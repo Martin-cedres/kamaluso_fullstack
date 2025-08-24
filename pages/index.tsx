@@ -70,9 +70,9 @@ export default function Home() {
             )}
             {products.map(product => (
               <div key={product._id} className="bg-white p-4 rounded-2xl shadow-md hover:shadow-lg transition transform hover:-translate-y-1">
-                {product.imagen ? (
+                {product.imageUrl ? (
                   <Image
-                    src={product.imagen}
+                    src={product.imageUrl}
                     alt={product.alt || product.nombre}
                     width={300}
                     height={200}
@@ -83,9 +83,11 @@ export default function Home() {
                     Sin imagen
                   </div>
                 )}
-                <h3 className="font-semibold text-lg mb-2">{product.nombre}</h3>
-                <p className="text-gray-500 text-sm mb-3">{product.descripcion || "Papelería única y personalizable. Envíos a todo Uruguay."}</p>
-                <Link href={`/productos/${product.slug || product._id}`} className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow hover:bg-pink-600 transition">
+                <h3 className="font-semibold text-lg mb-4">{product.nombre}</h3>
+                <Link
+                  href={`/productos/${product.slug || product._id}`}
+                  className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow hover:bg-pink-600 transition"
+                >
                   Ver más
                 </Link>
               </div>
