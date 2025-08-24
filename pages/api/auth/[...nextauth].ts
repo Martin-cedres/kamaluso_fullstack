@@ -1,38 +1,35 @@
+// pages/api/auth/[...nextauth].ts
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions = {
+export default NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (credentials?.email === "admin@kamaluso.com" && credentials?.password === "admin123") {
-          return { id: "1", name: "Admin", email: "admin@kamaluso.com" };
+        // Verificamos contra las variables de entorno
+        if (
+          credentials?.email === process.env.ADMIN_EMAIL &&
+          credentials?.password === process.env.ADMIN_PASSWORD
+        ) {
+          return {
+            id: "1",           // obligatorio para que NextAuth compile
+            email: credentials.email,
+          };
         }
         return null;
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt" as const },
+  session: {
+    strategy: "jwt",
+  },
   pages: {
-    signIn: "/login",
+    signIn: "/login", // tu página de login
   },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.user = user;
-      return token;
-    },
-    async session({ session, token }) {
-      session.user = token.user;
-      return session;
-    },
-  },
-  debug: process.env.NODE_ENV === "development",
-};
-
-export default NextAuth(authOptions);
+});
