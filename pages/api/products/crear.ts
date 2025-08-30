@@ -19,13 +19,9 @@ const s3 = new S3Client({
 
 const uploadFileToS3 = async (file: formidable.File) => {
   if (!file.filepath) throw new Error("Archivo no válido");
-  console.log("=== Subiendo archivo a S3 ===");
-  console.log("Archivo recibido:", file.originalFilename);
-
   const buffer = fs.readFileSync(file.filepath);
   const ext = path.extname(file.originalFilename || "");
   const key = `productos/${uuidv4()}${ext}`;
-
   await s3.send(
     new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
@@ -34,8 +30,6 @@ const uploadFileToS3 = async (file: formidable.File) => {
       ContentType: file.mimetype,
     })
   );
-
-  console.log("Archivo subido correctamente a S3:", key);
   return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 };
 
@@ -49,23 +43,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (err)
       return res
         .status(400)
-        .json({ error: "Error al procesar el formulario", detalles: err.message });
+        .json({ error: "Error al procesar formulario", detalles: err.message });
 
     try {
-      // Imagen principal
       const filePrincipal = Array.isArray(files.image) ? files.image[0] : files.image;
       if (!filePrincipal) return res.status(400).json({ error: "Falta la imagen principal" });
 
       const imagen = await uploadFileToS3(filePrincipal as formidable.File);
 
-      // Imágenes secundarias
       let images: string[] = [];
       if (files.images) {
         const filesSecundarias = Array.isArray(files.images) ? files.images : [files.images];
-        images = await Promise.all(filesSecundarias.map((f) => uploadFileToS3(f as formidable.File)));
+        images = await Promise.all(filesSecundarias.map(f => uploadFileToS3(f as formidable.File)));
       }
 
-      // Guardar en MongoDB
       const client = await clientPromise;
       const db = client.db("kamaluso");
 
@@ -74,6 +65,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         slug: Array.isArray(fields.slug) ? fields.slug[0] : fields.slug || "",
         descripcion: Array.isArray(fields.descripcion) ? fields.descripcion[0] : fields.descripcion || "",
         categoria: Array.isArray(fields.categoria) ? fields.categoria[0] : fields.categoria || "sublimable",
+        subcategoria: Array.isArray(fields.subcategoria) ? fields.subcategoria[0] : fields.subcategoria || "",
         precio: parseFloat(Array.isArray(fields.precio) ? fields.precio[0] : fields.precio) || 0,
         precioFlex: parseFloat(Array.isArray(fields.precioFlex) ? fields.precioFlex[0] : fields.precioFlex) || 0,
         precioDura: parseFloat(Array.isArray(fields.precioDura) ? fields.precioDura[0] : fields.precioDura) || 0,
@@ -92,12 +84,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         creadoEn: new Date(),
       };
 
-      console.log("=== Guardando producto en MongoDB ===");
-      console.log("Datos del producto:", nuevoProducto);
-
       const result = await db.collection("products").insertOne(nuevoProducto);
-
-      console.log("Producto guardado en MongoDB con ID:", result.insertedId);
 
       res.status(201).json({
         ok: true,

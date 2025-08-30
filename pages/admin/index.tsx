@@ -8,6 +8,7 @@ export default function Admin() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Formulario principal
   const [form, setForm] = useState({
     nombre: "",
     precio: "",
@@ -19,12 +20,11 @@ export default function Admin() {
     alt: "",
     status: "activo",
     notes: "",
-    tapa: "flex",
     destacado: false,
   });
 
-  const [categoria, setCategoria] = useState("sublimable");
-  const [variantes, setVariantes] = useState({ flex: "", dura: "" });
+  const [categoria, setCategoria] = useState("sublimable"); // Sublimable o personalizado
+  const [subCategoria, setSubCategoria] = useState("tapas-flex"); // Solo si personalizado
   const [image, setImage] = useState<File | null>(null);
   const [images, setImages] = useState<File[]>([]);
   const [productos, setProductos] = useState<any[]>([]);
@@ -101,17 +101,11 @@ export default function Admin() {
       formData.append("nombre", nombre);
       formData.append("descripcion", descripcion);
       formData.append("categoria", categoria);
+      if (categoria === "personalizado") formData.append("subCategoria", subCategoria);
       formData.append("destacado", destacado ? "true" : "false");
+      formData.append("precio", precio);
 
       Object.entries(rest).forEach(([key, value]) => formData.append(key, value));
-
-      if (categoria === "personalizado") {
-        formData.append("precioFlex", variantes.flex);
-        formData.append("precioDura", variantes.dura);
-        formData.append("tapa", form.tapa);
-      } else {
-        formData.append("precio", precio);
-      }
 
       if (image) formData.append("image", image);
       images.forEach((img, idx) => formData.append(`images[${idx}]`, img));
@@ -143,14 +137,14 @@ export default function Admin() {
         alt: "",
         status: "activo",
         notes: "",
-        tapa: "flex",
         destacado: false,
       });
-      setVariantes({ flex: "", dura: "" });
       setImage(null);
       setImages([]);
       setEditId(null);
       setShowForm(false);
+      setCategoria("sublimable");
+      setSubCategoria("tapas-flex");
       fetchProducts();
     } catch (err: any) {
       alert(err.message);
@@ -171,7 +165,7 @@ export default function Admin() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-textoPrimario">Panel de administración</h1>
-            <p className="text-sm text-gray-500 mt-1">Gestioná productos de Kamaluso con un flujo simple y limpio.</p>
+            <p className="text-sm text-gray-500 mt-1">Gestioná productos de Kamaluso de manera simple e intuitiva.</p>
           </div>
           <button
             onClick={() => setShowForm((v) => !v)}
@@ -184,8 +178,7 @@ export default function Admin() {
         {showForm && (
           <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-8">
             <SectionTitle>Datos del producto</SectionTitle>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Aquí van todos los inputs del formulario tal como tu versión original */}
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
@@ -198,6 +191,7 @@ export default function Admin() {
                   className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
                 />
               </div>
+
               {/* Slug */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
@@ -209,6 +203,7 @@ export default function Admin() {
                   className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
                 />
               </div>
+
               {/* Categoría */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
@@ -221,53 +216,35 @@ export default function Admin() {
                   <option value="personalizado">Personalizado</option>
                 </select>
               </div>
-              {/* Precios según categoría */}
-              {categoria === "sublimable" ? (
+
+              {/* Subcategoría si personalizado */}
+              {categoria === "personalizado" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-                  <input
-                    type="number"
-                    value={form.precio}
-                    onChange={(e) => setForm((f) => ({ ...f, precio: e.target.value }))}
-                    placeholder="Ej: 750"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de tapa</label>
+                  <select
+                    value={subCategoria}
+                    onChange={(e) => setSubCategoria(e.target.value)}
                     className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio Flex</label>
-                    <input
-                      type="number"
-                      value={variantes.flex}
-                      onChange={(e) => setVariantes((v) => ({ ...v, flex: e.target.value }))}
-                      placeholder="Ej: 750"
-                      className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio Dura</label>
-                    <input
-                      type="number"
-                      value={variantes.dura}
-                      onChange={(e) => setVariantes((v) => ({ ...v, dura: e.target.value }))}
-                      placeholder="Ej: 950"
-                      className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                    />
-                  </div>
-                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de tapa</label>
-                    <select
-                      value={form.tapa}
-                      onChange={(e) => setForm((f) => ({ ...f, tapa: e.target.value }))}
-                      className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                    >
-                      <option value="flex">Tapa Flex</option>
-                      <option value="dura">Tapa Dura</option>
-                    </select>
-                  </div>
+                  >
+                    <option value="tapas-flex">Tapa Flex</option>
+                    <option value="tapas-dura">Tapa Dura</option>
+                    <option value="tapas-madera">Tapa Madera</option>
+                  </select>
                 </div>
               )}
+
+              {/* Precio */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                <input
+                  type="number"
+                  value={form.precio}
+                  onChange={(e) => setForm((f) => ({ ...f, precio: e.target.value }))}
+                  placeholder="Ej: 750"
+                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
+                />
+              </div>
+
               {/* Destacado */}
               <div className="flex items-center gap-2">
                 <input
@@ -278,6 +255,7 @@ export default function Admin() {
                 />
                 <span>Destacado</span>
               </div>
+
               {/* Descripción */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
@@ -288,102 +266,40 @@ export default function Admin() {
                   className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
                 />
               </div>
-              {/* SEO */}
+
+              {/* SEO y Alt */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SEO Title</label>
-                  <input
-                    type="text"
-                    value={form.seoTitle}
-                    onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))}
-                    placeholder="Título SEO"
-                    className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SEO Description</label>
-                  <input
-                    type="text"
-                    value={form.seoDescription}
-                    onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))}
-                    placeholder="Descripción SEO"
-                    className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SEO Keywords</label>
-                  <input
-                    type="text"
-                    value={form.seoKeywords}
-                    onChange={(e) => setForm((f) => ({ ...f, seoKeywords: e.target.value }))}
-                    placeholder="palabra1, palabra2, palabra3"
-                    className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                  />
-                </div>
+                <input type="text" placeholder="SEO Title" value={form.seoTitle} onChange={e => setForm(f => ({...f, seoTitle: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
+                <input type="text" placeholder="SEO Description" value={form.seoDescription} onChange={e => setForm(f => ({...f, seoDescription: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
+                <input type="text" placeholder="SEO Keywords" value={form.seoKeywords} onChange={e => setForm(f => ({...f, seoKeywords: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
               </div>
-              {/* Alt */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alt imagen</label>
-                <input
-                  type="text"
-                  value={form.alt}
-                  onChange={(e) => setForm((f) => ({ ...f, alt: e.target.value }))}
-                  placeholder="Texto alternativo de la imagen"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                />
+                <input type="text" placeholder="Alt imagen" value={form.alt} onChange={e => setForm(f => ({...f, alt: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
               </div>
+
               {/* Notas */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
-                <textarea
-                  value={form.notes}
-                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                  placeholder="Notas internas"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                />
+                <textarea placeholder="Notas internas" value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
               </div>
-              {/* Imagen principal */}
+
+              {/* Imagenes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Imagen principal</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => e.target.files && setImage(e.target.files[0])}
-                  className="w-full"
-                />
-                {preview && <img src={preview} alt="Preview" className="w-32 h-32 object-cover mt-2 rounded-xl" />}
+                <input type="file" accept="image/*" onChange={e => e.target.files && setImage(e.target.files[0])} className="w-full"/>
+                {preview && <img src={preview} alt="Preview" className="w-32 h-32 mt-2 object-cover rounded-xl"/>}
               </div>
-              {/* Imágenes secundarias */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Imágenes secundarias</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => e.target.files && setImages(Array.from(e.target.files))}
-                  className="w-full"
-                />
+                <input type="file" accept="image/*" multiple onChange={e => e.target.files && setImages(Array.from(e.target.files))} className="w-full"/>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {previewsSecundarias.map((url, idx) => (
                     <div key={idx} className="relative">
                       <img src={url} alt={`Secundaria ${idx}`} className="w-24 h-24 object-cover rounded-xl" />
-                      <button
-                        type="button"
-                        onClick={() => setImages(images.filter((_, i) => i !== idx))}
-                        className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center"
-                      >
-                        x
-                      </button>
+                      <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center">x</button>
                     </div>
                   ))}
                 </div>
               </div>
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-fucsia text-white px-4 py-2 rounded-2xl shadow hover:opacity-90 transition"
-              >
+
+              <button type="submit" disabled={loading} className="bg-fucsia text-white px-4 py-2 rounded-2xl shadow hover:opacity-90 transition">
                 {editId ? "Editar producto" : "Guardar producto"}
               </button>
             </form>
@@ -404,6 +320,7 @@ export default function Admin() {
                   <th className="px-4 py-3">Precio</th>
                   <th className="px-4 py-3">Estado</th>
                   <th className="px-4 py-3">Categoría</th>
+                  <th className="px-4 py-3">Subcategoría</th>
                   <th className="px-4 py-3">Destacado</th>
                   <th className="px-4 py-3">Acciones</th>
                 </tr>
@@ -411,18 +328,17 @@ export default function Admin() {
               <tbody>
                 {productos.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">No hay productos</td>
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">No hay productos</td>
                   </tr>
                 )}
                 {productos.map((p) => (
                   <tr key={p._id} className="odd:bg-white even:bg-gray-50 border-b">
-                    <td className="px-4 py-3">
-                      <img src={p.imageUrl} alt={p.alt} className="w-16 h-16 object-cover rounded-xl" />
-                    </td>
+                    <td className="px-4 py-3"><img src={p.imageUrl} alt={p.alt} className="w-16 h-16 object-cover rounded-xl" /></td>
                     <td className="px-4 py-3">{p.nombre}</td>
-                    <td className="px-4 py-3">{p.precio || `${p.precioFlex} / ${p.precioDura}`}</td>
+                    <td className="px-4 py-3">{p.precio}</td>
                     <td className="px-4 py-3">{p.status}</td>
                     <td className="px-4 py-3">{p.categoria}</td>
+                    <td className="px-4 py-3">{p.subCategoria || "-"}</td>
                     <td className="px-4 py-3">{p.destacado ? "✅" : "-"}</td>
                     <td className="px-4 py-3 flex gap-2">
                       <button
@@ -439,11 +355,10 @@ export default function Admin() {
                             alt: p.alt || "",
                             status: p.status || "activo",
                             notes: p.notes || "",
-                            tapa: p.tapa || "flex",
                             destacado: p.destacado || false,
                           });
                           setCategoria(p.categoria || "sublimable");
-                          setVariantes({ flex: p.precioFlex || "", dura: p.precioDura || "" });
+                          setSubCategoria(p.subCategoria || "tapas-flex");
                           setShowForm(true);
                         }}
                         className="px-3 py-1 rounded-xl bg-blue-600 text-white hover:opacity-90 transition"
@@ -468,3 +383,4 @@ export default function Admin() {
     </div>
   );
 }
+
