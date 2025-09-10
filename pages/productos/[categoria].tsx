@@ -166,7 +166,7 @@ export default function CategoryPage({ initialProducts, initialCategory, baseUrl
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { categoria } = context.query;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   const category = categorias.find(c => c.slug === categoria) || null;
 

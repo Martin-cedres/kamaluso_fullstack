@@ -88,7 +88,7 @@ export default function BlogPostPage({ post }: Props) {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { slug } = context.query;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   try {
     const res = await fetch(`${baseUrl}/api/blog/${slug}`);

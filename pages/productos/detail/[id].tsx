@@ -197,7 +197,7 @@ export default function ProductDetailPage({ product }: Props) {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.query;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   try {
     const res = await fetch(`${baseUrl}/api/products/listar?_id=${id}`);
