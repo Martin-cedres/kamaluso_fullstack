@@ -1,12 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../lib/mongodb';
-import { requireAuth } from '../../../lib/auth';
-import formidable from 'formidable';
-import fs from 'fs';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import { ObjectId } from 'mongodb';
+// Forzando recarga del servidor
+import type { NextApiRequest, NextApiResponse } from "next";
+import formidable from "formidable";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { ObjectId } from "mongodb";
+import clientPromise from "../../../lib/mongodb";
+import { requireAuth } from "../../../lib/auth";
 
 export const config = { api: { bodyParser: false } };
 
@@ -19,80 +20,148 @@ const s3 = new S3Client({
 });
 
 const uploadFileToS3 = async (file: formidable.File) => {
+  if (!file || !file.filepath) throw new Error("Archivo inválido para S3");
   const buffer = fs.readFileSync(file.filepath);
-  const ext = path.extname(file.originalFilename || '');
+  const ext = path.extname(file.originalFilename || "") || ".webp";
   const key = `productos/${uuidv4()}${ext}`;
   await s3.send(
     new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: key,
       Body: buffer,
-      ContentType: file.mimetype,
+      ContentType: file.mimetype || "application/octet-stream",
+      ACL: "public-read",
     })
   );
+  try { fs.unlinkSync(file.filepath); } catch (e) {}
   return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method !== 'PUT') return res.status(405).json({ error: 'Método no permitido' });
+  if (req.method !== "PUT") return res.status(405).json({ error: "Método no permitido" });
 
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(400).json({ error: 'Error al procesar formulario', detalles: err.message });
+    if (err) return res.status(400).json({ error: "Error al procesar formulario", detalles: String(err) });
+
+    const idFromFields = fields.id;
+    const productId = Array.isArray(idFromFields) ? idFromFields[0] : idFromFields;
+
+    if (!ObjectId.isValid(productId)) {
+      return res.status(400).json({ error: `El ID de producto proporcionado no es válido: ${productId}` });
+    }
+
+    console.log("productId:", productId);
+    console.log("fields:", fields);
+    console.log("files:", files);
 
     try {
-      const { id } = req.query;
-      if (!id || typeof id !== 'string') return res.status(400).json({ error: 'Falta el ID del producto' });
-
       const client = await clientPromise;
-      const db = client.db('kamaluso');
-      const productsCollection = db.collection('products');
-      const objectId = new ObjectId(id);
+      const db = client.db("kamaluso");
 
-      const existingProduct = await productsCollection.findOne({ _id: objectId });
-      if (!existingProduct) return res.status(404).json({ error: 'Producto no encontrado' });
+      // --- Construcción explícita del documento a actualizar ---
+      const updateDoc: any = {};
 
-      // Imagen principal
-      let imagen = existingProduct.imagen;
-      if (files.image) imagen = await uploadFileToS3(Array.isArray(files.image) ? files.image[0] : files.image);
+      // Campos de texto directos
+      if (fields.nombre) updateDoc.nombre = fields.nombre;
+      if (fields.slug) updateDoc.slug = fields.slug;
+      if (fields.descripcion) updateDoc.descripcion = fields.descripcion;
+      if (fields.seoTitle) updateDoc.seoTitle = fields.seoTitle;
+      if (fields.seoDescription) updateDoc.seoDescription = fields.seoDescription;
+      if (fields.alt) updateDoc.alt = fields.alt;
+      if (fields.notes) updateDoc.notes = fields.notes;
+      if (fields.status) updateDoc.status = fields.status;
+      if (fields.categoria) updateDoc.categoria = fields.categoria;
+      if (fields.tapa) updateDoc.tapa = fields.tapa;
 
-      // Imágenes secundarias
-      let images = existingProduct.images || [];
-      if (files.images) {
-        const filesArray = Array.isArray(files.images) ? files.images : [files.images];
-        images = await Promise.all(filesArray.map(f => uploadFileToS3(f as formidable.File)));
+      // Campo de precio (numérico)
+      if (fields.precio) {
+        updateDoc.precio = parseFloat(String(fields.precio)) || 0;
+      }
+      // Campos de precio adicionales (numéricos)
+      if (fields.precioFlex) { // Add this block
+        updateDoc.precioFlex = parseFloat(String(fields.precioFlex)) || 0;
+      }
+      if (fields.precioDura) { // Add this block
+        updateDoc.precioDura = parseFloat(String(fields.precioDura)) || 0;
       }
 
-      const destacado = fields.destacado === 'true' ? true : fields.destacado === 'false' ? false : existingProduct.destacado || false;
+      // Campo destacado (booleano)
+      if (fields.destacado !== undefined) {
+        updateDoc.destacado = String(fields.destacado).toLowerCase() === 'true';
+      }
 
-      const updatedProduct: any = {
-        nombre: fields.nombre || existingProduct.nombre,
-        slug: fields.slug || existingProduct.slug,
-        descripcion: fields.descripcion || existingProduct.descripcion,
-        categoria: fields.categoria || existingProduct.categoria,
-        precio: parseFloat(fields.precio as string) || existingProduct.precio || 0,
-        precioFlex: parseFloat(fields.precioFlex as string) || existingProduct.precioFlex || 0,
-        precioDura: parseFloat(fields.precioDura as string) || existingProduct.precioDura || 0,
-        tapa: fields.tapa || existingProduct.tapa || 'flex',
-        seoTitle: fields.seoTitle || existingProduct.seoTitle || '',
-        seoDescription: fields.seoDescription || existingProduct.seoDescription || '',
-        seoKeywords: fields.seoKeywords || existingProduct.seoKeywords || '',
-        alt: fields.alt || existingProduct.alt || '',
-        notes: fields.notes || existingProduct.notes || '',
-        status: fields.status || existingProduct.status || 'activo',
-        destacado,
-        imagen,
-        images,
-        actualizadoEn: new Date(),
-      };
+      // Campo de keywords (array de strings)
+      if (typeof fields.seoKeywords === 'string') {
+        updateDoc.seoKeywords = fields.seoKeywords.split(',').map(s => s.trim());
+      }
 
-      await productsCollection.updateOne({ _id: objectId }, { $set: updatedProduct });
+      // Campo de subcategoría (array de strings)
+      const subCategoriaField = fields.subCategoria as string || "";
+      updateDoc.subCategoria = subCategoriaField ? [subCategoriaField] : [];
 
-      res.status(200).json({ ok: true, mensaje: 'Producto actualizado correctamente', imagen, images });
+      // Lógica para imágenes (igual que antes)
+      const filePrincipal = (files.image || files.imagen) as any;
+      if (filePrincipal) {
+        const fp = Array.isArray(filePrincipal) ? filePrincipal[0] : filePrincipal;
+        updateDoc.imageUrl = await uploadFileToS3(fp as formidable.File);
+      }
+
+      const filesArray: formidable.File[] = [];
+      Object.keys(files).forEach((k) => {
+        if (/^images/i.test(k)) {
+          const val = (files as any)[k];
+          if (Array.isArray(val)) val.forEach((f: formidable.File) => filesArray.push(f));
+          else filesArray.push(val);
+        }
+      });
+
+      if (filesArray.length > 0) {
+        const newImagesUrls: string[] = [];
+        for (const f of filesArray) {
+          if (f && f.filepath) {
+            const url = await uploadFileToS3(f as formidable.File);
+            newImagesUrls.push(url);
+          }
+        }
+        updateDoc.images = newImagesUrls;
+      }
+
+      updateDoc.actualizadoEn = new Date();
+
+      // Ensure image consistency
+      if (updateDoc.imageUrl || 'images' in updateDoc) {
+        const product = await db.collection("products").findOne({ _id: new ObjectId(productId) });
+        if (product) {
+            const finalImageUrl = updateDoc.imageUrl || product.imageUrl;
+            let finalImages;
+            if ('images' in updateDoc) { // New secondary images were uploaded
+                finalImages = [finalImageUrl, ...(updateDoc.images || [])];
+            } else { // No new secondary images, but maybe a new main image
+                const existingImages = product.images || [];
+                // We need to remove the old imageUrl from the array, wherever it was
+                const oldImageUrl = product.imageUrl;
+                const existingSecondaryImages = existingImages.filter(img => img !== oldImageUrl);
+                finalImages = [finalImageUrl, ...existingSecondaryImages];
+            }
+            updateDoc.images = finalImages;
+        }
+      }
+
+      console.log("updateDoc:", updateDoc);
+
+      const result = await db.collection("products").updateOne(
+        { _id: new ObjectId(productId) },
+        { $set: updateDoc }
+      );
+
+      console.log("result:", result);
+
+      res.status(200).json({ ok: true, mensaje: "Producto actualizado correctamente" });
     } catch (error) {
-      console.error('Error al actualizar producto:', error);
-      res.status(500).json({ error: 'Error interno al actualizar producto' });
+      console.error("EDIT PRODUCT ERROR:", error);
+      res.status(500).json({ error: "Error interno al actualizar el producto" });
     }
   });
 };

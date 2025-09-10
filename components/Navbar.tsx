@@ -1,20 +1,54 @@
-// app/components/Navbar.tsx
-"use client";
-
-import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useCart } from "../context/CartContext"; // Import useCart
+
+interface Categoria {
+  _id: string;
+  nombre: string;
+  slug: string;
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState<Categoria[]>([]);
+  const { cartCount } = useCart(); // Get cart count
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    fetch("/api/categorias/listar")
+      .then((res) => res.json())
+      .then((data) => setCategories(data))
+      .catch((err) => console.error("Error fetching categories:", err));
+  }, []);
+
+  const closeAllMenus = () => {
+    setMenuOpen(false);
+    setDropdownOpen(false);
+  };
+
+  const CategoryMenu = ({ isMobile = false }) => (
+    <div className={isMobile ? "pl-4 mt-1 flex flex-col gap-1" : "absolute top-8 left-0 bg-white shadow-lg rounded-xl py-2 w-48 z-50"}>
+      {categories.map((cat) => (
+        <Link
+          key={cat._id}
+          href={`/productos/${cat.slug}`}
+          className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition"
+          onClick={closeAllMenus}
+        >
+          {cat.nombre}
+        </Link>
+      ))}
+    </div>
+  );
 
   return (
     <nav className="bg-white shadow-md fixed w-full z-50">
       <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16">
-        {/* Logo */}
-        <Link href="/">
-                          <Image src="/logo.webp" alt="Kamaluso Logo" width={120} height={40} className="w-auto h-full" />
+        <Link href="/" className="flex items-center" onClick={closeAllMenus}>
+          <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" />
         </Link>
 
         {/* Desktop Menu */}
@@ -23,81 +57,61 @@ export default function Navbar() {
             Inicio
           </Link>
 
-          {/* Dropdown Productos */}
           <div className="relative">
             <button
-              onMouseEnter={() => setDropdownOpen(true)}
-              onMouseLeave={() => setDropdownOpen(false)}
+              onClick={() => setDropdownOpen(!dropdownOpen)}
               className="text-gray-900 font-medium hover:text-pink-500 transition flex items-center gap-1"
             >
-              Productos ▾
+              Categorías ▾
             </button>
-            {dropdownOpen && (
-              <div
-                onMouseEnter={() => setDropdownOpen(true)}
-                onMouseLeave={() => setDropdownOpen(false)}
-                className="absolute top-8 left-0 bg-white shadow-lg rounded-xl py-2 w-48 transition-all duration-300"
-              >
-                <Link
-                  href="/productos?sublimables=true"
-                  className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition"
-                >
-                  Sublimables
-                </Link>
-                <Link
-                  href="/productos?personalizados=true"
-                  className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition"
-                >
-                  Personalizados
-                </Link>
-              </div>
-            )}
+            {dropdownOpen && <CategoryMenu />}
           </div>
 
           <Link href="/contacto" className="text-gray-900 font-medium hover:text-pink-500 transition">
             Contacto
           </Link>
+
+          {status === 'authenticated' && (
+            <>
+              <Link href="/admin" className="text-gray-900 font-medium hover:text-pink-500 transition">
+                Admin
+              </Link>
+              <Link href="/admin/pedidos" className="text-gray-900 font-medium hover:text-pink-500 transition">
+                Pedidos
+              </Link>
+              <button onClick={() => signOut()} className="text-gray-900 font-medium hover:text-pink-500 transition">
+                Logout
+              </button>
+            </>
+          )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-gray-900"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {menuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+        {/* Right side icons */}
+        <div className="flex items-center gap-4">
+          <Link href="/cart" className="hidden md:block relative text-gray-900 hover:text-pink-500 transition" onClick={closeAllMenus}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {cartCount}
+              </span>
             )}
-          </svg>
-        </button>
+          </Link>
+
+          {/* Mobile Menu Button */}
+          <button className="md:hidden text-gray-900" onClick={() => setMenuOpen(!menuOpen)}>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m16 6H4" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-white shadow-md px-6 py-4">
-          <Link
-            href="/"
-            className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition"
-            onClick={() => setMenuOpen(false)}
-          >
+        <div className="md:hidden bg-white shadow-md px-6 py-4 space-y-2">
+          <Link href="/" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
             Inicio
           </Link>
 
@@ -106,38 +120,34 @@ export default function Navbar() {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="w-full text-left text-gray-900 font-medium py-2 flex justify-between items-center hover:text-pink-500 transition"
             >
-              Productos ▾
+              Categorías ▾
             </button>
-            {dropdownOpen && (
-              <div className="pl-4 mt-1 flex flex-col gap-1">
-                <Link
-                  href="/productos?sublimables=true"
-                  className="py-2 text-gray-900 hover:text-pink-500 transition"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Sublimables
-                </Link>
-                <Link
-                  href="/productos?personalizados=true"
-                  className="py-2 text-gray-900 hover:text-pink-500 transition"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Personalizados
-                </Link>
-              </div>
-            )}
+            {dropdownOpen && <CategoryMenu isMobile={true} />}
           </div>
 
-          <Link
-            href="/contacto"
-            className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition"
-            onClick={() => setMenuOpen(false)}
-          >
+          <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
             Contacto
           </Link>
+          
+          <Link href="/cart" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
+            Carrito ({cartCount})
+          </Link>
+
+          {status === 'authenticated' && (
+            <>
+              <Link href="/admin" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
+                Admin
+              </Link>
+              <Link href="/admin/pedidos" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
+                Pedidos
+              </Link>
+              <button onClick={() => { closeAllMenus(); signOut(); }} className="w-full text-left text-gray-900 font-medium py-2 hover:text-pink-500 transition">
+                Logout
+              </button>
+            </>
+          )}
         </div>
       )}
     </nav>
   );
 }
-

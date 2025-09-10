@@ -1,12 +1,20 @@
 export default function Footer() {
   return (
-    <footer className="bg-[#121212] text-white py-6 mt-12">
-      <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-        <p className="text-sm">&copy; 2025 Kamaluso. Todos los derechos reservados.</p>
+    <footer className="bg-white py-6 mt-12 border-t border-gray-200">
+      <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-gray-700">
+        <p className="text-sm text-center md:text-left">
+          &copy; 2025 Papelería Personalizada Kamaluso. Todos los derechos reservados.
+        </p>
         <div className="flex space-x-4 mt-2 md:mt-0">
-          <a href="#" className="hover:text-[#FF6B35] transition-colors">Facebook</a>
-          <a href="#" className="hover:text-[#FF6B35] transition-colors">Instagram</a>
-          <a href="#" className="hover:text-[#FF6B35] transition-colors">Twitter</a>
+          <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500 transition-colors text-sm">
+            Instagram
+          </a>
+          <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors text-sm">
+            Facebook
+          </a>
+          <a href="https://wa.me/549XXXXXXXXX" target="_blank" rel="noopener noreferrer" className="hover:text-green-500 transition-colors text-sm">
+            WhatsApp
+          </a>
         </div>
       </div>
     </footer>

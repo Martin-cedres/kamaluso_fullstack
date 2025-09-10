@@ -1,17 +1,33 @@
-import { useState, useEffect } from "react";
+// pages/admin/index.tsx
+import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
-import Footer from "../../components/Footer";
+
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+
+// Interfaces para los datos que vienen de la API
+interface SubCategoriaData {
+  nombre: string;
+  slug: string;
+}
+interface CategoriaData {
+  _id: string;
+  nombre: string;
+  slug: string;
+  subCategorias: SubCategoriaData[];
+}
 
 export default function Admin() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Formulario principal
-  const [form, setForm] = useState({
+  // --- ESTADOS --- //
+  const [form, setForm] = useState<any>({
     nombre: "",
     precio: "",
+    precioFlex: "", // Add this line
+    precioDura: "", // Add this line
     descripcion: "",
     seoTitle: "",
     seoDescription: "",
@@ -23,293 +39,371 @@ export default function Admin() {
     destacado: false,
   });
 
-  const [categoria, setCategoria] = useState("sublimable"); // Sublimable o personalizado
-  const [subCategoria, setSubCategoria] = useState("tapas-flex"); // Solo si personalizado
+  // Nuevos estados para categorías dinámicas
+  const [allCategories, setAllCategories] = useState<CategoriaData[]>([]);
+  const [selectedCategoria, setSelectedCategoria] = useState("");
+  const [selectedSubCategoria, setSelectedSubCategoria] = useState("");
+
   const [image, setImage] = useState<File | null>(null);
   const [images, setImages] = useState<File[]>([]);
+  const [previewsSecundarias, setPreviewsSecundarias] = useState<string[]>([]);
+  const [preview, setPreview] = useState<string | null>(null);
   const [productos, setProductos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [previewsSecundarias, setPreviewsSecundarias] = useState<string[]>([]);
 
-  // === Fetch productos
-  const fetchProducts = () => {
-    fetch("/api/products/listar")
-      .then((res) => res.json())
-      .then(setProductos)
-      .catch(() => setProductos([]));
+  // --- LÓGICA --- //
+
+  const generateSlug = (text: string) =>
+    text.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
+
+  useEffect(() => {
+    if (!editId) setForm((f: any) => ({ ...f, slug: generateSlug(f.nombre) }));
+  }, [form.nombre]);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/products/listar");
+      const data = await res.json();
+      setProductos(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Error fetch productos:", e);
+      setProductos([]);
+    }
   };
 
-  useEffect(() => fetchProducts(), []);
-
-  // Preview imagen principal
-  useEffect(() => {
-    if (image) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(image);
-    } else {
-      setPreview(null);
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categorias/listar");
+      const data = await res.json();
+      setAllCategories(Array.isArray(data) ? data : []);
+      if (data.length > 0 && !selectedCategoria) {
+        setSelectedCategoria(data[0].slug);
+      }
+    } catch (e) {
+      console.error("Error fetch categorías:", e);
+      setAllCategories([]);
     }
-  }, [image]);
+  };
 
-  // Preview imágenes secundarias
   useEffect(() => {
-    if (images.length > 0) {
-      const urls = images.map((img) => URL.createObjectURL(img));
-      setPreviewsSecundarias(urls);
-      return () => urls.forEach((url) => URL.revokeObjectURL(url));
-    } else setPreviewsSecundarias([]);
-  }, [images]);
+    fetchProducts();
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCategorySlug = e.target.value;
+    setSelectedCategoria(newCategorySlug);
+    setSelectedSubCategoria("");
+    setForm((f: any) => ({ ...f, precio: "", precioFlex: "", precioDura: "" }));
+  };
+
+  const handleSubCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSubCategoria(e.target.value);
+    setForm((f: any) => ({ ...f, precio: "", precioFlex: "", precioDura: "" }));
+  };
+
+  useEffect(() => {
+    if (!image) {
+      if (!editId) setPreview(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setPreview(reader.result as string);
+    reader.readAsDataURL(image);
+  }, [image, editId]);
+
+  useEffect(() => {
+    if (!images || images.length === 0) {
+      if (!editId) setPreviewsSecundarias([]);
+      return;
+    }
+    const urls = images.map((f) => URL.createObjectURL(f));
+    setPreviewsSecundarias(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [images, editId]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
   }, [status, router]);
 
-  if (status === "loading")
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl font-semibold">
-        Cargando...
-      </div>
-    );
+  if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-xl font-semibold">Cargando...</div>;
   if (status === "unauthenticated") return null;
 
-  // === Handlers
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este producto?")) return;
-    try {
-      const res = await fetch(`/api/products/eliminar?id=${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("No se pudo eliminar el producto.");
-      fetchProducts();
-    } catch (err: any) {
-      alert(err.message);
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(images);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    setImages(items);
+    const p = Array.from(previewsSecundarias);
+    const [pReordered] = p.splice(result.source.index, 1);
+    p.splice(result.destination.index, 0, pReordered);
+    setPreviewsSecundarias(p);
+  };
+
+  const resetForm = () => {
+    setForm({ nombre: "", precio: "", descripcion: "", seoTitle: "", seoDescription: "", seoKeywords: "", slug: "", alt: "", status: "activo", notes: "", destacado: false });
+    if (allCategories.length > 0) {
+      setSelectedCategoria(allCategories[0].slug);
+    } else {
+      setSelectedCategoria("");
     }
+    setSelectedSubCategoria("");
+    setImage(null);
+    setImages([]);
+    setPreview(null);
+    setPreviewsSecundarias([]);
+    setEditId(null);
+    setShowForm(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setProgress(10);
-
     try {
       const formData = new FormData();
-      const { nombre, precio, descripcion, destacado, ...rest } = form;
-      formData.append("nombre", nombre);
-      formData.append("descripcion", descripcion);
-      formData.append("categoria", categoria);
-      if (categoria === "personalizado") formData.append("subCategoria", subCategoria);
-      formData.append("destacado", destacado ? "true" : "false");
-      formData.append("precio", precio);
-
-      Object.entries(rest).forEach(([key, value]) => formData.append(key, value));
+      if (editId) formData.append("id", editId);
+      
+      Object.keys(form).forEach(key => formData.append(key, form[key]));
+      formData.append("categoria", selectedCategoria);
+      if (selectedSubCategoria) {
+        formData.append("subCategoria", selectedSubCategoria);
+      }
 
       if (image) formData.append("image", image);
-      images.forEach((img, idx) => formData.append(`images[${idx}]`, img));
+      images.forEach((f, i) => formData.append(`images[${i}]`, f));
 
       setProgress(30);
-
-      const res = await fetch(editId ? `/api/products/editar?id=${editId}` : "/api/products/crear", {
-        method: editId ? "PUT" : "POST",
-        body: formData,
-      });
-
-      setProgress(80);
+      const url = editId ? "/api/products/editar" : "/api/products/crear";
+      const res = await fetch(url, { method: editId ? "PUT" : "POST", body: formData });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al guardar el producto");
+      if (!res.ok) throw new Error(data.error || "Error al guardar");
 
       setProgress(100);
-      setSuccessMsg(editId ? "✅ Producto editado con éxito" : "✅ Producto publicado con éxito");
-      setTimeout(() => setSuccessMsg(null), 4000);
-
-      // Reset formulario
-      setForm({
-        nombre: "",
-        precio: "",
-        descripcion: "",
-        seoTitle: "",
-        seoDescription: "",
-        seoKeywords: "",
-        slug: "",
-        alt: "",
-        status: "activo",
-        notes: "",
-        destacado: false,
-      });
-      setImage(null);
-      setImages([]);
-      setEditId(null);
-      setShowForm(false);
-      setCategoria("sublimable");
-      setSubCategoria("tapas-flex");
-      fetchProducts();
+      setSuccessMsg(editId ? "✅ Producto editado" : "✅ Producto creado");
+      setTimeout(() => setSuccessMsg(null), 3000);
+      await fetchProducts();
+      resetForm();
     } catch (err: any) {
-      alert(err.message);
+      console.error("ERROR submit:", err);
+      alert(err.message || "Error");
     } finally {
       setLoading(false);
       setProgress(0);
     }
   };
 
-  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <h2 className="text-lg md:text-xl font-semibold text-textoPrimario mb-4">{children}</h2>
-  );
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("¿Eliminar este producto?")) return;
+    try {
+      const res = await fetch(`/api/products/eliminar?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error eliminando");
+      await fetchProducts();
+    } catch (err: any) {
+      console.error("DELETE ERROR:", err);
+      alert(err.message || "Error");
+    }
+  };
+
+  const handleEditClick = async (id: string) => {
+    try {
+      const res = await fetch(`/api/products/get?id=${id}`);
+      if (!res.ok) throw new Error("No se pudo obtener el producto");
+      const p = await res.json();
+
+      setEditId(String(p._id));
+      setForm({ ...p, seoKeywords: Array.isArray(p.seoKeywords) ? p.seoKeywords.join(", ") : p.seoKeywords || "" });
+      setSelectedCategoria(p.categoria || "");
+      const subCatValue = Array.isArray(p.subCategoria) ? p.subCategoria[0] : p.subCategoria || "";
+      setSelectedSubCategoria(subCatValue || "");
+      setPreview(p.imageUrl || null);
+      setPreviewsSecundarias(Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []));
+      setImage(null);
+      setImages([]);
+      setShowForm(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: any) {
+      console.error("EDIT CLICK ERROR:", err);
+      alert("No se pudo cargar el producto para editar");
+    }
+  };
+
+  const availableSubCategories = allCategories.find(c => c.slug === selectedCategoria)?.subCategorias || [];
+
+  const getDisplayPrice = (product: any) => {
+    if (product.precioDura && product.precioFlex) {
+      return `$U ${product.precioDura} (Dura) / $U ${product.precioFlex} (Flex)`;
+    }
+    if (product.precioDura) {
+      return `$U ${product.precioDura} (Dura)`;
+    }
+    if (product.precioFlex) {
+      return `$U ${product.precioFlex} (Flex)`;
+    }
+    if (product.precio) {
+      return `$U ${product.precio}`;
+    }
+    return "N/A";
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-textoPrimario">Panel de administración</h1>
-            <p className="text-sm text-gray-500 mt-1">Gestioná productos de Kamaluso de manera simple e intuitiva.</p>
+            <h1 className="text-2xl md:text-3xl font-bold">Panel de administración</h1>
+            <p className="text-sm text-gray-500 mt-1">Gestioná productos de Kamaluso.</p>
           </div>
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="inline-flex items-center gap-2 bg-fucsia text-white px-4 py-2 md:px-5 md:py-2.5 rounded-2xl shadow hover:opacity-90 transition"
-          >
-            {showForm ? "Cerrar formulario" : "Agregar producto"}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => { if (showForm) { resetForm(); } else { resetForm(); setShowForm(true); } }}
+              className="inline-flex items-center gap-2 bg-fucsia text-white px-4 py-2 rounded-2xl shadow"
+            >
+              {showForm ? "Cerrar formulario" : "Agregar producto"}
+            </button>
+            {successMsg && <div className="text-green-600 font-semibold">{successMsg}</div>}
+          </div>
         </div>
 
         {showForm && (
           <div className="bg-white rounded-2xl shadow-md p-6 md:p-8 mb-8">
-            <SectionTitle>Datos del producto</SectionTitle>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Nombre */}
+              <h2 className="text-lg md:text-xl font-semibold">Datos del producto</h2>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={form.nombre}
-                  onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-                  required
-                  placeholder="Ej: Agenda semanal 2026"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                />
+                <input type="text" value={form.nombre} onChange={(e) => setForm((f: any) => ({ ...f, nombre: e.target.value }))} required placeholder="Ej: Agenda semanal 2026" className="w-full rounded-xl border px-3 py-2.5" />
               </div>
 
-              {/* Slug */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-                <input
-                  type="text"
-                  value={form.slug}
-                  onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                  placeholder="ej: agenda-semanal-2026"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                />
+                <input type="text" value={form.slug} onChange={(e) => setForm((f: any) => ({ ...f, slug: e.target.value }))} placeholder="ej: agenda-semanal-2026" className="w-full rounded-xl border px-3 py-2.5" />
               </div>
 
-              {/* Categoría */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                <select
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                >
-                  <option value="sublimable">Sublimable</option>
-                  <option value="personalizado">Personalizado</option>
+                <select value={selectedCategoria} onChange={handleCategoryChange} className="w-full rounded-xl border px-3 py-2.5" required>
+                  <option value="" disabled>Selecciona una categoría</option>
+                  {allCategories.map(cat => (<option key={cat._id} value={cat.slug}>{cat.nombre}</option>))}
                 </select>
               </div>
 
-              {/* Subcategoría si personalizado */}
-              {categoria === "personalizado" && (
+              {availableSubCategories.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de tapa</label>
-                  <select
-                    value={subCategoria}
-                    onChange={(e) => setSubCategoria(e.target.value)}
-                    className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                  >
-                    <option value="tapas-flex">Tapa Flex</option>
-                    <option value="tapas-dura">Tapa Dura</option>
-                    <option value="tapas-madera">Tapa Madera</option>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subcategoría</label>
+                  <select value={selectedSubCategoria} onChange={handleSubCategoryChange} className="w-full rounded-xl border px-3 py-2.5" required>
+                    <option value="" disabled>Selecciona una subcategoría</option>
+                    {availableSubCategories.map(sub => (<option key={sub.slug} value={sub.slug}>{sub.nombre}</option>))}
                   </select>
                 </div>
               )}
 
-              {/* Precio */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-                <input
-                  type="number"
-                  value={form.precio}
-                  onChange={(e) => setForm((f) => ({ ...f, precio: e.target.value }))}
-                  placeholder="Ej: 750"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                />
-              </div>
+              {(() => {
+                const selectedCategory = allCategories.find(c => c.slug === selectedCategoria);
+                if (selectedCategory?.nombre === 'Agendas') {
+                  return (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio Tapa Dura</label>
+                        <input type="number" value={form.precioDura} onChange={(e) => setForm((f: any) => ({ ...f, precioDura: e.target.value }))} placeholder="Ej: 900" className="w-full rounded-xl border px-3 py-2.5" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio Tapa Flexible</label>
+                        <input type="number" value={form.precioFlex} onChange={(e) => setForm((f: any) => ({ ...f, precioFlex: e.target.value }))} placeholder="Ej: 800" className="w-full rounded-xl border px-3 py-2.5" />
+                      </div>
+                    </>
+                  );
+                } else {
+                  return (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                      <input type="number" value={form.precio} onChange={(e) => setForm((f: any) => ({ ...f, precio: e.target.value }))} placeholder="Ej: 750" className="w-full rounded-xl border px-3 py-2.5" />
+                    </div>
+                  );
+                }
+              })()}
 
-              {/* Destacado */}
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.destacado}
-                  onChange={(e) => setForm((f) => ({ ...f, destacado: e.target.checked }))}
-                  className="w-4 h-4"
-                />
-                <span>Destacado</span>
+                <input type="checkbox" checked={form.destacado} onChange={(e) => setForm((f: any) => ({ ...f, destacado: e.target.checked }))} className="h-4 w-4" />
+                <label className="text-sm text-gray-700">Destacado</label>
               </div>
 
-              {/* Descripción */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                <textarea
-                  value={form.descripcion}
-                  onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
-                  placeholder="Descripción del producto"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2.5 outline-none focus:ring-2 focus:ring-fucsia"
-                />
+                <textarea value={form.descripcion} onChange={(e) => setForm((f: any) => ({ ...f, descripcion: e.target.value }))} className="w-full rounded-xl border px-3 py-2.5" rows={4} placeholder="Descripción del producto" />
               </div>
 
-              {/* SEO y Alt */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" placeholder="SEO Title" value={form.seoTitle} onChange={e => setForm(f => ({...f, seoTitle: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
-                <input type="text" placeholder="SEO Description" value={form.seoDescription} onChange={e => setForm(f => ({...f, seoDescription: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
-                <input type="text" placeholder="SEO Keywords" value={form.seoKeywords} onChange={e => setForm(f => ({...f, seoKeywords: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
-              </div>
-              <div>
-                <input type="text" placeholder="Alt imagen" value={form.alt} onChange={e => setForm(f => ({...f, alt: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
-              </div>
-
-              {/* Notas */}
-              <div>
-                <textarea placeholder="Notas internas" value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} className="w-full rounded-xl border px-3 py-2.5 focus:ring-2 focus:ring-fucsia"/>
-              </div>
-
-              {/* Imagenes */}
-              <div>
-                <input type="file" accept="image/*" onChange={e => e.target.files && setImage(e.target.files[0])} className="w-full"/>
-                {preview && <img src={preview} alt="Preview" className="w-32 h-32 mt-2 object-cover rounded-xl"/>}
-              </div>
-              <div>
-                <input type="file" accept="image/*" multiple onChange={e => e.target.files && setImages(Array.from(e.target.files))} className="w-full"/>
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  {previewsSecundarias.map((url, idx) => (
-                    <div key={idx} className="relative">
-                      <img src={url} alt={`Secundaria ${idx}`} className="w-24 h-24 object-cover rounded-xl" />
-                      <button type="button" onClick={() => setImages(images.filter((_, i) => i !== idx))} className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center">x</button>
-                    </div>
-                  ))}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Título SEO</label>
+                  <input type="text" value={form.seoTitle} onChange={(e) => setForm((f: any) => ({ ...f, seoTitle: e.target.value }))} className="w-full rounded-xl border px-3 py-2.5" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Keywords SEO (coma separadas)</label>
+                  <input type="text" value={form.seoKeywords} onChange={(e) => setForm((f: any) => ({ ...f, seoKeywords: e.target.value }))} className="w-full rounded-xl border px-3 py-2.5" />
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="bg-fucsia text-white px-4 py-2 rounded-2xl shadow hover:opacity-90 transition">
-                {editId ? "Editar producto" : "Guardar producto"}
-              </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción SEO</label>
+                <textarea value={form.seoDescription} onChange={(e) => setForm((f: any) => ({ ...f, seoDescription: e.target.value }))} className="w-full rounded-xl border px-3 py-2.5" rows={2} />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Texto alternativo (Alt)</label>
+                <input type="text" value={form.alt} onChange={(e) => setForm((f: any) => ({ ...f, alt: e.target.value }))} className="w-full rounded-xl border px-3 py-2.5" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Imagen principal</label>
+                <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} className="w-full" />
+                {preview && <img src={preview} alt="preview" className="mt-2 w-32 h-32 object-cover rounded-xl" />}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Imágenes secundarias</label>
+                <input type="file" accept="image/*" multiple onChange={(e) => setImages(e.target.files ? Array.from(e.target.files) : [])} className="w-full" />
+                <div className="text-xs text-gray-500 mt-1">Puedes reordenar las imágenes arrastrándolas.</div>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="sec-images" direction="horizontal">
+                      {(provided) => (
+                        <div className="flex gap-2 mt-2 overflow-x-auto" ref={provided.innerRef} {...provided.droppableProps}>
+                          {previewsSecundarias.map((url, idx) => (
+                            <Draggable key={url + idx} draggableId={String(url) + idx} index={idx}>
+                              {(prov) => (
+                                <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} className="w-24 h-24 rounded-xl overflow-hidden border-2">
+                                  <img src={url} alt="preview secundaria" className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t">
+                <button type="submit" disabled={loading} className="bg-fucsia text-white px-6 py-2 rounded-2xl shadow">{editId ? "Guardar cambios" : "Crear producto"}</button>
+                <button type="button" onClick={() => resetForm()} className="bg-white border px-4 py-2 rounded-2xl">Cancelar</button>
+                {loading && <div className="ml-4 text-sm text-gray-600 self-center">{progress > 0 ? `Subiendo... ${progress}%` : 'Procesando...'}</div>}
+              </div>
             </form>
           </div>
         )}
 
-        {/* --- Tabla de productos --- */}
         <div className="bg-white rounded-2xl shadow-md overflow-hidden">
           <div className="px-4 md:px-6 py-4 border-b">
-            <h3 className="text-lg font-semibold text-textoPrimario">Productos</h3>
+            <h3 className="text-lg font-semibold">Productos</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -326,51 +420,18 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody>
-                {productos.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">No hay productos</td>
-                  </tr>
-                )}
                 {productos.map((p) => (
-                  <tr key={p._id} className="odd:bg-white even:bg-gray-50 border-b">
-                    <td className="px-4 py-3"><img src={p.imageUrl} alt={p.alt} className="w-16 h-16 object-cover rounded-xl" /></td>
+                  <tr key={String(p._id)} className="odd:bg-white even:bg-gray-50 border-b">
+                    <td className="px-4 py-3"><img src={p.imageUrl} alt={p.alt || p.nombre} className="w-16 h-16 object-cover rounded-xl" /></td>
                     <td className="px-4 py-3">{p.nombre}</td>
-                    <td className="px-4 py-3">{p.precio}</td>
+                    <td className="px-4 py-3">{getDisplayPrice(p)}</td>
                     <td className="px-4 py-3">{p.status}</td>
                     <td className="px-4 py-3">{p.categoria}</td>
-                    <td className="px-4 py-3">{p.subCategoria || "-"}</td>
+                    <td className="px-4 py-3">{Array.isArray(p.subCategoria) ? p.subCategoria.join(", ") : (p.subCategoria || "-")}</td>
                     <td className="px-4 py-3">{p.destacado ? "✅" : "-"}</td>
                     <td className="px-4 py-3 flex gap-2">
-                      <button
-                        onClick={() => {
-                          setEditId(p._id);
-                          setForm({
-                            nombre: p.nombre,
-                            precio: p.precio || "",
-                            descripcion: p.descripcion || "",
-                            seoTitle: p.seoTitle || "",
-                            seoDescription: p.seoDescription || "",
-                            seoKeywords: p.seoKeywords || "",
-                            slug: p.slug || "",
-                            alt: p.alt || "",
-                            status: p.status || "activo",
-                            notes: p.notes || "",
-                            destacado: p.destacado || false,
-                          });
-                          setCategoria(p.categoria || "sublimable");
-                          setSubCategoria(p.subCategoria || "tapas-flex");
-                          setShowForm(true);
-                        }}
-                        className="px-3 py-1 rounded-xl bg-blue-600 text-white hover:opacity-90 transition"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        className="px-3 py-1 rounded-xl bg-red-600 text-white hover:opacity-90 transition"
-                      >
-                        Eliminar
-                      </button>
+                      <button onClick={() => handleEditClick(String(p._id))} className="px-3 py-1 rounded-xl bg-blue-600 text-white">Editar</button>
+                      <button onClick={() => handleDelete(String(p._id))} className="px-3 py-1 rounded-xl bg-red-600 text-white">Eliminar</button>
                     </td>
                   </tr>
                 ))}
@@ -378,9 +439,8 @@ export default function Admin() {
             </table>
           </div>
         </div>
-      </div>
-      <Footer />
+      </main>
+      
     </div>
   );
 }
-

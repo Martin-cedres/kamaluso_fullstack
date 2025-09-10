@@ -1,8 +1,18 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { Readable } from 'stream';
+// pages/api/products/image.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import formidable from "formidable";
+import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-const s3 = new S3Client({
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+// Inicializar S3
+const s3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
@@ -11,36 +21,45 @@ const s3 = new S3Client({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { key } = req.query;
-  if (!key || typeof key !== 'string') {
-    return res.status(400).json({ error: 'Falta la key de la imagen o es inválida' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
-  try {
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key.trim(),
-    });
-    const data = await s3.send(command);
+  const form = formidable({ multiples: true });
 
-    res.setHeader('Content-Type', data.ContentType || 'image/webp');
+  form.parse(req, async (err, fields, files: any) => {
+    if (err) return res.status(500).json({ error: "Error parseando archivos" });
 
-    if (!data.Body) {
-      return res.status(404).json({ error: 'Imagen no encontrada' });
-    }
+    try {
+      const uploadedUrls: string[] = [];
 
-    if (data.Body instanceof Readable) {
-      data.Body.pipe(res);
-    } else {
-      const chunks: any[] = [];
-      for await (const chunk of data.Body as any) {
-        chunks.push(chunk);
+      // Convertir archivos en array
+      const fileArray = Array.isArray(files.images) ? files.images : files.images ? [files.images] : [];
+      if (files.image) fileArray.unshift(files.image); // imagen principal primero
+
+      for (const file of fileArray) {
+        const fileContent = fs.readFileSync(file.filepath);
+        const fileExt = file.originalFilename.split(".").pop();
+        const key = `products/${uuidv4()}.${fileExt}`;
+
+        const command = new PutObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: key,
+          Body: fileContent,
+          ACL: "public-read",
+        });
+
+        await s3Client.send(command);
+
+        uploadedUrls.push(
+          `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
+        );
       }
-      res.end(Buffer.concat(chunks));
-    }
-  } catch (err: any) {
-    console.error('Error al obtener la imagen:', err);
-    res.status(404).json({ error: 'Imagen no encontrada', detalles: err.message || String(err) });
-  }
-}
 
+      res.status(200).json({ urls: uploadedUrls });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Error subiendo archivos a S3" });
+    }
+  });
+}

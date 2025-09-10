@@ -1,11 +1,26 @@
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
+
 import { SessionProvider } from 'next-auth/react';
+import { CartProvider } from '../context/CartContext';
+import Navbar from '../components/Navbar';
+
+import Footer from '../components/Footer';
+import WhatsAppButton from '../components/WhatsAppButton';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <SessionProvider session={pageProps.session}>
-      <Component {...pageProps} />
+      <CartProvider>
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow">
+            <Component {...pageProps} />
+          </main>
+          <WhatsAppButton />
+          <Footer />
+        </div>
+      </CartProvider>
     </SessionProvider>
   );
 }
