@@ -75,7 +75,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         precio: parseFloat(String(fields.precio || "0")) || 0,
         precioFlex: parseFloat(String(fields.precioFlex || "0")) || 0, // Add this line
         precioDura: parseFloat(String(fields.precioDura || "0")) || 0, // Add this line
-        categoria: String(fields.categoria || "sublimable").trim().toLowerCase().replace(/\s+/g, "-"),
+        categoria: String(fields.categoria || "sublimable"),
         subCategoria: subCategoriaField ? [subCategoriaField] : [], // Simplificado
         tapa: String(fields.tapa || ""),
         seoTitle: String(fields.seoTitle || ""),
