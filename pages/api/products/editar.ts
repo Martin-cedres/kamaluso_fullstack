@@ -40,7 +40,7 @@ const uploadFileToS3 = async (file: formidable.File) => {
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "PUT") return res.status(405).json({ error: "Método no permitido" });
 
-  const form = formidable({ multiples: true });
+  const form = formidable({ multiples: true, uploadDir: "/tmp" });
 
   form.parse(req, async (err, fields, files) => {
     if (err) return res.status(400).json({ error: "Error al procesar formulario", detalles: String(err) });

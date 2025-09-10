@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const form = formidable({ multiples: true });
+  const form = formidable({ multiples: true, uploadDir: "/tmp" });
 
   form.parse(req, async (err, fields, files: any) => {
     if (err) return res.status(500).json({ error: "Error parseando archivos" });
