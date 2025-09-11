@@ -1,10 +1,11 @@
 import { GetServerSideProps } from 'next';
-import Head from 'next/head';
 import Navbar from "../../../components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCart } from "../../../context/CartContext";
+import { useState, useEffect } from 'react';
+import SeoMeta from '../../../components/SeoMeta';
 
 interface Product {
   _id: string;
@@ -24,13 +25,45 @@ interface Product {
   precioFlex?: number;
 }
 
+// Helper function to get the display price for a product card
+const getCardDisplayPrice = (product: Product) => {
+  if (product.precioDura) return product.precioDura;
+  if (product.precioFlex) return product.precioFlex;
+  if (product.precio) return product.precio;
+  return null;
+};
+
 interface Props {
   product: Product | null;
+  relatedProducts: Product[];
 }
 
-export default function ProductDetailPage({ product }: Props) {
+export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const { addToCart } = useCart();
   const router = useRouter();
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (product?.images?.[0]) {
+      setSelectedImage(product.images[0]);
+    } else if (product?.imageUrl) {
+      setSelectedImage(product.imageUrl);
+    }
+  }, [product?._id]); // Fix: Depend on the product's stable ID instead of the object reference
+
+  const handlePrevImage = () => {
+    if (!product?.images || product.images.length < 2) return;
+    const currentIndex = product.images.findIndex(img => img === selectedImage);
+    const prevIndex = (currentIndex - 1 + product.images.length) % product.images.length;
+    setSelectedImage(product.images[prevIndex]);
+  };
+
+  const handleNextImage = () => {
+    if (!product?.images || product.images.length < 2) return;
+    const currentIndex = product.images.findIndex(img => img === selectedImage);
+    const nextIndex = (currentIndex + 1) % product.images.length;
+    setSelectedImage(product.images[nextIndex]);
+  };
 
   const getDisplayPrice = () => {
     if (!product) return null;
@@ -71,77 +104,71 @@ export default function ProductDetailPage({ product }: Props) {
   const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`;
   const pageDescription = product.seoDescription || product.descripcion || "Encuentra los mejores artículos de papelería personalizada en Kamaluso.";
   const pageImage = product.images?.[0] || product.imageUrl || "/logo.webp";
-  const canonicalUrl = `https://www.papeleriapersonalizada.uy/productos/detail/${product._id}`;
-
-  const productSchema = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": product.nombre,
-    "image": pageImage,
-    "description": pageDescription,
-    "sku": product._id,
-    "offers": {
-      "@type": "Offer",
-      "url": canonicalUrl,
-      "priceCurrency": "UYU",
-      "price": displayPrice,
-      "availability": "https://schema.org/InStock", // Assuming all products are in stock
-      "itemCondition": "https://schema.org/NewCondition"
-    }
-  };
+  const canonicalUrl = `/productos/detail/${product._id}`;
 
   return (
     <>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:image" content={pageImage} />
-
-        {/* Twitter */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={canonicalUrl} />
-        <meta property="twitter:title" content={pageTitle} />
-        <meta property="twitter:description" content={pageDescription} />
-        <meta property="twitter:image" content={pageImage} />
-
-        <script type="application/ld+json">
-          {JSON.stringify(productSchema)}
-        </script>
-      </Head>
+      <SeoMeta 
+        title={pageTitle}
+        description={pageDescription}
+        image={pageImage}
+        url={canonicalUrl}
+        type="product"
+      />
 
       <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-6">
+      <main className="min-h-screen bg-gray-50 pt-32 px-6 pb-16">
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
 
           {/* Imágenes */}
           <div className="flex-1">
             <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-lg">
               <Image
-                src={product.images?.[0] || product.imageUrl || "/placeholder.png"}
+                src={selectedImage || "/placeholder.png"}
                 alt={product.alt || product.nombre}
                 fill
                 style={{ objectFit: "cover" }}
-                className="rounded-2xl"
+                className="rounded-2xl transition-opacity duration-300"
+                key={selectedImage}
               />
+              {product.images && product.images.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
+                    aria-label="Imagen anterior"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
+                    aria-label="Siguiente imagen"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
 
             {product.images && product.images.length > 1 && (
-              <div className="flex gap-4 mt-4 overflow-x-auto">
+              <div className="flex gap-4 mt-4 overflow-x-auto p-2">
                 {product.images.map((img, i) => (
-                  <div key={i} className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 border-pink-500">
+                  <div 
+                    key={i} 
+                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectedImage === img ? 'border-4 border-pink-500' : 'border-2 border-transparent hover:border-pink-300'}`}
+                    onClick={() => setSelectedImage(img)}
+                  >
                     <Image
                       src={img}
-                      alt={product.alt || product.nombre}
+                      alt={`${product.alt || product.nombre} thumbnail ${i + 1}`}
                       fill
                       style={{ objectFit: "cover" }}
-                      className="rounded-xl"
+                      className="rounded-lg"
                     />
                   </div>
                 ))}
@@ -184,12 +211,35 @@ export default function ProductDetailPage({ product }: Props) {
         </div>
 
         {/* Productos relacionados */}
-        <section className="mt-16">
-          <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-6xl mx-auto">
-            {/* Mapear productos relacionados si querés */}
-          </div>
-        </section>
+        {relatedProducts.length > 0 && (
+          <section className="mt-16">
+            <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-6xl mx-auto">
+              {relatedProducts.map((p) => {
+                const cardPrice = getCardDisplayPrice(p);
+                return (
+                  <Link key={p._id} href={`/productos/detail/${p._id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group">
+                      <div className="relative w-full h-56">
+                        <Image 
+                          src={p.images?.[0] || p.imageUrl || '/placeholder.png'} 
+                          alt={p.nombre} 
+                          fill
+                          style={{ objectFit: "cover" }}
+                          className="group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg truncate text-gray-800">{p.nombre}</h3>
+                        {cardPrice && (
+                          <p className="text-pink-500 font-semibold mt-2">$U {cardPrice}</p>
+                        )}
+                      </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
     </>
   );
@@ -198,22 +248,42 @@ export default function ProductDetailPage({ product }: Props) {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.query;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  let product: Product | null = null;
+  let relatedProducts: Product[] = [];
 
   try {
-    const res = await fetch(`${baseUrl}/api/products/listar?_id=${id}`);
-    if (!res.ok) {
-      return { props: { product: null } };
+    const productRes = await fetch(`${baseUrl}/api/products/listar?_id=${id}`);
+    if (productRes.ok) {
+      const data = await productRes.json();
+      product = data[0] || null;
+    } else {
+      // If product fetch fails, return immediately with empty props
+      return { props: { product: null, relatedProducts: [] } };
     }
-    const data = await res.json();
-    const product = data[0] || null;
+
+    // If product was found and has a category, fetch related products
+    if (product && product.categoria) {
+      const categoryParam = encodeURIComponent(product.categoria);
+      const relatedRes = await fetch(`${baseUrl}/api/products/listar?categoria=${categoryParam}&limit=5`);
+      
+      if (relatedRes.ok) {
+        const allRelated = await relatedRes.json();
+        // Ensure the API response is an array before processing
+        if (Array.isArray(allRelated)) {
+          relatedProducts = allRelated
+            .filter((p: Product) => p._id !== product?._id) // Exclude the current product
+            .slice(0, 4); // Limit to 4
+        }
+      }
+    }
 
     return {
-      props: { product },
+      props: { product, relatedProducts },
     };
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error fetching product details:', error);
     return {
-      props: { product: null },
+      props: { product: null, relatedProducts: [] }, // Return empty props on any error
     };
   }
 };

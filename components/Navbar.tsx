@@ -71,6 +71,10 @@ export default function Navbar() {
             Contacto
           </Link>
 
+          <Link href="/blog" className="text-gray-900 font-medium hover:text-pink-500 transition">
+            Blog
+          </Link>
+
           {status === 'authenticated' && (
             <>
               <Link href="/admin" className="text-gray-900 font-medium hover:text-pink-500 transition">
@@ -127,6 +131,10 @@ export default function Navbar() {
 
           <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
             Contacto
+          </Link>
+          
+          <Link href="/blog" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
+            Blog
           </Link>
           
           <Link href="/cart" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>

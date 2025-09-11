@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -6,10 +6,66 @@ import { useCart } from '../context/CartContext';
 import Navbar from '../components/Navbar';
 
 export default function CartPage() {
-  const { cartItems, updateQuantity, removeFromCart, cartCount } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, cartCount, appliedCoupon, setAppliedCoupon } = useCart();
   const router = useRouter();
 
+  const [couponCode, setCouponCode] = useState(appliedCoupon?.code || '');
+  const [couponMessage, setCouponMessage] = useState('');
+
+  // Recalculate discountAmount based on appliedCoupon from context
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+
   const total = cartItems.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+  const finalTotal = total - discountAmount;
+
+  // Effect to update coupon message if appliedCoupon changes (e.g., on page load with persisted coupon)
+  useEffect(() => {
+    if (appliedCoupon) {
+      setCouponMessage(`Cupón ${appliedCoupon.code} aplicado con éxito!`);
+    } else {
+      setCouponMessage('');
+    }
+  }, [appliedCoupon]);
+
+
+  const applyCoupon = async () => {
+    setCouponMessage(''); // Clear previous messages
+    setAppliedCoupon(null); // Clear applied coupon in context before new attempt
+
+    try {
+      const res = await fetch('/api/coupons/aplicar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: couponCode,
+          cartItems: cartItems.map(item => ({
+            productId: item._id,
+            quantity: item.quantity,
+            price: item.precio,
+            category: item.categoria
+          })),
+          cartTotal: total,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAppliedCoupon(null); // Ensure coupon is cleared on error
+        setCouponMessage(data.message || 'Error al aplicar el cupón.');
+        return;
+      }
+
+      setAppliedCoupon({ code: data.couponCode, discountAmount: data.discountAmount }); // Set coupon in context
+      setCouponMessage(data.message || 'Cupón aplicado con éxito!');
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      setAppliedCoupon(null); // Clear coupon on connection error
+      setCouponMessage('Error de conexión al aplicar el cupón.');
+    }
+  };
 
   return (
     <>
@@ -60,11 +116,48 @@ export default function CartPage() {
               <div className="mt-10 flex justify-end">
                 <div className="bg-white p-6 rounded-2xl shadow-md w-full sm:w-auto">
                   <h2 className="text-2xl font-semibold mb-4">Resumen del Pedido</h2>
-                  <div className="flex justify-between text-lg">
-                    <span>Total</span>
+
+                  {/* Coupon Input */}
+                  <div className="mb-4">
+                    <label htmlFor="coupon" className="block text-sm font-medium text-gray-700 mb-1">¿Tienes un cupón?</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        id="coupon"
+                        className="flex-grow border border-gray-300 rounded-md shadow-sm p-2"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Ingresa tu código"
+                      />
+                      <button
+                        onClick={applyCoupon}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                      >
+                        Aplicar
+                      </button>
+                    </div>
+                    {couponMessage && (
+                      <p className={`mt-2 text-sm ${discountAmount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {couponMessage}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between text-lg mb-2">
+                    <span>Subtotal</span>
                     <span className="font-bold">$U {total.toFixed(2)}</span>
                   </div>
-                  <button 
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-lg text-green-600 mb-2">
+                      <span>Descuento Cupón</span>
+                      <span className="font-bold">-$U {discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xl font-bold border-t pt-2">
+                    <span>Total Final</span>
+                    <span>$U {finalTotal.toFixed(2)}</span>
+                  </div>
+                  <button
                     onClick={() => router.push('/checkout')}
                     className="w-full mt-6 bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
                   >

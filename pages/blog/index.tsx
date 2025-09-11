@@ -1,14 +1,16 @@
 import { GetServerSideProps } from 'next';
-import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '../../components/Navbar';
+import SeoMeta from '../../components/SeoMeta';
 
 interface Post {
   _id: string;
   title: string;
+  subtitle?: string; // Added
   slug: string;
   excerpt?: string;
   createdAt: string;
+  tags?: string[]; // Added
 }
 
 interface Props {
@@ -18,10 +20,11 @@ interface Props {
 export default function BlogIndexPage({ posts }: Props) {
   return (
     <>
-      <Head>
-        <title>Blog | Kamaluso Papelería</title>
-        <meta name="description" content="Artículos y noticias sobre papelería personalizada, regalos empresariales y más." />
-      </Head>
+      <SeoMeta 
+        title="Blog | Kamaluso Papelería"
+        description="Artículos y noticias sobre papelería personalizada, regalos empresariales y más."
+        url="/blog"
+      />
 
       <Navbar />
 
@@ -37,6 +40,7 @@ export default function BlogIndexPage({ posts }: Props) {
                     {post.title}
                   </Link>
                 </h2>
+                {post.subtitle && <p className="text-xl text-gray-700 mb-2">{post.subtitle}</p>} {/* Added subtitle */}
                 <p className="text-gray-600 mb-4">{post.excerpt}</p>
                 <Link href={`/blog/${post.slug}`} className="font-semibold text-pink-500 hover:underline">
                   Leer más

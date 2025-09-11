@@ -1,11 +1,10 @@
 
-// pages/index.tsx
 import { useEffect, useState } from "react";
-import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { getProductHref } from "../lib/utils"; // Importar la función de utilidad
+import SeoMeta from "../components/SeoMeta"; // Importar el nuevo componente SEO
 
 // Definir una interfaz para los objetos de categoría y producto para mayor seguridad de tipos
 interface Categoria {
@@ -78,10 +77,7 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>Papelería Personalizada | Kamaluso</title>
-        <meta name="description" content="Kamaluso ofrece agendas, libretas y cuadernos personalizables en San José de Mayo. Envíos a todo Uruguay." />
-      </Head>
+      <SeoMeta />
 
       <Navbar />
 
@@ -96,12 +92,12 @@ export default function Home() {
         {/* Categorías Dinámicas */}
         <section className="px-6 py-12 bg-gray-50">
           <h2 className="text-3xl font-semibold text-center mb-10">Categorías</h2>
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 max-w-6xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
             {categories.map((cat) => (
               <Link
                 key={cat._id}
                 href={`/productos/${cat.slug}`}
-                className="bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+                className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
               >
                 <div className="relative w-full h-48">
                   <Image src={cat.imagen || "/placeholder.png"} alt={cat.nombre} fill style={{ objectFit: "cover" }} />

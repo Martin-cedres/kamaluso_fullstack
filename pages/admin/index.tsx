@@ -1,6 +1,7 @@
 // pages/admin/index.tsx
 import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
+import Link from "next/link"; // Added Link import
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -263,9 +264,12 @@ export default function Admin() {
             <p className="text-sm text-gray-500 mt-1">Gestioná productos de Kamaluso.</p>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/admin/blog" className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-2xl shadow hover:bg-blue-600 transition">
+              Administrar Blog
+            </Link>
             <button
               onClick={() => { if (showForm) { resetForm(); } else { resetForm(); setShowForm(true); } }}
-              className="inline-flex items-center gap-2 bg-fucsia text-white px-4 py-2 rounded-2xl shadow"
+              className="inline-flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded-2xl shadow"
             >
               {showForm ? "Cerrar formulario" : "Agregar producto"}
             </button>

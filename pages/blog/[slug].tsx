@@ -1,15 +1,17 @@
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Navbar from '../../components/Navbar';
+import SeoMeta from '../../components/SeoMeta';
 
 interface Post {
   _id: string;
   title: string;
+  subtitle?: string; // Added
   slug: string;
   content: string;
   excerpt?: string;
   createdAt: string;
-  // Add other fields like author, coverImage, etc. as you extend the schema
+  tags?: string[]; // Added
 }
 
 interface Props {
@@ -30,7 +32,8 @@ export default function BlogPostPage({ post }: Props) {
 
   const pageTitle = `${post.title} | Blog de Kamaluso`;
   const pageDescription = post.excerpt || post.content.substring(0, 155);
-  const canonicalUrl = `https://www.papeleriapersonalizada.uy/blog/${post.slug}`;
+  const canonicalUrl = `/blog/${post.slug}`;
+  // const pageImage = post.coverImage; // Removed as blog is simplified without images
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -46,23 +49,15 @@ export default function BlogPostPage({ post }: Props) {
 
   return (
     <>
+      <SeoMeta 
+        title={pageTitle}
+        description={pageDescription}
+        url={canonicalUrl}
+        // image={pageImage} // Removed image prop as blog is simplified without images
+        type="article"
+      />
+      {/* JSON-LD Schema for Google Rich Results */}
       <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-
-        {/* Twitter */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={canonicalUrl} />
-        <meta property="twitter:title" content={pageTitle} />
-        <meta property="twitter:description" content={pageDescription} />
-
         <script type="application/ld+json">
           {JSON.stringify(articleSchema)}
         </script>
@@ -74,7 +69,17 @@ export default function BlogPostPage({ post }: Props) {
         <div className="max-w-4xl mx-auto">
           <article>
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-            <p className="text-gray-500 mb-8">Publicado el {new Date(post.createdAt).toLocaleDateString()}</p>
+            {post.subtitle && <h2 className="text-2xl font-semibold text-gray-700 mb-4">{post.subtitle}</h2>} {/* Added subtitle */}
+            <p className="text-gray-500 mb-2">Publicado el {new Date(post.createdAt).toLocaleDateString()}</p>
+            {post.tags && post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {post.tags.map(tag => (
+                  <span key={tag} className="bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="prose lg:prose-xl max-w-none">
               {/* Render the post content. If it's HTML, you'd use dangerouslySetInnerHTML */}
               {post.content}

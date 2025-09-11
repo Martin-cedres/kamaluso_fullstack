@@ -23,7 +23,7 @@ const paymentOptions = {
 };
 
 export default function CheckoutPage() {
-  const { cartItems, clearCart, cartCount } = useCart();
+  const { cartItems, clearCart, cartCount, appliedCoupon } = useCart(); // Added appliedCoupon
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,7 +35,8 @@ export default function CheckoutPage() {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.precio * item.quantity, 0);
   const surcharge = paymentMethod === 'link_mercadopago' ? subtotal * 0.1 : 0;
-  const total = subtotal + surcharge;
+  const couponDiscount = appliedCoupon?.discountAmount || 0; // Get discount from appliedCoupon
+  const total = subtotal + surcharge - couponDiscount; // Subtract coupon discount
 
   useEffect(() => {
     // If user switches to pickup, but has a non-local payment method, switch to pago_en_local
@@ -65,8 +66,12 @@ export default function CheckoutPage() {
       shippingMethod,
       address: fullAddress,
       items: cartItems,
+      subtotal,
+      surcharge,
+      couponDiscount,
       total,
       paymentMethod,
+      appliedCoupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : undefined, // Pass applied coupon details
     };
 
     const response = await fetch('/api/orders/crear', {
@@ -117,6 +122,12 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-md text-orange-600">
                     <span>Recargo (10%)</span>
                     <span>$U {surcharge.toFixed(2)}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-md text-green-600">
+                    <span>Descuento Cupón</span>
+                    <span>-$U {couponDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold">

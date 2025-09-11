@@ -1,11 +1,11 @@
 
-// pages/productos/index.tsx
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "../../components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
 import { getProductHref } from "../../lib/utils"; // Usamos la utilidad de URL
+import SeoMeta from "../../components/SeoMeta";
 
 interface Product {
   _id: string;
@@ -94,6 +94,11 @@ export default function ProductsPage() {
 
   return (
     <>
+      <SeoMeta 
+        title="Nuestros Productos | Kamaluso Papelería"
+        description="Explora todos nuestros productos de papelería personalizada: agendas, cuadernos, libretas y más."
+        url="/productos"
+      />
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-6">
         <h1 className="text-3xl font-semibold text-center mb-10">{formattedTitle}</h1>

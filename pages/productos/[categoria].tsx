@@ -1,11 +1,11 @@
 import { GetServerSideProps } from 'next';
-import Head from 'next/head';
 import Navbar from "../../components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
 import { getProductHref } from "../../lib/utils";
 import { categorias } from '../../lib/categorias'; // Import categories
 import { useState } from 'react';
+import SeoMeta from '../../components/SeoMeta'; // Importar el componente SEO
 
 interface Product {
   _id: string;
@@ -36,12 +36,11 @@ interface Category {
 interface CategoriaPageProps {
   initialProducts: Product[];
   initialCategory: Category | null;
-  baseUrl: string; // Add this line
 }
 
 const ITEMS_PER_PAGE = 16;
 
-export default function CategoryPage({ initialProducts, initialCategory, baseUrl }: CategoriaPageProps) {
+export default function CategoryPage({ initialProducts, initialCategory }: CategoriaPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(initialCategory);
   const [currentPage, setCurrentPage] = useState(1); // Add this line
 
@@ -84,20 +83,16 @@ export default function CategoryPage({ initialProducts, initialCategory, baseUrl
 
   const pageTitle = `${selectedCategory.nombre} | Kamaluso Papelería`;
   const pageDescription = selectedCategory.descripcion;
-  const canonicalUrl = `https://www.papeleriapersonalizada.uy/productos/${selectedCategory.slug}`;
+  const canonicalUrl = `/productos/${selectedCategory.slug}`;
 
   return (
     <>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={`${baseUrl}${selectedCategory.imagen}`} />
-        <meta name="twitter:card" content="summary_large_image" />
-      </Head>
+      <SeoMeta 
+        title={pageTitle}
+        description={pageDescription}
+        image={selectedCategory.imagen}
+        url={canonicalUrl}
+      />
 
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-6">

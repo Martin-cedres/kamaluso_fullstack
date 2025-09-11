@@ -6,7 +6,14 @@ interface CartItem {
   nombre: string;
   precio: number;
   imageUrl?: string;
+  categoria?: string; // Added
   quantity: number;
+}
+
+// Define the shape of an applied coupon
+interface AppliedCoupon {
+  code: string;
+  discountAmount: number;
 }
 
 // Define the shape of the context
@@ -17,6 +24,8 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
+  appliedCoupon?: AppliedCoupon; // Added
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void; // Added
 }
 
 // Create the context
@@ -38,6 +47,7 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null); // Added
 
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -46,9 +56,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       if (storedCart) {
         setCartItems(JSON.parse(storedCart));
       }
+      const storedCoupon = localStorage.getItem('appliedCoupon'); // Added
+      if (storedCoupon) {
+        setAppliedCoupon(JSON.parse(storedCoupon)); // Added
+      }
     } catch (error) {
-      console.error("Failed to parse cart from localStorage", error);
+      console.error("Failed to parse data from localStorage", error); // Generalize error message
       setCartItems([]);
+      setAppliedCoupon(null); // Reset coupon on error
     }
   }, []);
 
@@ -56,6 +71,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('shoppingCart', JSON.stringify(cartItems));
   }, [cartItems]);
+
+  // Save appliedCoupon to localStorage whenever it changes (Added)
+  useEffect(() => {
+    if (appliedCoupon) {
+      localStorage.setItem('appliedCoupon', JSON.stringify(appliedCoupon));
+    } else {
+      localStorage.removeItem('appliedCoupon');
+    }
+  }, [appliedCoupon]);
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setCartItems(prevItems => {
@@ -100,6 +124,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     updateQuantity,
     clearCart,
     cartCount,
+    appliedCoupon, // Added
+    setAppliedCoupon, // Added
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
