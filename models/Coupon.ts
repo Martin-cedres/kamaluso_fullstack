@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ICoupon extends Document {
   code: string;
@@ -24,4 +24,6 @@ const CouponSchema: Schema = new Schema({
   minPurchaseAmount: { type: Number, default: 0 },
 }, { timestamps: true });
 
-export default mongoose.models.Coupon || mongoose.model<ICoupon>('Coupon', CouponSchema);
+const Coupon: Model<ICoupon> = mongoose.models.Coupon || mongoose.model<ICoupon>('Coupon', CouponSchema);
+
+export default Coupon;

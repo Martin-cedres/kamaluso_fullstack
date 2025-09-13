@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ICoupon } from '../../../lib/coupon';
+import { ICoupon } from '@/models/Coupon';
 
 interface CouponFormProps {
   initialData?: ICoupon; // For edit mode

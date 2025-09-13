@@ -1,12 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ObjectId } from 'mongodb';
-import clientPromise from '../../../lib/mongodb';
+import mongoose from 'mongoose';
+import connectDB from '../../../lib/mongoose';
+import Post from '../../../models/Post';
 import { requireAuth } from '../../../lib/auth';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'DELETE') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  await connectDB();
 
   try {
     const { id } = req.query;
@@ -15,15 +18,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(400).json({ error: 'Post ID is required' });
     }
 
-    if (!ObjectId.isValid(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid Post ID' });
     }
 
-    const client = await clientPromise;
-    const db = client.db();
-    const result = await db.collection('posts').deleteOne({ _id: new ObjectId(id) });
+    const deletedPost = await Post.findByIdAndDelete(id);
 
-    if (result.deletedCount === 0) {
+    if (!deletedPost) {
       return res.status(404).json({ error: 'Post not found' });
     }
 

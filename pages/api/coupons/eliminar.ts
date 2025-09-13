@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import dbConnect from '../../../lib/mongodb';
-import Coupon from '../../../lib/coupon';
+import connectDB from '@/lib/mongoose';
+import Coupon from '@/models/Coupon';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await dbConnect();
+  await connectDB();
 
   if (req.method === 'DELETE') {
     try {

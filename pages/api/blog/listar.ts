@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../lib/mongodb';
+import connectDB from '../../../lib/mongoose';
+import Post from '../../../models/Post';
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,9 +8,8 @@ export default async function handler(
 ) {
   if (req.method === 'GET') {
     try {
-      const client = await clientPromise;
-      const db = client.db();
-      const posts = await db.collection('posts').find({}).sort({ createdAt: -1 }).toArray();
+      await connectDB();
+      const posts = await Post.find({}).sort({ createdAt: -1 });
       res.status(200).json(posts);
     } catch (error) {
       console.error('Error fetching posts:', error);

@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import dbConnect from '../../../lib/mongodb';
-import Coupon from '../../../lib/coupon';
-import Product from '../../../lib/product'; // Assuming you have a Product model
+import connectDB from '@/lib/mongoose';
+import Coupon from '@/models/Coupon';
+import Product from '@/models/Product'; // Corrected import
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await dbConnect();
+  await connectDB(); // Corrected DB connection
 
   if (req.method === 'POST') {
     try {

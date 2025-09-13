@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '../../../components/AdminLayout';
+import AdminLayout from '@/components/AdminLayout';
 
 interface Coupon {
   _id: string;

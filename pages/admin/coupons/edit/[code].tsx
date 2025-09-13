@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '../../../components/AdminLayout';
+import AdminLayout from '@/components/AdminLayout';
 import CouponForm from '../form';
-import { ICoupon } from '../../../lib/coupon';
+import { ICoupon } from '@/models/Coupon';
 
 export default function AdminCouponEdit() {
   const { data: session, status } = useSession();
