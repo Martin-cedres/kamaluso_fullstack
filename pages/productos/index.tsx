@@ -109,35 +109,29 @@ export default function ProductsPage() {
           )}
 
           {currentProducts.map((product) => (
-                        <div
-              key={product._id}
-              className="w-64 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col"
-            >
-              <div className="relative w-full h-48">
-                <Image
-                  src={product.imageUrl || "/placeholder.png"}
-                  alt={product.alt || product.nombre}
-                  fill
-                  style={{ objectFit: "cover" }}
-                  className="rounded-xl"
-                />
-              </div>
-
-              <div className="p-4 text-center flex flex-col flex-grow">
-                <h3 className="font-semibold text-lg mb-2">{product.nombre}</h3>
-                
-                <div>
-                  {getCardPrice(product)}
+            <Link key={product._id} href={getProductHref(product)}>
+              <div className="w-64 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col cursor-pointer">
+                <div className="relative w-full h-48">
+                  <Image
+                    src={product.imageUrl || "/placeholder.png"}
+                    alt={product.alt || product.nombre}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    className="rounded-xl"
+                  />
                 </div>
 
-                <Link
-                  href={getProductHref(product)} // Usamos la utilidad centralizada
-                  className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow mt-auto"
-                >
-                  Ver más
-                </Link>
+                <div className="p-4 text-center flex flex-col flex-grow">
+                  <h3 className="font-semibold text-lg mb-2">{product.nombre}</h3>
+
+                  <div>{getCardPrice(product)}</div>
+
+                  <div className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow mt-auto">
+                    Ver más
+                  </div>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

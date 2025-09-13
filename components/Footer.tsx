@@ -20,7 +20,7 @@ export default function Footer() {
           <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors text-sm">
             Facebook
           </a>
-          <a href="https://wa.me/549XXXXXXXXX" target="_blank" rel="noopener noreferrer" className="hover:text-green-500 transition-colors text-sm">
+          <a href="https://wa.me/  const phoneNumber = '59898615074'; " target="_blank" rel="noopener noreferrer" className="hover:text-green-500 transition-colors text-sm">
             WhatsApp
           </a>
         </div>
