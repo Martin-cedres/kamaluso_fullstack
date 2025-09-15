@@ -113,7 +113,7 @@ export default function Home() {
         {/* Productos Destacados */}
         <section className="px-6 py-12">
           <h2 className="text-3xl font-semibold text-center mb-10">Productos Destacados</h2>
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {destacados.length === 0 && <p className="text-center col-span-full text-gray-500">No hay productos destacados</p>}
             {destacados.map((product) => (
               <div

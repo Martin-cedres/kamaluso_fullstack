@@ -1,28 +1,16 @@
 import { useSession, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "../context/CartContext"; // Import useCart
-
-interface Categoria {
-  _id: string;
-  nombre: string;
-  slug: string;
-}
+import { useCategories } from "../context/CategoryContext"; // Import useCategories
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [categories, setCategories] = useState<Categoria[]>([]);
+  const { categories, loading } = useCategories(); // Use categories from context
   const { cartCount } = useCart(); // Get cart count
   const { data: session, status } = useSession();
-
-  useEffect(() => {
-    fetch("/api/categorias/listar")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch((err) => console.error("Error fetching categories:", err));
-  }, []);
 
   const closeAllMenus = () => {
     setMenuOpen(false);
@@ -31,16 +19,20 @@ export default function Navbar() {
 
   const CategoryMenu = ({ isMobile = false }) => (
     <div className={isMobile ? "pl-4 mt-1 flex flex-col gap-1" : "absolute top-8 left-0 bg-white shadow-lg rounded-xl py-2 w-48 z-50"}>
-      {categories.map((cat) => (
-        <Link
-          key={cat._id}
-          href={`/productos/${cat.slug}`}
-          className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition"
-          onClick={closeAllMenus}
-        >
-          {cat.nombre}
-        </Link>
-      ))}
+      {loading ? (
+        <div className="px-4 py-2 text-gray-500">Cargando...</div>
+      ) : (
+        categories.map((cat) => (
+          <Link
+            key={cat._id}
+            href={`/productos/${cat.slug}`}
+            className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition"
+            onClick={closeAllMenus}
+          >
+            {cat.nombre}
+          </Link>
+        ))
+      )}
     </div>
   );
 

@@ -49,7 +49,7 @@ const generateEmailContent = (order: OrderRequestBody) => {
           <li><strong>Cuenta Nueva:</strong> 001199848-00001</li>
           <li><strong>Cuenta Anterior:</strong> 013.0123275</li>
         </ul>
-        <p>Una vez realizada la transferencia, por favor envía el comprobante a este mismo correo.</p>
+        <p>Una vez realizada la transferencia, por favor envía el comprobante a este mismo correo o por whatsapp al 098615074.</p>
       `;
       break;
     case 'qr_mercadopago':

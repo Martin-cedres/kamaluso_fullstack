@@ -122,12 +122,12 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
 
           {/* Imágenes */}
           <div className="flex-1">
-            <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-lg">
+            <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg">
               <Image
                 src={selectedImage || "/placeholder.png"}
                 alt={product.alt || product.nombre}
                 fill
-                style={{ objectFit: "cover" }}
+                style={{ objectFit: "contain" }}
                 className="rounded-2xl transition-opacity duration-300"
                 key={selectedImage}
               />
@@ -167,7 +167,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
                       src={img}
                       alt={`${product.alt || product.nombre} thumbnail ${i + 1}`}
                       fill
-                      style={{ objectFit: "cover" }}
+                      style={{ objectFit: "contain" }}
                       className="rounded-lg"
                     />
                   </div>
@@ -224,7 +224,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
                           src={p.images?.[0] || p.imageUrl || '/placeholder.png'} 
                           alt={p.nombre} 
                           fill
-                          style={{ objectFit: "cover" }}
+                          style={{ objectFit: "contain" }}
                           className="group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
