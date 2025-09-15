@@ -38,7 +38,7 @@ export default function ContactoPage() {
         </div>
       </main>
 
-      <Footer />
+    
     </>
   );
 }
