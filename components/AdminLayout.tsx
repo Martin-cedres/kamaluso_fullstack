@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* You might want a different Navbar/Header for admin, or pass a prop to the existing one */}
       {/* For simplicity, using the main Navbar for now */}
       <Navbar /> 
-      <div className="pt-16 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-32 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {children}
       </div>
       {/* You might want a different Footer for admin, or omit it */}

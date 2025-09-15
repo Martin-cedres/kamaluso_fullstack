@@ -257,7 +257,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 pt-32 pb-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Panel de administración</h1>
@@ -266,6 +266,9 @@ export default function Admin() {
           <div className="flex items-center gap-4">
             <Link href="/admin/blog" className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-2xl shadow hover:bg-blue-600 transition">
               Administrar Blog
+            </Link>
+            <Link href="/admin/coupons" className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-2xl shadow hover:bg-green-600 transition">
+              Administrar Cupones
             </Link>
             <button
               onClick={() => { if (showForm) { resetForm(); } else { resetForm(); setShowForm(true); } }}

@@ -1,52 +1,114 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import AdminLayout from '../../components/AdminLayout';
+import { debounce } from 'lodash';
 
-// Define a type for the order for better type safety
+// Tipos más detallados
+interface CartItem {
+  _id: string;
+  nombre: string;
+  quantity: number;
+  precio: number;
+  finish?: string;
+}
+
 interface Order {
   _id: string;
   name: string;
+  email?: string;
+  phone?: string;
   shippingMethod: 'delivery' | 'pickup';
   address: string;
-  items: any[];
+  items: CartItem[];
   total: number;
   paymentMethod: string;
-  email?: string;
   createdAt: string;
   status: string;
+  notes?: string;
 }
+
+// Componente para el Modal de Detalles del Pedido
+const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => void }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full">
+      <h2 className="text-2xl font-bold mb-4">Detalles del Pedido</h2>
+      <p><strong>ID:</strong> {order._id}</p>
+      <p><strong>Cliente:</strong> {order.name}</p>
+      <p><strong>Email:</strong> {order.email}</p>
+      <p><strong>Teléfono:</strong> {order.phone}</p>
+      <p><strong>Dirección:</strong> {order.address}</p>
+      <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
+      <p><strong>Método de Pago:</strong> {order.paymentMethod}</p>
+      <p><strong>Estado:</strong> {order.status}</p>
+      <p><strong>Fecha:</strong> {new Date(order.createdAt).toLocaleString()}</p>
+      
+      {order.notes && (
+        <div className="mt-4">
+          <h3 className="font-bold">Notas del Cliente:</h3>
+          <p className="p-2 bg-gray-100 rounded-md">{order.notes}</p>
+        </div>
+      )}
+
+      <h3 className="font-bold mt-4">Productos:</h3>
+      <ul className="list-disc pl-5 mt-2">
+        {order.items.map(item => (
+          <li key={item._id}>
+            {item.nombre} (x{item.quantity}) - {item.finish || 'Sin acabado'}
+          </li>
+        ))}
+      </ul>
+
+      <button onClick={onClose} className="mt-6 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition">
+        Cerrar
+      </button>
+    </div>
+  </div>
+);
 
 const AdminPedidosPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const fetchOrders = async () => {
-    const res = await fetch('/api/orders/listar');
+  const fetchOrders = useCallback(debounce(async (page: number, status: string, search: string) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: '20',
+    });
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+
+    const res = await fetch(`/api/orders/listar?${params.toString()}`);
     const data = await res.json();
-    setOrders(data);
-  };
+    setOrders(data.orders);
+    setTotalPages(data.totalPages);
+    setCurrentPage(data.currentPage);
+  }, 300), []);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/login');
     } else if (status === 'authenticated') {
-      fetchOrders();
+      fetchOrders(currentPage, statusFilter, searchTerm);
     }
-  }, [status, router]);
+  }, [status, router, currentPage, statusFilter, searchTerm, fetchOrders]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
       const res = await fetch('/api/orders/actualizar', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status: newStatus }),
       });
-
       if (res.ok) {
-        fetchOrders(); // Refresh the orders list
+        fetchOrders(currentPage, statusFilter, searchTerm);
       } else {
         console.error('Failed to update order status');
       }
@@ -55,54 +117,112 @@ const AdminPedidosPage = () => {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const handleFilterChange = (newStatus: string) => {
+    setCurrentPage(1);
+    setStatusFilter(newStatus);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentPage(1);
+    setSearchTerm(e.target.value);
+  };
+
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center text-xl font-semibold">Cargando...</div>;
+    return <AdminLayout><div className="text-xl font-semibold">Cargando...</div></AdminLayout>;
   }
 
-  if (status === 'unauthenticated') {
-    return null; // Or a login form
+  if (!session) {
+    return null;
   }
+
+  const statusOptions = ['pendiente', 'enviado', 'entregado'];
 
   return (
-    <div className="container mx-auto px-4">
-      <h1 className="text-2xl font-bold my-4">Administración de Pedidos</h1>
-      <table className="min-w-full bg-white mt-4">
-        <thead>
-          <tr>
-            <th className="py-2 px-4 border-b">ID del Pedido</th>
-            <th className="py-2 px-4 border-b">Nombre</th>
-            <th className="py-2 px-4 border-b">Total</th>
-            <th className="py-2 px-4 border-b">Método de Pago</th>
-            <th className="py-2 px-4 border-b">Estado</th>
-            <th className="py-2 px-4 border-b">Fecha</th>
-            <th className="py-2 px-4 border-b">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order._id}>
-              <td className="py-2 px-4 border-b">{order._id}</td>
-              <td className="py-2 px-4 border-b">{order.name}</td>
-              <td className="py-2 px-4 border-b">${order.total}</td>
-              <td className="py-2 px-4 border-b">{order.paymentMethod}</td>
-              <td className="py-2 px-4 border-b">{order.status}</td>
-              <td className="py-2 px-4 border-b">{new Date(order.createdAt).toLocaleString()}</td>
-              <td className="py-2 px-4 border-b">
-                <select
-                  value={order.status}
-                  onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                  className="border rounded px-2 py-1"
-                >
-                  <option value="pendiente">Pendiente</option>
-                  <option value="enviado">Enviado</option>
-                  <option value="entregado">Entregado</option>
-                </select>
-              </td>
-            </tr>
+    <AdminLayout>
+      <h1 className="text-3xl font-bold mb-6">Administración de Pedidos</h1>
+      
+      {/* Filters and Search */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4">
+        <div className="flex-grow">
+          <input 
+            type="text"
+            placeholder="Buscar por nombre o email..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
+        <div className="flex items-center gap-2 bg-gray-200 p-1 rounded-lg">
+          <button onClick={() => handleFilterChange('')} className={`px-3 py-1 rounded-md text-sm ${statusFilter === '' ? 'bg-white shadow' : ''}`}>Todos</button>
+          {statusOptions.map(opt => (
+            <button key={opt} onClick={() => handleFilterChange(opt)} className={`px-3 py-1 rounded-md text-sm capitalize ${statusFilter === opt ? 'bg-white shadow' : ''}`}>{opt}</button>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl shadow-lg">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-4 text-left">Cliente</th>
+                <th className="py-3 px-4 text-left">Total</th>
+                <th className="py-3 px-4 text-left">Estado</th>
+                <th className="py-3 px-4 text-left">Fecha</th>
+                <th className="py-3 px-4 text-left">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {orders.map((order) => (
+                <tr key={order._id}>
+                  <td className="py-4 px-4 whitespace-nowrap">{order.name}</td>
+                  <td className="py-4 px-4 whitespace-nowrap">${order.total.toFixed(2)}</td>
+                  <td className="py-4 px-4 whitespace-nowrap">{order.status}</td>
+                  <td className="py-4 px-4 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="py-4 px-4 whitespace-nowrap flex gap-2">
+                    <button onClick={() => setSelectedOrder(order)} className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600">Ver Detalles</button>
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                      className="border rounded-lg px-2 py-1 text-sm"
+                    >
+                      {statusOptions.map(opt => <option key={opt} value={opt} className="capitalize">{opt}</option>)}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-6">
+          <button 
+            onClick={() => handlePageChange(currentPage - 1)} 
+            disabled={currentPage <= 1}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span>
+            Página {currentPage} de {totalPages}
+          </span>
+          <button 
+            onClick={() => handlePageChange(currentPage + 1)} 
+            disabled={currentPage >= totalPages}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+      {selectedOrder && <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />}
+    </AdminLayout>
   );
 };
 

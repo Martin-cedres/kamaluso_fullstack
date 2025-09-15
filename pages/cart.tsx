@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useCart } from '../context/CartContext';
+import { useCart, getCartItemId } from '../context/CartContext';
 import Navbar from '../components/Navbar';
 
 export default function CartPage() {
@@ -12,13 +12,11 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState(appliedCoupon?.code || '');
   const [couponMessage, setCouponMessage] = useState('');
 
-  // Recalculate discountAmount based on appliedCoupon from context
   const discountAmount = appliedCoupon?.discountAmount || 0;
 
   const total = cartItems.reduce((sum, item) => sum + item.precio * item.quantity, 0);
   const finalTotal = total - discountAmount;
 
-  // Effect to update coupon message if appliedCoupon changes (e.g., on page load with persisted coupon)
   useEffect(() => {
     if (appliedCoupon) {
       setCouponMessage(`Cupón ${appliedCoupon.code} aplicado con éxito!`);
@@ -27,10 +25,9 @@ export default function CartPage() {
     }
   }, [appliedCoupon]);
 
-
   const applyCoupon = async () => {
-    setCouponMessage(''); // Clear previous messages
-    setAppliedCoupon(null); // Clear applied coupon in context before new attempt
+    setCouponMessage('');
+    setAppliedCoupon(null);
 
     try {
       const res = await fetch('/api/coupons/aplicar', {
@@ -53,16 +50,16 @@ export default function CartPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setAppliedCoupon(null); // Ensure coupon is cleared on error
+        setAppliedCoupon(null);
         setCouponMessage(data.message || 'Error al aplicar el cupón.');
         return;
       }
 
-      setAppliedCoupon({ code: data.couponCode, discountAmount: data.discountAmount }); // Set coupon in context
+      setAppliedCoupon({ code: data.couponCode, discountAmount: data.discountAmount });
       setCouponMessage(data.message || 'Cupón aplicado con éxito!');
     } catch (error) {
       console.error('Error applying coupon:', error);
-      setAppliedCoupon(null); // Clear coupon on connection error
+      setAppliedCoupon(null);
       setCouponMessage('Error de conexión al aplicar el cupón.');
     }
   };
@@ -85,31 +82,35 @@ export default function CartPage() {
             <div>
               {/* Cart Items */}
               <div className="space-y-6">
-                {cartItems.map(item => (
-                  <div key={item._id} className="flex items-center gap-6 bg-white p-4 rounded-2xl shadow-md">
-                    <div className="relative w-24 h-24 rounded-xl overflow-hidden">
-                      <Image
-                        src={item.imageUrl || '/placeholder.png'}
-                        alt={item.nombre}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
+                {cartItems.map(item => {
+                  const cartItemId = getCartItemId(item);
+                  return (
+                    <div key={cartItemId} className="flex items-center gap-6 bg-white p-4 rounded-2xl shadow-md">
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden">
+                        <Image
+                          src={item.imageUrl || '/placeholder.png'}
+                          alt={item.nombre}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                      <div className="flex-grow">
+                        <h2 className="font-semibold text-lg">{item.nombre}</h2>
+                        {item.finish && <p className="text-sm text-gray-500">Acabado: {item.finish}</p>}
+                        <p className="text-gray-600">$U {item.precio}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <button onClick={() => updateQuantity(cartItemId, item.quantity - 1)} className="px-3 py-1 bg-gray-200 rounded-md">-</button>
+                        <span>{item.quantity}</span>
+                        <button onClick={() => updateQuantity(cartItemId, item.quantity + 1)} className="px-3 py-1 bg-gray-200 rounded-md">+</button>
+                      </div>
+                      <p className="font-semibold w-24 text-right">$U {(item.precio * item.quantity).toFixed(2)}</p>
+                      <button onClick={() => removeFromCart(cartItemId)} className="text-red-500 hover:text-red-700">
+                        Eliminar
+                      </button>
                     </div>
-                    <div className="flex-grow">
-                      <h2 className="font-semibold text-lg">{item.nombre}</h2>
-                      <p className="text-gray-600">$U {item.precio}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <button onClick={() => updateQuantity(item._id, item.quantity - 1)} className="px-3 py-1 bg-gray-200 rounded-md">-</button>
-                      <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item._id, item.quantity + 1)} className="px-3 py-1 bg-gray-200 rounded-md">+</button>
-                    </div>
-                    <p className="font-semibold w-24 text-right">$U {(item.precio * item.quantity).toFixed(2)}</p>
-                    <button onClick={() => removeFromCart(item._id)} className="text-red-500 hover:text-red-700">
-                      Eliminar
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Cart Summary */}

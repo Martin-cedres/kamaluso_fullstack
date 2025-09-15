@@ -4,6 +4,7 @@ import Navbar from "../../../components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "../../../context/CartContext";
+import { useState } from 'react';
 
 interface Product {
   _id: string;
@@ -29,6 +30,7 @@ interface Props {
 
 export default function ProductDetailPage({ product }: Props) {
   const { addToCart } = useCart();
+  const [finish, setFinish] = useState('Brillo'); // Estado para el acabado
 
   const getDisplayPrice = () => {
     if (!product) return null;
@@ -47,13 +49,17 @@ export default function ProductDetailPage({ product }: Props) {
         alert("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
         return;
       }
-      addToCart({
+      
+      const itemToAdd = {
         _id: product._id,
         nombre: product.nombre,
         precio: priceToUse,
         imageUrl: product.images?.[0] || product.imageUrl,
-      });
-      alert(`${product.nombre} ha sido agregado al carrito!`);
+        finish: product.tapa === 'Tapa Dura' ? finish : undefined,
+      };
+
+      addToCart(itemToAdd);
+      alert(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
     }
   };
 
@@ -83,7 +89,7 @@ export default function ProductDetailPage({ product }: Props) {
       "url": canonicalUrl,
       "priceCurrency": "UYU",
       "price": displayPrice,
-      "availability": "https://schema.org/InStock", // Assuming all products are in stock
+      "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition"
     }
   };
@@ -162,6 +168,29 @@ export default function ProductDetailPage({ product }: Props) {
                 </p>
               )}
               <p className="text-gray-600 mb-6">{product.descripcion}</p>
+
+              {/* Selector de Acabado Condicional */}
+              {product.tapa === 'Tapa Dura' && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Acabado</label>
+                  <div className="flex rounded-md shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setFinish('Brillo')}
+                      className={`flex-1 px-4 py-2 text-sm rounded-l-md border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                    >
+                      Brillo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFinish('Mate')}
+                      className={`flex-1 px-4 py-2 text-sm rounded-r-md border border-l-0 ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                    >
+                      Mate
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">

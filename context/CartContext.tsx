@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define the shape of a cart item
-interface CartItem {
+export interface CartItem {
   _id: string;
   nombre: string;
   precio: number;
   imageUrl?: string;
-  categoria?: string; // Added
+  categoria?: string;
   quantity: number;
+  finish?: string; // Acabado del producto
 }
 
 // Define the shape of an applied coupon
@@ -20,12 +21,12 @@ interface AppliedCoupon {
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
-  appliedCoupon?: AppliedCoupon; // Added
-  setAppliedCoupon: (coupon: AppliedCoupon | null) => void; // Added
+  appliedCoupon?: AppliedCoupon;
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void;
 }
 
 // Create the context
@@ -40,6 +41,11 @@ export const useCart = () => {
   return context;
 };
 
+// Helper to generate a unique ID for a cart item based on product ID and finish
+export const getCartItemId = (product: { _id: string; finish?: string }) => {
+  return product.finish ? `${product._id}-${product.finish}` : product._id;
+};
+
 // Create the provider component
 interface CartProviderProps {
   children: ReactNode;
@@ -47,7 +53,7 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null); // Added
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -56,14 +62,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       if (storedCart) {
         setCartItems(JSON.parse(storedCart));
       }
-      const storedCoupon = localStorage.getItem('appliedCoupon'); // Added
+      const storedCoupon = localStorage.getItem('appliedCoupon');
       if (storedCoupon) {
-        setAppliedCoupon(JSON.parse(storedCoupon)); // Added
+        setAppliedCoupon(JSON.parse(storedCoupon));
       }
     } catch (error) {
-      console.error("Failed to parse data from localStorage", error); // Generalize error message
+      console.error("Failed to parse data from localStorage", error);
       setCartItems([]);
-      setAppliedCoupon(null); // Reset coupon on error
+      setAppliedCoupon(null);
     }
   }, []);
 
@@ -72,7 +78,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     localStorage.setItem('shoppingCart', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Save appliedCoupon to localStorage whenever it changes (Added)
+  // Save appliedCoupon to localStorage whenever it changes
   useEffect(() => {
     if (appliedCoupon) {
       localStorage.setItem('appliedCoupon', JSON.stringify(appliedCoupon));
@@ -82,12 +88,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   }, [appliedCoupon]);
 
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
+    const cartItemId = getCartItemId(product);
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item._id === product._id);
+      const existingItem = prevItems.find(item => getCartItemId(item) === cartItemId);
       if (existingItem) {
-        // Increase quantity if item already exists
+        // Increase quantity if item with same finish already exists
         return prevItems.map(item =>
-          item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+          getCartItemId(item) === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
       // Add new item with quantity 1
@@ -95,17 +102,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item._id !== productId));
+  const removeFromCart = (cartItemId: string) => {
+    setCartItems(prevItems => prevItems.filter(item => getCartItemId(item) !== cartItemId));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartItemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartItemId);
     } else {
       setCartItems(prevItems =>
         prevItems.map(item =>
-          item._id === productId ? { ...item, quantity } : item
+          getCartItemId(item) === cartItemId ? { ...item, quantity } : item
         )
       );
     }
@@ -124,8 +131,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     updateQuantity,
     clearCart,
     cartCount,
-    appliedCoupon, // Added
-    setAppliedCoupon, // Added
+    appliedCoupon,
+    setAppliedCoupon,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

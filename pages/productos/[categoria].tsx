@@ -90,7 +90,7 @@ export default function CategoryPage({ initialProducts, initialCategory }: Categ
       <SeoMeta 
         title={pageTitle}
         description={pageDescription}
-        image={selectedCategory.imagen}
+        image={selectedCategory.imagen || '/logo.webp'}
         url={canonicalUrl}
       />
 

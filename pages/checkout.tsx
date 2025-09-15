@@ -23,27 +23,28 @@ const paymentOptions = {
 };
 
 export default function CheckoutPage() {
-  const { cartItems, clearCart, cartCount, appliedCoupon } = useCart(); // Added appliedCoupon
+  const { cartItems, clearCart, cartCount, appliedCoupon } = useCart();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [notes, setNotes] = useState('');
   const [department, setDepartment] = useState(departments[0]);
   const [shippingMethod, setShippingMethod] = useState('delivery');
   const [paymentMethod, setPaymentMethod] = useState('brou');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.precio * item.quantity, 0);
   const surcharge = paymentMethod === 'link_mercadopago' ? subtotal * 0.1 : 0;
-  const couponDiscount = appliedCoupon?.discountAmount || 0; // Get discount from appliedCoupon
-  const total = subtotal + surcharge - couponDiscount; // Subtract coupon discount
+  const couponDiscount = appliedCoupon?.discountAmount || 0;
+  const total = subtotal + surcharge - couponDiscount;
 
   useEffect(() => {
-    // If user switches to pickup, but has a non-local payment method, switch to pago_en_local
     if (shippingMethod === 'pickup') {
       setPaymentMethod('pago_en_local');
     }
-    // If user switches away from pickup and pago_en_local is selected, switch to a default
     if (shippingMethod === 'delivery' && paymentMethod === 'pago_en_local') {
       setPaymentMethod('brou');
     }
@@ -57,7 +58,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    const fullAddress = shippingMethod === 'delivery' ? `${address}, ${department}` : 'Retiro en Local';
+    setIsSubmitting(true);
+
+    const fullAddress = shippingMethod === 'delivery' ? `${address}, ${city}, ${department}` : 'Retiro en Local';
 
     const payload = {
       name,
@@ -65,29 +68,38 @@ export default function CheckoutPage() {
       phone,
       shippingMethod,
       address: fullAddress,
+      city,
+      notes,
       items: cartItems,
       subtotal,
       surcharge,
       couponDiscount,
       total,
       paymentMethod,
-      appliedCoupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : undefined, // Pass applied coupon details
+      appliedCoupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : undefined,
     };
 
-    const response = await fetch('/api/orders/crear', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    });
+    try {
+      const response = await fetch('/api/orders/crear', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+      });
 
-    if (response.ok) {
-        alert('¡Pedido realizado con éxito!');
-        clearCart();
-        router.push('/');
-    } else {
-        alert('Hubo un error al procesar tu pedido. Por favor, inténtalo de nuevo.');
+      if (response.ok) {
+          alert('¡Pedido realizado con éxito!');
+          clearCart();
+          router.push('/');
+      } else {
+          alert('Hubo un error al procesar tu pedido. Por favor, inténtalo de nuevo.');
+          setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Hubo un error de conexión. Por favor, inténtalo de nuevo.');
+      setIsSubmitting(false);
     }
   };
 
@@ -107,6 +119,7 @@ export default function CheckoutPage() {
                   <div key={item._id} className="flex justify-between items-center">
                     <div>
                       <p className="font-semibold">{item.nombre} <span className="text-gray-500">x {item.quantity}</span></p>
+                      {item.finish && <p className="text-sm text-gray-500">Acabado: {item.finish}</p>}
                     </div>
                     <p className="text-gray-700">$U {item.precio * item.quantity}</p>
                   </div>
@@ -185,6 +198,10 @@ export default function CheckoutPage() {
                         <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} required={shippingMethod === 'delivery'} placeholder="Calle, número, apto, etc." className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
                       </div>
                       <div>
+                        <label htmlFor="city" className="block text-sm font-medium text-gray-700">Ciudad</label>
+                        <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)} required={shippingMethod === 'delivery'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
+                      </div>
+                      <div>
                         <label htmlFor="department" className="block text-sm font-medium text-gray-700">Departamento</label>
                         <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required={shippingMethod === 'delivery'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
                           {departments.map(dep => <option key={dep} value={dep}>{dep}</option>)}
@@ -192,6 +209,12 @@ export default function CheckoutPage() {
                       </div>
                     </>
                   )}
+
+                  {/* Notes Field */}
+                  <div>
+                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notas del Pedido (opcional)</label>
+                    <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
+                  </div>
 
                   {/* Payment Method */}
                   <div>
@@ -207,8 +230,8 @@ export default function CheckoutPage() {
                     </select>
                   </div>
                 </div>
-                <button type="submit" className="w-full mt-6 bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition disabled:bg-gray-400" disabled={cartCount === 0}>
-                  Confirmar Pedido
+                <button type="submit" className="w-full mt-6 bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition disabled:bg-gray-400" disabled={cartCount === 0 || isSubmitting}>
+                  {isSubmitting ? 'Procesando...' : 'Confirmar Pedido'}
                 </button>
               </form>
             </div>
