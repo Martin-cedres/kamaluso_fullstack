@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import formidable from "formidable";
 import fs from "fs";
 import path from "path";
+import os from 'os'; // Importar el módulo os
 import { v4 as uuidv4 } from "uuid";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import clientPromise from "../../../lib/mongodb";
@@ -38,7 +39,8 @@ const uploadFileToS3 = async (file: formidable.File) => {
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
-  const form = formidable({ multiples: true, uploadDir: "/tmp" });
+  // Usar el directorio temporal del sistema operativo
+  const form = formidable({ multiples: true, uploadDir: os.tmpdir() });
 
   form.parse(req, async (err, fields, files) => {
     if (err) return res.status(400).json({ error: "Error al procesar formulario", detalles: String(err) });
@@ -73,10 +75,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         slug: String(fields.slug || ""),
         descripcion: String(fields.descripcion || ""),
         precio: parseFloat(String(fields.precio || "0")) || 0,
-        precioFlex: parseFloat(String(fields.precioFlex || "0")) || 0, // Add this line
-        precioDura: parseFloat(String(fields.precioDura || "0")) || 0, // Add this line
+        precioFlex: parseFloat(String(fields.precioFlex || "0")) || 0,
+        precioDura: parseFloat(String(fields.precioDura || "0")) || 0,
         categoria: String(fields.categoria || "sublimable"),
-        subCategoria: subCategoriaField ? [subCategoriaField] : [], // Simplificado
+        subCategoria: subCategoriaField ? [subCategoriaField] : [],
         tapa: String(fields.tapa || ""),
         seoTitle: String(fields.seoTitle || ""),
         seoDescription: String(fields.seoDescription || ""),

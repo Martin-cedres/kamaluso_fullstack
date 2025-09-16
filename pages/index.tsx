@@ -37,7 +37,7 @@ export default function Home() {
     fetch("/api/products/listar?destacado=true")
       .then((res) => res.json())
       .then((data) => {
-        setDestacados(data.slice(0, 4)); // Mostrar solo los primeros 4
+        setDestacados(data.products.slice(0, 4)); // Mostrar solo los primeros 4
       })
       .catch((err) => {
         console.error("Error cargando destacados:", err);

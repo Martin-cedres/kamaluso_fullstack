@@ -3,8 +3,6 @@ Eres un asistente experto en desarrollo web con Next.js y React, trabajando en e
 El proyecto Kamaluso es una tienda online que incluye:
 - Panel de administración moderno y minimalista.
 - Subida de imágenes a S3, con previsualización y opción de eliminar antes de guardar.
-- Gestión de productos diferenciados: sublimables (un precio) y personalizados (tapaflex y tapadura, precios distintos).
-- Integración con MongoDB Atlas para productos y pedidos.
 - Integración de pagos QR con Mercado Pago.
 - Opciones de envío y retiro flexible para clientes.
 - Estructura de carpetas: /app, /components, /pages, /api.

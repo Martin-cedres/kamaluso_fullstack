@@ -18,25 +18,39 @@ function normSubCategoria(s: string) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const db = (await clientPromise).db("kamaluso");
+    const { query: reqQuery } = req;
 
-    // Parámetros
-    const categoriaParam = req.query.categoria as string || "";
-    const subCategoriaParam = req.query.subCategoria as string || req.query.subcategoria as string || "";
-    const slug = req.query.slug as string || "";
-    const _id = req.query._id as string || "";
-    const destacadoQuery = req.query.destacado;
+    // --- PARÁMETROS ---
+    const getQueryParam = (param: string | string[] | undefined): string => {
+      if (Array.isArray(param)) return param[0];
+      return param || "";
+    };
+
+    const categoriaParam = getQueryParam(reqQuery.categoria);
+    const subCategoriaParam = getQueryParam(reqQuery.subCategoria) || getQueryParam(reqQuery.subcategoria);
+    const slug = getQueryParam(reqQuery.slug);
+    const _id = getQueryParam(reqQuery._id);
+    const search = getQueryParam(reqQuery.search);
+    const page = getQueryParam(reqQuery.page) || "1";
+    const limit = getQueryParam(reqQuery.limit) || "12";
+    const destacadoQuery = reqQuery.destacado;
 
     const categoria = categoriaParam ? norm(categoriaParam) : "";
     const subCategoria = subCategoriaParam ? normSubCategoria(subCategoriaParam) : "";
 
-    // Destacado
+    // Paginación
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Filtro de destacado
     let destacadoFilter: boolean | undefined = undefined;
     if (typeof destacadoQuery !== "undefined") {
       const val = String(destacadoQuery).toLowerCase();
       destacadoFilter = val === "true" || val === "1" || val === "yes";
     }
 
-    // Construir query
+    // --- CONSTRUIR QUERY ---
     const query: any = {};
 
     if (categoria) query.categoria = { $regex: new RegExp(`^${categoria}$`, "i") };
@@ -45,36 +59,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (_id) query._id = new ObjectId(_id);
     if (typeof destacadoFilter !== "undefined") query.destacado = destacadoFilter;
 
-    // Consulta
-    const productos = await db
-      .collection("products")
-      .find(query)
-      .sort({ creadoEn: -1 })
-      .project({
-        nombre: 1,
-        slug: 1,
-        descripcion: 1,
-        precio: 1,
-        precioFlex: 1,
-        precioDura: 1,
-        categoria: 1,
-        subCategoria: 1,
-        seoTitle: 1,
-        seoDescription: 1,
-        seoKeywords: 1,
-        alt: 1,
-        notes: 1,
-        status: 1,
-        destacado: 1,
-        imageUrl: 1,
-        images: 1,
-        creadoEn: 1,
-        actualizadoEn: 1,
-        tapa: 1,
-      })
-      .toArray();
+    // Añadir filtro de búsqueda
+    if (search) {
+      const searchRegex = { $regex: search, $options: "i" };
+      query.$or = [
+        { nombre: searchRegex },
+        { descripcion: searchRegex },
+        { seoKeywords: searchRegex },
+      ];
+    }
 
-    // Mapeo
+    // --- CONSULTAS A DB ---
+    const [productos, total] = await Promise.all([
+      db
+        .collection("products")
+        .find(query)
+        .sort({ creadoEn: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .project({
+          nombre: 1, slug: 1, descripcion: 1, precio: 1, precioFlex: 1,
+          precioDura: 1, categoria: 1, subCategoria: 1, seoTitle: 1,
+          seoDescription: 1, seoKeywords: 1, alt: 1, notes: 1, status: 1,
+          destacado: 1, imageUrl: 1, images: 1, creadoEn: 1, actualizadoEn: 1,
+          tapa: 1,
+        })
+        .toArray(),
+      db.collection("products").countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    // --- MAPEO Y RESPUESTA ---
     const mapped = productos.map((p: any) => ({
       _id: p._id,
       nombre: p.nombre,
@@ -99,11 +115,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       tapa: p.tapa || "",
     }));
 
-    console.log("LISTAR PRODUCTOS:", mapped);
-
-    res.status(200).json(mapped);
+    res.status(200).json({
+      products: mapped,
+      currentPage: pageNum,
+      totalPages,
+    });
   } catch (err) {
     console.error("LISTAR ERROR:", err);
-    res.status(500).json({ error: "Error listando productos", detalles: String(err) });
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: "Error listando productos", detalles: errorMessage });
   }
 }
