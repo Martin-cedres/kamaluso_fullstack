@@ -9,6 +9,7 @@ import Head from 'next/head'; // Import Head
 
 import Footer from '../components/Footer';
 import WhatsAppButton from '../components/WhatsAppButton';
+import { Toaster } from 'react-hot-toast';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -18,6 +19,34 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <CartProvider>
         <CategoryProvider> {/* Wrap with CategoryProvider */}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 5000,
+              success: {
+                style: {
+                  background: '#ec4899', // pink-500
+                  color: '#fff',
+                  borderRadius: '1rem', // rounded-2xl equivalent
+                },
+                iconTheme: {
+                  primary: '#fff',
+                  secondary: '#ec4899',
+                },
+              },
+              error: {
+                style: {
+                  background: '#ef4444', // red-500
+                  color: '#fff',
+                  borderRadius: '1rem',
+                },
+                iconTheme: {
+                  primary: '#fff',
+                  secondary: '#ef4444',
+                },
+              },
+            }}
+          />
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-grow">

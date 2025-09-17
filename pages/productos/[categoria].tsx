@@ -26,13 +26,13 @@ interface Product {
 }
 
 interface Category {
-    id: string;
-    nombre: string;
-    descripcion: string;
-    tipoPrecios: string;
-    slug: string;
-    imagen: string;
-    keywords: string[];
+  id: string;
+  nombre: string;
+  descripcion: string;
+  tipoPrecios: string;
+  slug: string;
+  imagen: string;
+  keywords: string[];
 }
 
 interface CategoriaPageProps {
@@ -89,7 +89,7 @@ export default function CategoryPage({ category: initialCategory }: CategoriaPag
       fetchProducts();
     }
   }, [categorySlug, currentPage, debouncedSearchTerm]);
-  
+
   // Función para obtener el precio de la tarjeta
   const getCardPrice = (product: Product) => {
     if (product.precioDura && product.precioFlex) {
@@ -123,7 +123,7 @@ export default function CategoryPage({ category: initialCategory }: CategoriaPag
 
   return (
     <>
-      <SeoMeta 
+      <SeoMeta
         title={pageTitle}
         description={pageDescription}
         image={category.imagen || '/logo.webp'}
@@ -161,7 +161,7 @@ export default function CategoryPage({ category: initialCategory }: CategoriaPag
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl max-w-full mx-auto">
                 {products.length === 0 && (
                   <p className="col-span-full text-center w-full text-gray-500">No se encontraron productos para esta selección.</p>
                 )}

@@ -173,7 +173,8 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
         {relatedProducts.length > 0 && (
           <section className="mt-16">
             <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
+
               {relatedProducts.map((p) => (
                 <Link key={p._id} href={`/productos/detail/${p._id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group">
                   <div className="relative w-full h-56">
@@ -196,8 +197,8 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
 }
 
 const serialize = (doc: any) => {
-    if (!doc) return null;
-    return JSON.parse(JSON.stringify(doc));
+  if (!doc) return null;
+  return JSON.parse(JSON.stringify(doc));
 };
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -238,8 +239,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         categoria: product.categoria,
         _id: { $ne: new mongoose.Types.ObjectId(product._id) },
       })
-      .limit(4)
-      .lean();
+        .limit(4)
+        .lean();
     }
 
     // 5. Return all props, serializing where necessary

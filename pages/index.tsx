@@ -99,7 +99,7 @@ export default function Home() {
                 href={`/productos/${cat.slug}`}
                 className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
               >
-                <div className="relative w-full h-48">
+                <div className="relative w-full h-64">
                   <Image src={cat.imagen || "/placeholder.png"} alt={cat.nombre} fill style={{ objectFit: "cover" }} />
                 </div>
                 <div className="p-4 text-center">
