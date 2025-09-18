@@ -26,7 +26,7 @@ export default function AdminBlogEdit() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/api/auth/signin');
     }
   }, [session, status, router]);
 

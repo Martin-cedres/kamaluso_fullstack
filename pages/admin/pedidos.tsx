@@ -117,7 +117,7 @@ const AdminPedidosPage = () => {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.replace('/login');
+      router.replace('/api/auth/signin');
     } else if (status === 'authenticated') {
       fetchOrders(currentPage, statusFilter, searchTerm);
     }

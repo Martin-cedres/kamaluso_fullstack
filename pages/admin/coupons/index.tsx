@@ -27,7 +27,7 @@ export default function AdminCouponsIndex() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/api/auth/signin');
     }
   }, [session, status, router]);
 

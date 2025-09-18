@@ -126,7 +126,7 @@ export default function Admin() {
   }, [images, editId]);
 
   useEffect(() => {
-    if (status === "unauthenticated") router.replace("/login");
+    if (status === "unauthenticated") router.replace("/api/auth/signin");
   }, [status, router]);
 
   if (status === "loading") return <div className="min-h-screen flex items-center justify-center text-xl font-semibold">Cargando...</div>;

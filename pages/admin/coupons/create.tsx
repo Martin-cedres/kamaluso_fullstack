@@ -13,7 +13,7 @@ export default function AdminCouponCreate() {
   }
 
   if (status === 'unauthenticated') {
-    router.push('/login');
+    router.push('/api/auth/signin');
     return null;
   }
 

@@ -16,7 +16,7 @@ export default function AdminCouponEdit() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/api/auth/signin');
     }
   }, [session, status, router]);
 

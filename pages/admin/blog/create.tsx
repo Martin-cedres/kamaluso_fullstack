@@ -13,7 +13,7 @@ export default function AdminBlogCreate() {
   }
 
   if (status === 'unauthenticated') {
-    router.push('/login');
+    router.push('/api/auth/signin');
     return null;
   }
 
