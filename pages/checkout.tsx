@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
 import Navbar from '../components/Navbar';
+import toast from 'react-hot-toast';
 
 const departments = [
   "Artigas", "Canelones", "Cerro Largo", "Colonia", "Durazno", "Flores", 
@@ -12,14 +13,21 @@ const departments = [
 
 const paymentOptions = {
   brou: "Transferencia Bancaria BROU",
-  qr_mercadopago: "QR Mercado Pago",
   oca_blue: "Depósito OCA Blue",
   mi_dinero: "Mi Dinero",
   prex: "Prex",
   abitab: "Giro ABITAB",
   red_pagos: "Giro RED PAGOS",
-  pago_en_local: "Pago en Local",
+  pago_en_local: "Pago en Local (con seña)",
+  pago_efectivo_local: "Pago en Efectivo en Local",
   mercado_pago_online: "Tarjeta de Crédito/Débito (Mercado Pago)",
+};
+
+const shippingOptions = {
+  dac_domicilio: "DAC - Envío a Domicilio",
+  dac_agencia: "DAC - Retiro en Agencia",
+  correo: "Correo Uruguayo - Retiro en Sucursal",
+  pickup: "Retiro en Local (San José de Mayo)"
 };
 
 export default function CheckoutPage() {
@@ -30,9 +38,9 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
-  const [notes, setNotes] = useState('');
   const [department, setDepartment] = useState(departments[0]);
-  const [shippingMethod, setShippingMethod] = useState('delivery');
+  const [shippingMethod, setShippingMethod] = useState('dac_domicilio');
+  const [shippingNotes, setShippingNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('brou');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,23 +48,39 @@ export default function CheckoutPage() {
   const couponDiscount = appliedCoupon?.discountAmount || 0;
   const total = subtotal - couponDiscount;
 
-  useEffect(() => {
-    if (shippingMethod === 'pickup') {
-      setPaymentMethod('pago_en_local');
-    } else if (paymentMethod === 'pago_en_local') {
-      setPaymentMethod('brou');
+  const getShippingDetails = () => {
+    let details = {
+      method: shippingOptions[shippingMethod as keyof typeof shippingOptions],
+      address: '',
+      notes: shippingNotes
+    };
+
+    switch (shippingMethod) {
+      case 'dac_domicilio':
+        details.address = `${address}, ${city}, ${department}`;
+        break;
+      case 'dac_agencia':
+      case 'correo':
+        details.address = `Retiro en agencia/sucursal. Detalles en notas.`;
+        break;
+      case 'pickup':
+        details.address = 'Retiro en Local';
+        break;
     }
-  }, [shippingMethod]);
+    return details;
+  }
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cartCount === 0) {
-      alert('Tu carrito está vacío.');
+      toast.error('Tu carrito está vacío.');
       router.push('/');
       return;
     }
 
     setIsSubmitting(true);
+    
+    const shippingDetails = getShippingDetails();
 
     if (paymentMethod === 'mercado_pago_online') {
       try {
@@ -72,22 +96,21 @@ export default function CheckoutPage() {
           throw new Error(data.message || 'Failed to create payment preference');
         }
 
-        const formData = { name, email, phone, shippingMethod, address, city, department, notes, paymentMethod, appliedCoupon };
+        const formData = { name, email, phone, shippingDetails, paymentMethod, appliedCoupon };
         localStorage.setItem('checkout_form_data', JSON.stringify(formData));
         
         router.push(data.init_point);
 
       } catch (error: any) {
         console.error('Mercado Pago checkout error:', error);
-        alert(`Hubo un error al iniciar el pago con Mercado Pago:\n\n${error.message}`);
+        toast.error(`Hubo un error al iniciar el pago con Mercado Pago: ${error.message}`);
         setIsSubmitting(false);
       }
       return;
     }
 
-    const fullAddress = shippingMethod === 'delivery' ? `${address}, ${city}, ${department}` : 'Retiro en Local';
     const payload = {
-      name, email, phone, shippingMethod, address: fullAddress, city, notes,
+      name, email, phone, shippingDetails,
       items: cartItems,
       subtotal, couponDiscount, total, paymentMethod,
       appliedCoupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : undefined,
@@ -101,20 +124,33 @@ export default function CheckoutPage() {
       });
 
       if (response.ok) {
-          alert('¡Pedido realizado con éxito! Recibirás un correo con los detalles.');
+          toast.success('¡Pedido realizado con éxito! Recibirás un correo con los detalles.');
           clearCart();
           router.push('/');
       } else {
           const errorData = await response.json();
-          alert(`Hubo un error al procesar tu pedido: ${errorData.message || 'Por favor, inténtalo de nuevo.'}`);
+          toast.error(`Hubo un error al procesar tu pedido: ${errorData.message || 'Por favor, inténtalo de nuevo.'}`);
           setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Hubo un error de conexión. Por favor, inténtalo de nuevo.');
+      toast.error('Hubo un error de conexión. Por favor, inténtalo de nuevo.');
       setIsSubmitting(false);
     }
   };
+
+  const getNotesPlaceholder = () => {
+    if (shippingMethod === 'correo') return 'Indica la dirección de la sucursal de Correo Uruguayo donde retirarás.';
+    if (shippingMethod === 'dac_agencia') return 'Indica la dirección de la agencia DAC donde retirarás.';
+    return 'Instrucciones especiales, aclaraciones, etc.';
+  }
+
+  const availablePaymentOptions = () => {
+    if (shippingMethod === 'pickup') {
+      return Object.entries(paymentOptions);
+    }
+    return Object.entries(paymentOptions).filter(([key]) => key !== 'pago_en_local' && key !== 'pago_efectivo_local');
+  }
 
   return (
     <>
@@ -151,18 +187,7 @@ export default function CheckoutPage() {
               <h2 className="text-2xl font-semibold mb-4">Tus Datos</h2>
               <form onSubmit={handleCheckout}>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Método de Envío</label>
-                    <div className="mt-1 flex rounded-md shadow-sm">
-                      <button type="button" onClick={() => setShippingMethod('delivery')} className={`flex-1 px-4 py-2 text-sm rounded-l-md border ${shippingMethod === 'delivery' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}>
-                        Envío a Domicilio
-                      </button>
-                      <button type="button" onClick={() => setShippingMethod('pickup')} className={`flex-1 px-4 py-2 text-sm rounded-r-md border border-l-0 ${shippingMethod === 'pickup' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}>
-                        Retiro en Local
-                      </button>
-                    </div>
-                  </div>
-
+                  
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre y Apellido</label>
                     <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
@@ -176,40 +201,48 @@ export default function CheckoutPage() {
                     <input type="tel" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
                   </div>
 
-                  {shippingMethod === 'delivery' && (
+                  <div>
+                    <label htmlFor="shippingMethod" className="block text-sm font-medium text-gray-700">Método de Envío</label>
+                    <select id="shippingMethod" value={shippingMethod} onChange={(e) => setShippingMethod(e.target.value)} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
+                      {Object.entries(shippingOptions).map(([key, text]) => (
+                        <option key={key} value={key}>{text}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">El costo del envío es a cargo del comprador y se abona al recibir/retirar el paquete.</p>
+                  </div>
+
+                  {shippingMethod === 'dac_domicilio' && (
                     <>
                       <div>
                         <label htmlFor="address" className="block text-sm font-medium text-gray-700">Dirección de Envío</label>
-                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} required={shippingMethod === 'delivery'} placeholder="Calle, número, apto, etc." className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
+                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} required={shippingMethod === 'dac_domicilio'} placeholder="Calle, número, apto, etc." className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
                       </div>
                       <div>
                         <label htmlFor="city" className="block text-sm font-medium text-gray-700">Ciudad</label>
-                        <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)} required={shippingMethod === 'delivery'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
+                        <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)} required={shippingMethod === 'dac_domicilio'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
                       </div>
                       <div>
                         <label htmlFor="department" className="block text-sm font-medium text-gray-700">Departamento</label>
-                        <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required={shippingMethod === 'delivery'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
+                        <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required={shippingMethod === 'dac_domicilio'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
                           {departments.map(dep => <option key={dep} value={dep}>{dep}</option>)}
                         </select>
                       </div>
                     </>
                   )}
 
-                  <div>
-                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notas del Pedido (opcional)</label>
-                    <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
-                  </div>
+                  {(shippingMethod === 'correo' || shippingMethod === 'dac_agencia') && (
+                    <div>
+                      <label htmlFor="shippingNotes" className="block text-sm font-medium text-gray-700">Notas de Envío</label>
+                      <textarea id="shippingNotes" value={shippingNotes} onChange={(e) => setShippingNotes(e.target.value)} rows={3} placeholder={getNotesPlaceholder()} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500" />
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Método de Pago</label>
                     <select id="paymentMethod" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500">
-                      {shippingMethod === 'pickup' ? (
-                        <option value="pago_en_local">Pago en Local</option>
-                      ) : (
-                        Object.entries(paymentOptions).filter(([key]) => key !== 'pago_en_local').map(([key, text]) => (
-                          <option key={key} value={key}>{text}</option>
-                        ))
-                      )}
+                      {availablePaymentOptions().map(([key, text]) => (
+                        <option key={key} value={key}>{text}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

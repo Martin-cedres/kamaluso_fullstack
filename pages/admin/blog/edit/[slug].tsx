@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import BlogForm from '../form';
+import toast from 'react-hot-toast';
 
 interface Post {
   _id: string;
@@ -69,10 +70,10 @@ export default function AdminBlogEdit() {
         throw new Error(errorData.message || 'Error al actualizar el artículo');
       }
 
-      alert('Artículo actualizado con éxito!');
+      toast.success('Artículo actualizado con éxito!');
       router.push('/admin/blog'); // Redirect to blog list
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
   };
 

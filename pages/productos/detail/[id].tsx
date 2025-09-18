@@ -7,6 +7,7 @@ import { useCart } from "../../../context/CartContext";
 import { useState, useEffect } from 'react';
 import SeoMeta from '../../../components/SeoMeta';
 import ProductReviewSection from '../../../components/ProductReviewSection';
+import toast from 'react-hot-toast';
 
 // Import the correct Mongoose connection function and models
 import connectDB from '../../../lib/mongoose';
@@ -90,12 +91,12 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
     if (product) {
       const priceToUse = displayPrice;
       if (priceToUse === undefined || priceToUse === null || isNaN(priceToUse)) {
-        alert("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
+        toast.error("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
         return;
       }
       const itemToAdd = { _id: product._id, nombre: product.nombre, precio: priceToUse, imageUrl: product.images?.[0] || product.imageUrl, finish: product.tapa === 'Tapa Dura' ? finish : undefined };
       addToCart(itemToAdd);
-      alert(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
+      toast.success(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
     }
   };
 

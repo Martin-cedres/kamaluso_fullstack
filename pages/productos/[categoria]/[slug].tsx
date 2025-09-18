@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "../../../context/CartContext";
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 interface Product {
   _id: string;
@@ -46,7 +47,7 @@ export default function ProductDetailPage({ product }: Props) {
     if (product) {
       const priceToUse = displayPrice;
       if (priceToUse === undefined || priceToUse === null || isNaN(priceToUse)) {
-        alert("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
+        toast.error("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
         return;
       }
       
@@ -59,7 +60,7 @@ export default function ProductDetailPage({ product }: Props) {
       };
 
       addToCart(itemToAdd);
-      alert(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
+      toast.success(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
     }
   };
 

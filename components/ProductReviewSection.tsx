@@ -5,6 +5,7 @@ import { StarIcon } from '@heroicons/react/20/solid';
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import type { IReview } from '../models/Review';
+import toast from 'react-hot-toast';
 
 interface ProductReviewSectionProps {
   productId: string;
@@ -26,7 +27,6 @@ const ProductReviewSection: React.FC<ProductReviewSectionProps> = ({ productId, 
   const [newReviewImages, setNewReviewImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [reviewSubmittedMessage, setReviewSubmittedMessage] = useState('');
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
@@ -39,9 +39,11 @@ const ProductReviewSection: React.FC<ProductReviewSectionProps> = ({ productId, 
         setPage(nextPage);
       } else {
         console.error('Failed to fetch more reviews');
+        toast.error('No se pudieron cargar más reseñas.');
       }
     } catch (error) {
       console.error('Error fetching more reviews:', error);
+      toast.error('Error al cargar más reseñas.');
     } finally {
       setLoadingMore(false);
     }
@@ -55,7 +57,7 @@ const ProductReviewSection: React.FC<ProductReviewSectionProps> = ({ productId, 
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       if (newReviewImages.length + filesArray.length > 3) {
-        alert('Puedes subir un máximo de 3 imágenes.');
+        toast.error('Puedes subir un máximo de 3 imágenes.');
         return;
       }
       setNewReviewImages((prev) => [...prev, ...filesArray]);
@@ -73,11 +75,10 @@ const ProductReviewSection: React.FC<ProductReviewSectionProps> = ({ productId, 
     e.preventDefault();
     if (!session) { signIn('google'); return; }
     if (newReviewRating === 0 || !newReviewComment.trim()) {
-      alert('Por favor, completa la calificación y el comentario.');
+      toast.error('Por favor, completa la calificación y el comentario.');
       return;
     }
     setSubmittingReview(true);
-    setReviewSubmittedMessage('');
     try {
       let uploadedImageUrls: string[] = [];
       if (newReviewImages.length > 0) {
@@ -94,14 +95,14 @@ const ProductReviewSection: React.FC<ProductReviewSectionProps> = ({ productId, 
         body: JSON.stringify({ productId, rating: newReviewRating, comment: newReviewComment, imageUrls: uploadedImageUrls }),
       });
       if (!reviewRes.ok) throw new Error('Failed to submit review');
-      setReviewSubmittedMessage('Tu reseña ha sido recibida. Estará visible una vez que sea aprobada.');
+      toast.success('Tu reseña ha sido recibida y estará visible una vez que sea aprobada.');
       setNewReviewRating(0);
       setNewReviewComment('');
       setNewReviewImages([]);
       setImagePreviews([]);
     } catch (error) {
       console.error('Error submitting review:', error);
-      setReviewSubmittedMessage('Error al enviar tu reseña. Por favor, inténtalo de nuevo.');
+      toast.error('Error al enviar tu reseña. Por favor, inténtalo de nuevo.');
     } finally {
       setSubmittingReview(false);
     }
@@ -182,11 +183,6 @@ const ProductReviewSection: React.FC<ProductReviewSectionProps> = ({ productId, 
           </div>
         ) : (
           <form onSubmit={handleSubmitReview} className="space-y-4">
-            {reviewSubmittedMessage && (
-              <div className={`p-3 rounded-md ${reviewSubmittedMessage.includes('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                {reviewSubmittedMessage}
-              </div>
-            )}
             <p className="text-gray-700">Estás dejando una reseña como <span className="font-semibold">{session.user?.name || session.user?.email}</span></p>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tu calificación</label>

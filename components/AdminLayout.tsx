@@ -1,47 +1,64 @@
-import React from 'react';
-import Navbar from './Navbar';
-import Footer from './Footer';
+import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { 
+  HomeIcon, 
+  ShoppingCartIcon, 
+  StarIcon, 
+  NewspaperIcon, 
+  TicketIcon 
+} from '@heroicons/react/24/outline';
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+const navigation = [
+  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
+  { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
+  { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },
+  { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
+];
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const router = useRouter();
 
-  const adminNavItems = [
-    { name: 'Dashboard', href: '/admin' },
-    { name: 'Pedidos', href: '/admin/pedidos' },
-    { name: 'Blog', href: '/admin/blog' },
-    { name: 'Cupones', href: '/admin/coupons' },
-    { name: 'Reseñas', href: '/admin/reviews' }, // Nuevo enlace para reseñas
-    // Puedes añadir más enlaces de administración aquí
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar /> 
-      <div className="pt-32 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Admin Navigation */}
-        <nav className="bg-white shadow-sm rounded-lg p-4 mb-8">
-          <ul className="flex flex-wrap gap-4 justify-center">
-            {adminNavItems.map((item) => (
+    <div className="min-h-screen bg-gray-100 flex font-sans">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white shadow-md flex-shrink-0">
+        <div className="p-6">
+          <Link href="/admin" className="text-2xl font-bold text-pink-500">
+            Admin Kamaluso
+          </Link>
+        </div>
+        <nav className="mt-6">
+          <ul>
+            {navigation.map((item) => (
               <li key={item.name}>
                 <Link 
-                  href={item.href}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${router.pathname === item.href || (item.href !== '/admin' && router.pathname.startsWith(item.href)) ? 'bg-pink-500 text-white' : 'text-gray-700 hover:bg-gray-200'}`}
-                >
-                  {item.name}
+                  href={item.href} 
+                  className={`flex items-center px-6 py-3 text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors duration-200 ${
+                    router.pathname === item.href || (item.href !== '/admin' && router.pathname.startsWith(item.href))
+                      ? 'bg-pink-50 text-pink-600 border-r-4 border-pink-500' 
+                      : ''
+                  }`}>
+                  <item.icon className="h-6 w-6 mr-3" />
+                  <span>{item.name}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-6 sm:p-8 lg:p-10">
         {children}
-      </div>
-      <Footer />
+      </main>
     </div>
   );
-}
+};
+
+export default AdminLayout;

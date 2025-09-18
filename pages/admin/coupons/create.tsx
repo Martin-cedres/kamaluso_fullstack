@@ -1,7 +1,8 @@
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import CouponForm from './form';
+import toast from 'react-hot-toast';
 
 export default function AdminCouponCreate() {
   const { data: session, status } = useSession();
@@ -31,10 +32,10 @@ export default function AdminCouponCreate() {
         throw new Error(errorData.message || 'Error al crear el cupón');
       }
 
-      alert('Cupón creado con éxito!');
+      toast.success('Cupón creado con éxito!');
       router.push('/admin/coupons'); // Redirect to coupons list
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
   };
 

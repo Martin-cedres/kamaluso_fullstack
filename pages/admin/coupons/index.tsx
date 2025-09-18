@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
+import toast from 'react-hot-toast';
 
 interface Coupon {
   _id: string;
@@ -30,12 +31,6 @@ export default function AdminCouponsIndex() {
     }
   }, [session, status, router]);
 
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchCoupons();
-    }
-  }, [status]);
-
   const fetchCoupons = async () => {
     try {
       setLoading(true);
@@ -52,6 +47,12 @@ export default function AdminCouponsIndex() {
     }
   };
 
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchCoupons();
+    }
+  }, [status]);
+
   const handleDelete = async (code: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este cupón?')) {
       return;
@@ -61,11 +62,13 @@ export default function AdminCouponsIndex() {
         method: 'DELETE',
       });
       if (!res.ok) {
-        throw new Error(`Error deleting coupon: ${res.statusText}`);
+        const data = await res.json();
+        throw new Error(data.message || `Error deleting coupon: ${res.statusText}`);
       }
+      toast.success('Cupón eliminado con éxito');
       setCoupons(coupons.filter(coupon => coupon.code !== code));
     } catch (err: any) {
-      alert(`Error al eliminar el cupón: ${err.message}`);
+      toast.error(`Error al eliminar el cupón: ${err.message}`);
     }
   };
 

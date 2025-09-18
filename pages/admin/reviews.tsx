@@ -5,6 +5,7 @@ import AdminLayout from '../../components/AdminLayout';
 import Image from 'next/image';
 import { StarIcon } from '@heroicons/react/20/solid';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 interface Review {
   _id: string;
@@ -24,7 +25,6 @@ const AdminReviewsPage: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -35,7 +35,6 @@ const AdminReviewsPage: React.FC = () => {
 
   const fetchReviews = async () => {
     setLoading(true);
-    setMessage(null);
     try {
       const query = filterStatus === 'all' ? '' : `?status=${filterStatus}`;
       const res = await fetch(`/api/admin/reviews${query}`);
@@ -46,7 +45,7 @@ const AdminReviewsPage: React.FC = () => {
       setReviews(data);
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      setMessage({ type: 'error', text: 'Error al cargar las reseñas.' });
+      toast.error('Error al cargar las reseñas.');
     } finally {
       setLoading(false);
     }
@@ -59,7 +58,6 @@ const AdminReviewsPage: React.FC = () => {
   }, [session, filterStatus]);
 
   const handleAction = async (reviewId: string, action: 'approve' | 'reject' | 'delete') => {
-    setMessage(null);
     try {
       let res;
       if (action === 'delete') {
@@ -77,11 +75,11 @@ const AdminReviewsPage: React.FC = () => {
       if (!res.ok) {
         throw new Error(`Failed to ${action} review`);
       }
-      setMessage({ type: 'success', text: `Reseña ${action === 'approve' ? 'aprobada' : action === 'reject' ? 'rechazada' : 'eliminada'} correctamente.` });
+      toast.success(`Reseña ${action === 'approve' ? 'aprobada' : action === 'reject' ? 'rechazada' : 'eliminada'} correctamente.`);
       fetchReviews(); // Refrescar la lista
     } catch (error) {
       console.error(`Error ${action} review:`, error);
-      setMessage({ type: 'error', text: `Error al ${action === 'approve' ? 'aprobar' : action === 'reject' ? 'rechazar' : 'eliminar'} la reseña.` });
+      toast.error(`Error al ${action === 'approve' ? 'aprobar' : action === 'reject' ? 'rechazar' : 'eliminar'} la reseña.`);
     }
   };
 
@@ -109,12 +107,6 @@ const AdminReviewsPage: React.FC = () => {
   return (
     <AdminLayout>
       <h1 className="text-3xl font-bold mb-6">Moderación de Reseñas</h1>
-
-      {message && (
-        <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          {message.text}
-        </div>
-      )}
 
       <div className="mb-6 flex space-x-4">
         <button

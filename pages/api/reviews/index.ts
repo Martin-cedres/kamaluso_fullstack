@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
-import clientPromise from "../../../lib/mongodb";
+import connectDB from "../../../lib/mongoose"; // Importar connectDB para Mongoose
 import Review from "../../../models/Review";
 import Product from "../../../models/Product"; // Importar el modelo de Producto
 
@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "POST") {
     try {
-      await clientPromise; // Asegurarse de que la conexión a la DB está establecida
+      await connectDB(); // Conectar a la base de datos con Mongoose
 
       const { productId, rating, comment, imageUrls } = req.body;
 

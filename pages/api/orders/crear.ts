@@ -3,17 +3,21 @@ import clientPromise from '../../../lib/mongodb';
 import { transporter } from '../../../lib/nodemailer';
 
 // Tipo para el cuerpo de la solicitud
+type ShippingDetails = {
+  method: string;
+  address: string;
+  notes?: string;
+}
+
 type OrderRequestBody = {
   name: string;
   phone: string;
-  shippingMethod: 'delivery' | 'pickup';
-  address: string; 
-  city?: string;
-  notes?: string;
-  items: any[]; // Deberíamos tipar esto mejor, pero por ahora lo dejamos así
+  shippingDetails: ShippingDetails;
+  items: any[];
   total: number;
   paymentMethod: string;
   email?: string;
+  notes?: string; // This is the general order notes, separate from shipping notes
 };
 
 type ResponseData = {
@@ -25,14 +29,13 @@ type ResponseData = {
 // Texto de métodos de pago
 const paymentMethodText: Record<string, string> = {
   brou: "Transferencia Bancaria BROU",
-  qr_mercadopago: "QR Mercado Pago",
-  link_mercadopago: "Link Mercado Pago",
   oca_blue: "Depósito OCA Blue",
   mi_dinero: "Mi Dinero",
   prex: "Prex",
   abitab: "Giro ABITAB",
   red_pagos: "Giro RED PAGOS",
-  pago_en_local: "Pago en Local",
+  pago_en_local: "Pago en Local (con seña)",
+  pago_efectivo_local: "Pago en Efectivo en Local",
 };
 
 const generateItemsHTML = (items: any[]) => {
@@ -48,9 +51,22 @@ const generateItemsHTML = (items: any[]) => {
   ).join('');
 };
 
+const generateShippingHTML = (shippingDetails: ShippingDetails) => {
+  let html = `<p><strong>Método:</strong> ${shippingDetails.method}</p>`;
+  if (shippingDetails.address && shippingDetails.address !== 'Retiro en Local') {
+    html += `<p><strong>Dirección:</strong> ${shippingDetails.address}</p>`;
+  }
+  if (shippingDetails.notes) {
+    html += `<p><strong>Notas de Envío:</strong> ${shippingDetails.notes}</p>`;
+  }
+  html += `<p style="font-size:0.8em; color:#555;">El costo del envío es a cargo del comprador y se abona al recibir/retirar el paquete.</p>`;
+  return html;
+};
+
 // Genera el contenido HTML del correo para el comprador
 const generateEmailContent = (order: OrderRequestBody) => {
   const itemsList = generateItemsHTML(order.items);
+  const shippingInfo = generateShippingHTML(order.shippingDetails);
   let paymentInstructions = '';
   // ... (resto del switch de paymentInstructions)
 
@@ -86,11 +102,10 @@ const generateEmailContent = (order: OrderRequestBody) => {
         ${paymentInstructions}
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
-        <p><strong>Método:</strong> ${order.shippingMethod === 'delivery' ? 'Envío a Domicilio' : 'Retiro en Local'}</p>
-        <p><strong>Dirección:</strong> ${order.address}</p>
+        ${shippingInfo}
 
         ${order.notes ? `
-        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Notas del Pedido</h2>
+        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Notas Generales del Pedido</h2>
         <p>${order.notes}</p>
         ` : ''}
 
@@ -103,6 +118,7 @@ const generateEmailContent = (order: OrderRequestBody) => {
 // Genera el contenido del correo para el admin
 const generateAdminEmailContent = (order: OrderRequestBody, orderId: string) => {
   const itemsList = generateItemsHTML(order.items);
+  const shippingInfo = generateShippingHTML(order.shippingDetails);
 
   return {
     subject: `¡Tienes un nuevo Pedido!`,
@@ -135,11 +151,10 @@ const generateAdminEmailContent = (order: OrderRequestBody, orderId: string) => 
         <p>${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
-        <p><strong>Método:</strong> ${order.shippingMethod === 'delivery' ? 'Envío a Domicilio' : 'Retiro en Local'}</p>
-        <p><strong>Dirección:</strong> ${order.address}</p>
+        ${shippingInfo}
 
         ${order.notes ? `
-        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Notas del Pedido</h2>
+        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Notas Generales del Pedido</h2>
         <p>${order.notes}</p>
         ` : ''}
 
@@ -156,6 +171,10 @@ export default async function handler(
   if (req.method === 'POST') {
     try {
       const orderDetails: OrderRequestBody = req.body;
+
+      // Asegurar que el total se calcula en el servidor
+      const calculatedTotal = orderDetails.items.reduce((acc, item) => acc + (item.precio * item.quantity), 0);
+      orderDetails.total = calculatedTotal;
 
       const client = await clientPromise;
       const db = client.db();

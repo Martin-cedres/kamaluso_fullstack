@@ -18,50 +18,73 @@ interface Order {
   name: string;
   email?: string;
   phone?: string;
-  shippingMethod: 'delivery' | 'pickup';
-  address: string;
+  shippingDetails: {
+    method: string;
+    address: string;
+    notes?: string;
+  };
   items: CartItem[];
   total: number;
   paymentMethod: string;
   createdAt: string;
   status: string;
-  notes?: string;
+  notes?: string; // General order notes
 }
 
 // Componente para el Modal de Detalles del Pedido
 const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full">
-      <h2 className="text-2xl font-bold mb-4">Detalles del Pedido</h2>
-      <p><strong>ID:</strong> {order._id}</p>
-      <p><strong>Cliente:</strong> {order.name}</p>
-      <p><strong>Email:</strong> {order.email}</p>
-      <p><strong>Teléfono:</strong> {order.phone}</p>
-      <p><strong>Dirección:</strong> {order.address}</p>
-      <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
-      <p><strong>Método de Pago:</strong> {order.paymentMethod}</p>
-      <p><strong>Estado:</strong> {order.status}</p>
-      <p><strong>Fecha:</strong> {new Date(order.createdAt).toLocaleString()}</p>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+    <div className="bg-white p-6 rounded-2xl shadow-xl max-w-2xl w-full max-h-full overflow-y-auto">
+      <div className="flex justify-between items-start">
+        <h2 className="text-2xl font-bold mb-4">Detalles del Pedido</h2>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">&times;</button>
+      </div>
+      <div className="space-y-2 text-sm">
+        <p><strong>ID:</strong> {order._id}</p>
+        <p><strong>Cliente:</strong> {order.name}</p>
+        <p><strong>Email:</strong> {order.email}</p>
+        <p><strong>Teléfono:</strong> {order.phone}</p>
+        <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
+        <p><strong>Método de Pago:</strong> {order.paymentMethod}</p>
+        <p><strong>Estado:</strong> <span className="capitalize font-medium">{order.status}</span></p>
+        <p><strong>Fecha:</strong> {new Date(order.createdAt).toLocaleString()}</p>
+      </div>
+
+      <div className="mt-4 pt-4 border-t">
+        <h3 className="font-bold text-lg">Detalles de Envío</h3>
+        <div className="space-y-1 text-sm mt-2">
+          <p><strong>Método:</strong> {order.shippingDetails.method}</p>
+          {order.shippingDetails.address && order.shippingDetails.address !== 'Retiro en Local' && 
+            <p><strong>Dirección:</strong> {order.shippingDetails.address}</p>}
+          {order.shippingDetails.notes && 
+            <p><strong>Notas de Envío:</strong> {order.shippingDetails.notes}</p>}
+        </div>
+      </div>
       
       {order.notes && (
-        <div className="mt-4">
-          <h3 className="font-bold">Notas del Cliente:</h3>
-          <p className="p-2 bg-gray-100 rounded-md">{order.notes}</p>
+        <div className="mt-4 pt-4 border-t">
+          <h3 className="font-bold text-lg">Notas Generales del Pedido:</h3>
+          <p className="p-2 bg-gray-100 rounded-md text-sm mt-2">{order.notes}</p>
         </div>
       )}
 
-      <h3 className="font-bold mt-4">Productos:</h3>
-      <ul className="list-disc pl-5 mt-2">
-        {order.items.map(item => (
-          <li key={item._id}>
-            {item.nombre} (x{item.quantity}) - {item.finish || 'Sin acabado'}
-          </li>
-        ))}
-      </ul>
+      <div className="mt-4 pt-4 border-t">
+        <h3 className="font-bold text-lg">Productos:</h3>
+        <ul className="list-disc pl-5 mt-2 text-sm space-y-1">
+          {order.items.map(item => (
+            <li key={item._id}>
+              {item.nombre} (x{item.quantity}) 
+              {item.finish && <span className="text-gray-600"> - Acabado: {item.finish}</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <button onClick={onClose} className="mt-6 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition">
-        Cerrar
-      </button>
+      <div className="text-right mt-6">
+        <button onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+          Cerrar
+        </button>
+      </div>
     </div>
   </div>
 );

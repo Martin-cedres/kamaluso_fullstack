@@ -118,31 +118,28 @@ export default function Home() {
             {destacados.map((product) => (
               <div
                 key={product._id}
-                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-lg hover:shadow-pink-500/50 transition transform hover:-translate-y-1"
+                className="bg-white rounded-2xl shadow-md hover:shadow-lg hover:shadow-pink-500/50 transition transform hover:-translate-y-1 flex flex-col h-full"
               >
-                {product.imageUrl ? (
-                  <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden">
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.alt || product.nombre}
-                      fill
-                      style={{ objectFit: "cover" }}
-                      className="rounded-xl"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-48 bg-gray-200 rounded-xl mb-4 grid place-items-center text-gray-500">Sin imagen</div>
-                )}
-                <h3 className="font-semibold text-lg mb-4">{product.nombre}</h3>
-                <div>
-                  {getCardPrice(product)}
+                <div className="relative w-full h-48 rounded-t-2xl overflow-hidden">
+                  <Image
+                    src={product.imageUrl || '/placeholder.png'}
+                    alt={product.alt || product.nombre}
+                    fill
+                    style={{ objectFit: "cover" }}
+                  />
                 </div>
-                <Link
-                  href={getProductHref(product)}
-                  className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow"
-                >
-                  Ver más
-                </Link>
+                <div className="p-4 flex flex-col flex-grow text-center">
+                  <h3 className="font-semibold text-lg mb-2 flex-grow">{product.nombre}</h3>
+                  <div className="mb-4">
+                    {getCardPrice(product)}
+                  </div>
+                  <Link
+                    href={getProductHref(product)}
+                    className="block w-full text-center bg-pink-500 text-white px-4 py-2 rounded-xl shadow mt-auto"
+                  >
+                    Ver más
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

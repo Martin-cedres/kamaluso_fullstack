@@ -6,13 +6,13 @@ import { transporter } from '../../../lib/nodemailer';
 // --- Lógica de Email (Copiada de /api/orders/crear.ts) ---
 const paymentMethodText: Record<string, string> = {
   brou: "Transferencia Bancaria BROU",
-  qr_mercadopago: "QR Mercado Pago",
   oca_blue: "Depósito OCA Blue",
   mi_dinero: "Mi Dinero",
   prex: "Prex",
   abitab: "Giro ABITAB",
   red_pagos: "Giro RED PAGOS",
-  pago_en_local: "Pago en Local",
+  pago_en_local: "Pago en Local (con seña)",
+  pago_efectivo_local: "Pago en Efectivo en Local",
   mercado_pago_online: "Pagado con Tarjeta (Mercado Pago)",
 };
 
@@ -29,8 +29,22 @@ const generateItemsHTML = (items: any[]) => {
   ).join('');
 };
 
+const generateShippingHTML = (shippingDetails: any) => {
+  if (!shippingDetails) return '<p>No se especificaron detalles de envío.</p>';
+  let html = `<p><strong>Método:</strong> ${shippingDetails.method}</p>`;
+  if (shippingDetails.address && shippingDetails.address !== 'Retiro en Local') {
+    html += `<p><strong>Dirección:</strong> ${shippingDetails.address}</p>`;
+  }
+  if (shippingDetails.notes) {
+    html += `<p><strong>Notas de Envío:</strong> ${shippingDetails.notes}</p>`;
+  }
+  html += `<p style="font-size:0.8em; color:#555;">El costo del envío es a cargo del comprador y se abona al recibir/retirar el paquete.</p>`;
+  return html;
+};
+
 const generateEmailContent = (order: any) => {
   const itemsList = generateItemsHTML(order.items);
+  const shippingInfo = generateShippingHTML(order.shippingDetails);
   return {
     subject: `Gracias por tu compra en Papeleria Personalizada Kamaluso`,
     html: `
@@ -47,8 +61,7 @@ const generateEmailContent = (order: any) => {
         <h2 style="color:#555;">Método de Pago</h2>
         <p>${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
         <h2 style="color:#555;">Detalles de Envío</h2>
-        <p><strong>Método:</strong> ${order.shippingMethod === 'delivery' ? 'Envío a Domicilio' : 'Retiro en Local'}</p>
-        <p><strong>Dirección:</strong> ${order.address}</p>
+        ${shippingInfo}
       </div>
     `,
   };
@@ -56,16 +69,25 @@ const generateEmailContent = (order: any) => {
 
 const generateAdminEmailContent = (order: any, orderId: string) => {
     const itemsList = generateItemsHTML(order.items);
+    const shippingInfo = generateShippingHTML(order.shippingDetails);
     return {
       subject: `¡Nuevo Pedido Pagado con Mercado Pago!`,
       html: `
         <div style="font-family: Arial, sans-serif; color:#333; max-width:600px; margin:auto; padding:20px; background:#f0fff0;">
           <h1 style="text-align:center; color:#2e7d32;">¡Venta Confirmada por Mercado Pago!</h1>
           <p><strong>ID del Pedido:</strong> ${orderId}</p>
-          <p><strong>Cliente:</strong> ${order.name} (${order.email})</p>
-          <h2 style="color:#555;">Detalles</h2>
+          
+          <h2 style="color:#555;">Detalles del Cliente</h2>
+          <p><strong>Nombre:</strong> ${order.name}</p>
+          <p><strong>Email:</strong> ${order.email}</p>
+          <p><strong>Teléfono:</strong> ${order.phone}</p>
+
+          <h2 style="color:#555;">Resumen del Pedido</h2>
           <table style="width:100%; border-collapse:collapse;"><tbody>${itemsList}</tbody></table>
           <p style="text-align:right; font-weight:bold;">Total Pagado: $U ${order.total.toFixed(2)}</p>
+
+          <h2 style="color:#555;">Detalles de Envío</h2>
+          ${shippingInfo}
         </div>
       `,
     };
@@ -117,9 +139,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     console.log("El pago es nuevo.");
 
-    console.log("4. Creando el documento de la nueva orden...");
+    console.log("4. Calculando el total y creando el documento de la nueva orden...");
+
+    // Calcular el total desde el array de items para asegurar consistencia
+    const calculatedTotal = formData.items.reduce((acc: number, item: any) => acc + (item.precio * item.quantity), 0);
+    
     const newOrder = {
       ...formData,
+      total: calculatedTotal, // Usar el total calculado en el servidor
       createdAt: new Date(),
       status: 'pagado', // Marcado como pagado
       paymentDetails: {

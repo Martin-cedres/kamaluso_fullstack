@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import CouponForm from '../form';
 import { ICoupon } from '@/models/Coupon';
+import toast from 'react-hot-toast';
 
 export default function AdminCouponEdit() {
   const { data: session, status } = useSession();
@@ -18,12 +19,6 @@ export default function AdminCouponEdit() {
       router.push('/login');
     }
   }, [session, status, router]);
-
-  useEffect(() => {
-    if (status === 'authenticated' && code) {
-      fetchCoupon();
-    }
-  }, [status, code]);
 
   const fetchCoupon = async () => {
     try {
@@ -46,6 +41,12 @@ export default function AdminCouponEdit() {
     }
   };
 
+  useEffect(() => {
+    if (status === 'authenticated' && code) {
+      fetchCoupon();
+    }
+  }, [status, code, fetchCoupon]);
+
   const handleSubmit = async (formData: any) => {
     try {
       const res = await fetch('/api/coupons/editar', {
@@ -61,10 +62,10 @@ export default function AdminCouponEdit() {
         throw new Error(errorData.message || 'Error al actualizar el cupón');
       }
 
-      alert('Cupón actualizado con éxito!');
+      toast.success('Cupón actualizado con éxito!');
       router.push('/admin/coupons'); // Redirect to coupons list
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
   };
 

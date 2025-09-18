@@ -1,7 +1,8 @@
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '../../../components/AdminLayout';
 import BlogForm from './form';
+import toast from 'react-hot-toast';
 
 export default function AdminBlogCreate() {
   const { data: session, status } = useSession();
@@ -31,10 +32,10 @@ export default function AdminBlogCreate() {
         throw new Error(errorData.message || 'Error al crear el artículo');
       }
 
-      alert('Artículo creado con éxito!');
+      toast.success('Artículo creado con éxito!');
       router.push('/admin/blog'); // Redirect to blog list
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
   };
 

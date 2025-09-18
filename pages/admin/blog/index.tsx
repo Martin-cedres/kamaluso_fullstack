@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import AdminLayout from '@/components/AdminLayout'; // Assuming you have an AdminLayout
+import AdminLayout from '../../../components/AdminLayout'; // Corrected import path
+import toast from 'react-hot-toast';
 
 interface Post {
   _id: string;
@@ -57,18 +58,13 @@ export default function AdminBlogIndex() {
         method: 'DELETE',
       });
       if (!res.ok) {
-        throw new Error(`Error deleting post: ${res.statusText}`);
+        const data = await res.json();
+        throw new Error(data.message || `Error deleting post: ${res.statusText}`);
       }
-      // After deletion, re-fetch posts to update the list
-      // The useEffect will handle re-fetching when status is authenticated
-      // No need to call fetchPosts() directly here, as it's now inside useEffect
-      // Just ensure the state is reset or the list is re-rendered by a status change or similar
-      // For simplicity, we can just trigger a re-fetch by changing a state or re-calling fetchPosts if it were outside useEffect
-      // For now, let's just rely on the user navigating back or a manual refresh if needed after delete
-      // Or, better, remove the deleted post from the local state:
+      toast.success('Artículo eliminado con éxito');
       setPosts(posts.filter(post => post.slug !== slug));
     } catch (err: any) {
-      alert(`Error al eliminar el artículo: ${err.message}`);
+      toast.error(`Error al eliminar el artículo: ${err.message}`);
     }
   };
 
