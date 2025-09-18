@@ -13,11 +13,9 @@ const CheckoutSuccessPage = () => {
     const { payment_id, status: mpStatus } = router.query;
 
     if (!payment_id || !mpStatus) {
-      // Si no hay parámetros, no hacer nada o redirigir
       return;
     }
 
-    // Evitar que se procese múltiples veces
     if (status !== 'processing') {
       return;
     }
@@ -25,45 +23,57 @@ const CheckoutSuccessPage = () => {
     if (mpStatus === 'approved') {
       const formDataString = localStorage.getItem('checkout_form_data');
       if (!formDataString) {
-        setError('No se pudieron recuperar los datos del formulario. Por favor, contacta a soporte.');
+        const supportError = 'No se pudieron recuperar los datos del formulario. Por favor, contacta a soporte.';
+        setError(supportError);
         setStatus('error');
         return;
       }
 
-      const formData = JSON.parse(formDataString);
-      const cartItems = JSON.parse(localStorage.getItem('cart_items') || '[]');
-      const total = cartItems.reduce((sum: number, item: any) => sum + item.precio * item.quantity, 0);
+      try {
+        const formData = JSON.parse(formDataString);
+        const cartItems = JSON.parse(localStorage.getItem('shoppingCart') || '[]');
+        const total = cartItems.reduce((sum: number, item: any) => sum + item.precio * item.quantity, 0);
 
-      const payload = {
-        ...formData,
-        items: cartItems,
-        total,
-        paymentId: payment_id,
-      };
+        const payload = {
+          ...formData,
+          items: cartItems,
+          total,
+          paymentId: payment_id,
+        };
 
-      fetch('/api/orders/confirm-mp-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.orderId) {
-          setStatus('success');
-          clearCart(); // Limpiar carrito
-          localStorage.removeItem('checkout_form_data');
-          localStorage.removeItem('cart_items'); // Limpiar también los items guardados
-        } else {
-          throw new Error(data.message || 'Error al confirmar el pedido.');
-        }
-      })
-      .catch(err => {
-        setError(err.message);
+        fetch('/api/orders/confirm-mp-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(err => {
+              throw new Error(err.message || `Error del servidor: ${response.statusText}`);
+            });
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.orderId) {
+            setStatus('success');
+            clearCart();
+            localStorage.removeItem('checkout_form_data');
+          localStorage.removeItem('shoppingCart'); // Limpiar también los items guardados
+          } else {
+            throw new Error(data.message || 'Error al confirmar el pedido.');
+          }
+        })
+        .catch(err => {
+          setError(`Hubo un problema al confirmar tu orden: ${err.message}`);
+          setStatus('error');
+        });
+      } catch (parseError: any) {
+        setError(`Error al procesar los datos del formulario: ${parseError.message}. Por favor, contacta a soporte.`);
         setStatus('error');
-      });
+      }
 
     } else {
-      // El pago fue rechazado o está pendiente
       setError(`El pago fue ${mpStatus}. Por favor, intenta de nuevo.`);
       setStatus('error');
     }
