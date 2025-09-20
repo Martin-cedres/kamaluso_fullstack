@@ -253,7 +253,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   const page = 1;
   const limit = 12; // O el número de productos por página que prefieras
-  const query = { categoria: category.nombre };
+  const query = { categoria: category.slug };
 
   const productsData = await Product.find(query)
     .limit(limit)
