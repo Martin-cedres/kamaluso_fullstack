@@ -43,7 +43,7 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
       }
       
       const itemToAdd = {
-        _id: product._id,
+        _id: String(product._id),
         nombre: product.nombre,
         precio: priceToUse,
         imageUrl: product.images?.[0] || product.imageUrl,
@@ -219,7 +219,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const products = await Product.find({ slug: { $exists: true }, categoria: { $exists: true } }).limit(10).lean();
 
   const paths = products.map((product) => ({
-    params: { categoria: product.categoria, slug: product.slug },
+    params: { categoria: String(product.categoria), slug: String(product.slug) },
   }));
 
   return {
