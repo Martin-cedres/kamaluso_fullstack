@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 // Import the correct Mongoose connection function and models
 import connectDB from '../../../lib/mongoose';
 import Product, { IProduct } from '../../../models/Product';
-import Review, { IReview } from '../../../models/Review';
+
 import mongoose from 'mongoose';
 
 // This interface is for the props passed to the component
@@ -223,13 +223,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const productRes = await fetch(`${baseUrl}/api/products/listar?_id=${id}`);
     if (!productRes.ok) {
-      return { props: { product: null, relatedProducts: [], initialReviews: [], totalReviews: 0 } };
+      return { props: { product: null, relatedProducts: [] } };
     }
     const productData = await productRes.json();
     const product = productData.products && productData.products.length > 0 ? productData.products[0] : null;
 
     if (!product) {
-      return { props: { product: null, relatedProducts: [], initialReviews: [], totalReviews: 0 } };
+      return { props: { product: null, relatedProducts: [] } };
     }
 
 
@@ -255,7 +255,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   } catch (error) {
     console.error(`Error fetching product details for id: ${id}`, error);
     return {
-      props: { product: null, relatedProducts: [], initialReviews: [], totalReviews: 0 },
+      props: { product: null, relatedProducts: [] },
     };
   }
 };

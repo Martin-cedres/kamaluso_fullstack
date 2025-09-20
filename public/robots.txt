@@ -1,4 +1,9 @@
+# *
 User-agent: *
 Allow: /
 
+# Host
+Host: https://www.papeleriapersonalizada.uy
+
+# Sitemaps
 Sitemap: https://www.papeleriapersonalizada.uy/sitemap.xml
