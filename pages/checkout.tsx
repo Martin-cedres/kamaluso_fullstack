@@ -87,7 +87,7 @@ export default function CheckoutPage() {
         const response = await fetch('/api/payments/create-preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: cartItems }),
+          body: JSON.stringify({ items: cartItems, couponCode: appliedCoupon?.code }),
         });
 
         const data = await response.json();
@@ -112,8 +112,9 @@ export default function CheckoutPage() {
     const payload = {
       name, email, phone, shippingDetails,
       items: cartItems,
-      subtotal, couponDiscount, total, paymentMethod,
-      appliedCoupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : undefined,
+      total, // This total is from the client, the server will recalculate
+      paymentMethod,
+      couponCode: appliedCoupon?.code, // Send only the code
     };
 
     try {

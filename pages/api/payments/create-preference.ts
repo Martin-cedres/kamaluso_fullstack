@@ -1,12 +1,15 @@
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
+import connectDB from '@/lib/mongoose';
+import { validateAndCalculateDiscount } from '@/lib/couponValidator';
 
-// Valida que el Access Token exista
+// Validate Access Token
 if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
   throw new Error("MERCADOPAGO_ACCESS_TOKEN is not defined in environment variables");
 }
 
-// Inicializa el cliente de Mercado Pago
+// Init Mercado Pago client
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
 });
@@ -18,38 +21,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const items = req.body.items;
+    await connectDB();
+    const { items, couponCode } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Cart items are required' });
     }
 
-    // Mapea los items del carrito al formato que Mercado Pago requiere
-    const preferenceItems = items.map(item => ({
-      id: item._id,
-      title: item.nombre,
-      description: item.finish ? `Acabado: ${item.finish}` : '',
-      quantity: Number(item.quantity),
-      unit_price: Number(item.precio),
-      currency_id: 'UYU', // Asumiendo Pesos Uruguayos
-    }));
+    // 1. Calculate subtotal on the server
+    const subtotal = items.reduce((acc, item) => acc + (Number(item.precio) * Number(item.quantity)), 0);
+
+    let finalTotal = subtotal;
+
+    // 2. If coupon is provided, validate it and get the final total
+    if (couponCode) {
+      const couponResult = await validateAndCalculateDiscount(couponCode, items, subtotal);
+      if (couponResult.success && couponResult.newCartTotal) {
+        finalTotal = couponResult.newCartTotal;
+      }
+      // If coupon is invalid, we proceed with the subtotal
+    }
+
+    // 3. Create a single preference item with the final total
+    const preferenceItem = {
+      id: 'order-total',
+      title: 'Total de tu compra en Kamaluso Papelería',
+      description: 'Resumen de tu pedido completo',
+      quantity: 1,
+      unit_price: finalTotal,
+      currency_id: 'UYU',
+    };
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
     const preferenceData = {
-      items: preferenceItems,
+      items: [preferenceItem],
       back_urls: {
         success: `${baseUrl}/checkout/success`,
         failure: `${baseUrl}/checkout/failure`,
         pending: `${baseUrl}/checkout/pending`,
       },
-      // auto_return: 'approved' as 'approved', // Desactivado temporalmente para depurar
+      // auto_return: 'approved', // Keep disabled for debugging if needed
     };
 
     const preference = new Preference(client);
     const result = await preference.create({ body: preferenceData });
 
-    // Devuelve el punto de inicio (la URL de redirección)
     res.status(201).json({ init_point: result.init_point });
 
   } catch (error: any) {
