@@ -11,7 +11,7 @@ const paymentMethodText: Record<string, string> = {
   prex: "Prex",
   abitab: "Giro ABITAB",
   red_pagos: "Giro RED PAGOS",
-  pago_en_local: "Pago en Local (con seña)",
+  pago_en_local: "Pago en Local",
   pago_efectivo_local: "Pago en Efectivo en Local",
   mercado_pago_online: "Pagado con Tarjeta (Mercado Pago)",
 };
@@ -45,6 +45,40 @@ const generateShippingHTML = (shippingDetails: any) => {
 const generateEmailContent = (order: any) => {
   const itemsList = generateItemsHTML(order.items);
   const shippingInfo = generateShippingHTML(order.shippingDetails);
+  let paymentInstructions = '';
+
+  switch (order.paymentMethod) {
+    case 'brou':
+      paymentInstructions = '<p><strong>Instrucciones BROU:</strong> Realiza una transferencia o depósito al BROU, caja de ahorro en pesos Cuenta Nueva Nro. 001199848-00001 Nro. Cuenta anterior 013.0123275 Titular Martín CEDRÉS. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'oca_blue':
+      paymentInstructions = '<p><strong>Instrucciones OCA Blue:</strong> Deposita en OCA Blue, cuenta N° 987654321. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'mi_dinero':
+      paymentInstructions = '<p><strong>Instrucciones Mi Dinero:</strong> Transferencia por APP Nro. Cuenta 7537707. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'prex':
+      paymentInstructions = '<p><strong>Instrucciones Prex:</strong> Nro. Cuenta 1216437 Nombre Katherine Silva. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'abitab':
+      paymentInstructions = '<p><strong>Instrucciones ABITAB:</strong> Realiza un giro en ABITAB a nombre de Katherine Silva, CI 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'red_pagos':
+      paymentInstructions = '<p><strong>Instrucciones RED PAGOS:</strong> Realiza un giro en RED PAGOS a nombre de Katherine Silva, CI 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'pago_en_local':
+      paymentInstructions = '<p><strong>Instrucciones Pago en Local:</strong> Puedes pagar el resto en nuestro local al retirar tu pedido, por el medio que elijas en ese momento.</p>';
+      break;
+    case 'pago_efectivo_local':
+      paymentInstructions = '<p><strong>Instrucciones Pago en Efectivo en Local:</strong> Puedes pagar en efectivo en nuestro local al retirar tu pedido.</p>';
+      break;
+    case 'mercado_pago_online':
+      paymentInstructions = '<p><strong>Instrucciones Mercado Pago:</strong> Tu pago ha sido procesado exitosamente a través de Mercado Pago. ¡Gracias!</p>';
+      break;
+    default:
+      paymentInstructions = '<p>No se encontraron instrucciones de pago específicas para el método seleccionado. Por favor, contáctanos para más detalles.</p>';
+  }
+
   return {
     subject: `Gracias por tu compra en Papeleria Personalizada Kamaluso`,
     html: `
@@ -60,6 +94,7 @@ const generateEmailContent = (order: any) => {
         <p style="text-align:right; font-weight:bold;">Total Pagado: $U ${order.total.toFixed(2)}</p>
         <h2 style="color:#555;">Método de Pago</h2>
         <p>${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
+        ${paymentInstructions}
         <h2 style="color:#555;">Detalles de Envío</h2>
         ${shippingInfo}
       </div>
@@ -70,6 +105,40 @@ const generateEmailContent = (order: any) => {
 const generateAdminEmailContent = (order: any, orderId: string) => {
     const itemsList = generateItemsHTML(order.items);
     const shippingInfo = generateShippingHTML(order.shippingDetails);
+    let paymentInstructions = '';
+
+    switch (order.paymentMethod) {
+      case 'brou':
+        paymentInstructions = '<p><strong>Instrucciones BROU:</strong> Realiza una transferencia o depósito al BROU, caja de ahorro en pesos Nro. 001199848-00001 Nro. Cuenta anterior 013.0123275 Titular Martín CEDRÉS). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'oca_blue':
+        paymentInstructions = '<p><strong>Instrucciones OCA Blue:</strong> Deposita en OCA Blue (Nro. 0216811). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'mi_dinero':
+        paymentInstructions = '<p><strong>Instrucciones Mi Dinero:</strong> Deposito Mi Dinero (Transferencia por APP Nro. Cuenta 7537707). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'prex':
+        paymentInstructions = '<p><strong>Instrucciones Prex:</strong> Deposito Prex (Nro. Cuenta 1216437 Nombre Katherine Silva). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'abitab':
+        paymentInstructions = '<p><strong>Instrucciones ABITAB:</strong> GIROS por ABITAB a nombre de Katherine SILVA C.I 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'red_pagos':
+        paymentInstructions = '<p><strong>Instrucciones RED PAGOS:</strong> GIROS por RED PAGOS a nombre de Katherine SILVA C.I 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'pago_en_local':
+        paymentInstructions = '<p><strong>Instrucciones Pago en Local:</strong> Puedes pagar  en nuestro local al retirar tu pedido, por el medio que elija en ese momento.</p>';
+        break;
+      case 'pago_efectivo_local':
+        paymentInstructions = '<p><strong>Instrucciones Pago en Efectivo en Local:</strong> Puedes pagar en efectivo en nuestro local al retirar tu pedido.</p>';
+        break;
+      case 'mercado_pago_online':
+        paymentInstructions = '<p><strong>Instrucciones Mercado Pago:</strong> El pago ha sido procesado exitosamente a través de Mercado Pago.</p>';
+        break;
+      default:
+        paymentInstructions = '<p>No se encontraron instrucciones de pago específicas para el método seleccionado.</p>';
+    }
+
     return {
       subject: `¡Nuevo Pedido Pagado con Mercado Pago!`,
       html: `
@@ -85,7 +154,9 @@ const generateAdminEmailContent = (order: any, orderId: string) => {
           <h2 style="color:#555;">Resumen del Pedido</h2>
           <table style="width:100%; border-collapse:collapse;"><tbody>${itemsList}</tbody></table>
           <p style="text-align:right; font-weight:bold;">Total Pagado: $U ${order.total.toFixed(2)}</p>
-
+          <h2 style="color:#555;">Método de Pago</h2>
+          <p>${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
+          ${paymentInstructions}
           <h2 style="color:#555;">Detalles de Envío</h2>
           ${shippingInfo}
         </div>

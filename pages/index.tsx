@@ -118,9 +118,9 @@ export default function Home() {
             {destacados.map((product) => (
               <div
                 key={product._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-lg hover:shadow-pink-500/50 transition transform hover:-translate-y-1 flex flex-col h-full"
+                className="bg-white rounded-2xl shadow-md hover:shadow-lg hover:shadow-pink-500/50 transition transform hover:-translate-y-1 flex flex-col h-full overflow-hidden"
               >
-                <div className="relative w-full h-48 rounded-t-2xl overflow-hidden">
+                <div className="relative w-full aspect-square">
                   <Image
                     src={product.imageUrl || '/placeholder.png'}
                     alt={product.alt || product.nombre}
@@ -133,13 +133,13 @@ export default function Home() {
                   <div className="mb-4">
                     {getCardPrice(product)}
                   </div>
-                  <Link
-                    href={getProductHref(product)}
-                    className="block w-full text-center bg-pink-500 text-white px-4 py-2 rounded-xl shadow mt-auto"
-                  >
-                    Ver más
-                  </Link>
                 </div>
+                <Link
+                  href={getProductHref(product)}
+                  className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl"
+                >
+                  Ver más
+                </Link>
               </div>
             ))}
           </div>

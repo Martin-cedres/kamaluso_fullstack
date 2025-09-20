@@ -16,7 +16,7 @@ interface AdminLayoutProps {
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
-  { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
+
   { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
 ];

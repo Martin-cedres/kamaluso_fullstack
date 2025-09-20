@@ -31,7 +31,7 @@ interface Props {
 
 export default function ProductDetailPage({ product }: Props) {
   const { addToCart } = useCart();
-  const [finish, setFinish] = useState('Brillo'); // Estado para el acabado
+  const [finish, setFinish] = useState<string | null>(null); // Estado para el acabado
 
   const getDisplayPrice = () => {
     if (!product) return null;
@@ -45,6 +45,11 @@ export default function ProductDetailPage({ product }: Props) {
 
   const handleAddToCart = () => {
     if (product) {
+      if (product.tapa === 'Tapa Dura' && finish === null) {
+        toast.error("Por favor, selecciona una textura para la tapa.");
+        return;
+      }
+
       const priceToUse = displayPrice;
       if (priceToUse === undefined || priceToUse === null || isNaN(priceToUse)) {
         toast.error("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
@@ -127,7 +132,7 @@ export default function ProductDetailPage({ product }: Props) {
 
           {/* Imágenes */}
           <div className="flex-1">
-            <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-lg">
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
               <Image
                 src={product.images?.[0] || product.imageUrl || "/placeholder.png"}
                 alt={product.alt || product.nombre}
@@ -163,29 +168,25 @@ export default function ProductDetailPage({ product }: Props) {
                   $U {displayPrice}
                 </p>
               )}
-              {product.tapa && (
-                <p className="mb-4 text-gray-700 font-medium">
-                  Tapa: <span className="font-semibold">{product.tapa}</span>
-                </p>
-              )}
+
               <p className="text-gray-600 mb-6">{product.descripcion}</p>
 
               {/* Selector de Acabado Condicional */}
               {product.tapa === 'Tapa Dura' && (
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Acabado</label>
-                  <div className="flex rounded-md shadow-sm">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Textura de tapas</label>
+                  <div className="flex rounded-xl shadow-sm">
                     <button
                       type="button"
                       onClick={() => setFinish('Brillo')}
-                      className={`flex-1 px-4 py-2 text-sm rounded-l-md border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
                     >
                       Brillo
                     </button>
                     <button
                       type="button"
                       onClick={() => setFinish('Mate')}
-                      className={`flex-1 px-4 py-2 text-sm rounded-r-md border border-l-0 ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
                     >
                       Mate
                     </button>
@@ -195,7 +196,7 @@ export default function ProductDetailPage({ product }: Props) {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <button 
+              <button
                 onClick={handleAddToCart}
                 className="bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
               >

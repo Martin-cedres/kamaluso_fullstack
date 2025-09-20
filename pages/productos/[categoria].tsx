@@ -169,21 +169,21 @@ export default function CategoryPage({ category: initialCategory }: CategoriaPag
                 {products.map((product) => (
                   <Link key={product._id} href={getProductHref(product)}>
                     <div className="bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col cursor-pointer h-full">
-                      <div className="relative w-full h-48">
+                      <div className="relative w-full aspect-square">
                         <Image
                           src={product.imageUrl || "/placeholder.png"}
                           alt={product.alt || product.nombre}
                           fill
                           style={{ objectFit: "cover" }}
-                          className="rounded-xl"
+                          className=""
                         />
                       </div>
                       <div className="p-4 text-center flex flex-col flex-grow">
                         <h3 className="font-semibold text-lg mb-2 flex-grow">{product.nombre}</h3>
                         <div>{getCardPrice(product)}</div>
-                        <div className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow mt-auto">
-                          Ver más
-                        </div>
+                      </div>
+                      <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
+                        Ver más
                       </div>
                     </div>
                   </Link>

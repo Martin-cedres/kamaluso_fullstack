@@ -141,7 +141,7 @@ export default function CheckoutPage() {
 
   const getNotesPlaceholder = () => {
     if (shippingMethod === 'correo') return 'Indica la dirección de la sucursal de Correo Uruguayo donde retirarás.';
-    if (shippingMethod === 'dac_agencia') return 'Indica la dirección de la agencia DAC donde retirarás.';
+    if (shippingMethod === 'dac_agencia') return 'Indica en que agencia retiras.';
     return 'Instrucciones especiales, aclaraciones, etc.';
   }
 

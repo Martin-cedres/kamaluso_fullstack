@@ -20,7 +20,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <CartProvider>
         <CategoryProvider> {/* Wrap with CategoryProvider */}
           <Toaster
-            position="top-right"
+            position="bottom-right"
             toastOptions={{
               duration: 5000,
               success: {

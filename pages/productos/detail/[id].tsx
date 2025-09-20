@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useCart } from "../../../context/CartContext";
 import { useState, useEffect } from 'react';
 import SeoMeta from '../../../components/SeoMeta';
-import ProductReviewSection from '../../../components/ProductReviewSection';
+
 import toast from 'react-hot-toast';
 
 // Import the correct Mongoose connection function and models
@@ -44,15 +44,13 @@ const getCardDisplayPrice = (product: ProductProp) => {
 interface Props {
   product: ProductProp | null;
   relatedProducts: ProductProp[];
-  initialReviews: IReview[];
-  totalReviews: number;
 }
 
-export default function ProductDetailPage({ product, relatedProducts, initialReviews, totalReviews }: Props) {
+export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const { addToCart } = useCart();
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
-  const [finish, setFinish] = useState('Brillo');
+  const [finish, setFinish] = useState<string | null>(null);
 
   useEffect(() => {
     if (product?.images?.[0]) {
@@ -89,6 +87,11 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
 
   const handleAddToCart = () => {
     if (product) {
+      if (product.tapa === 'Tapa Dura' && finish === null) {
+        toast.error("Por favor, selecciona una textura para la tapa.");
+        return;
+      }
+
       const priceToUse = displayPrice;
       if (priceToUse === undefined || priceToUse === null || isNaN(priceToUse)) {
         toast.error("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
@@ -121,8 +124,8 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
       <main className="min-h-screen bg-gray-50 pt-32 px-6 pb-16">
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
           <div className="flex-1">
-            <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg">
-              <Image src={selectedImage || "/placeholder.png"} alt={product.alt || product.nombre} fill style={{ objectFit: "contain" }} className="rounded-2xl transition-opacity duration-300" key={selectedImage} />
+            <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
+              <Image src={selectedImage || "/placeholder.png"} alt={product.alt || product.nombre} fill style={{ objectFit: "cover" }} className="rounded-2xl transition-opacity duration-300" key={selectedImage} />
               {product.images && product.images.length > 1 && (
                 <>
                   <button onClick={handlePrevImage} className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10" aria-label="Imagen anterior">
@@ -138,7 +141,7 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
               <div className="flex gap-4 mt-4 overflow-x-auto p-2">
                 {product.images.map((img, i) => (
                   <div key={i} className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectedImage === img ? 'border-4 border-pink-500' : 'border-2 border-transparent hover:border-pink-300'}`} onClick={() => setSelectedImage(img)}>
-                    <Image src={img} alt={`${product.alt || product.nombre} thumbnail ${i + 1}`} fill style={{ objectFit: "contain" }} className="rounded-lg" />
+                    <Image src={img} alt={`${product.alt || product.nombre} thumbnail ${i + 1}`} fill style={{ objectFit: "cover" }} className="rounded-lg" />
                   </div>
                 ))}
               </div>
@@ -148,16 +151,16 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
             <div>
               <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
               {displayPrice && <p className="text-pink-500 font-semibold text-2xl mb-6">$U {displayPrice}</p>}
-              {product.tapa && <p className="mb-4 text-gray-700 font-medium">Tapa: <span className="font-semibold">{product.tapa}</span></p>}
+
               <p className="text-gray-600 mb-6">{product.descripcion}</p>
               {product.tapa === 'Tapa Dura' && (
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Acabado</label>
-                  <div className="flex rounded-md shadow-sm">
-                    <button type="button" onClick={() => setFinish('Brillo')} className={`flex-1 px-4 py-2 text-sm rounded-l-md border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Textura de tapas</label>
+                  <div className="flex rounded-xl shadow-sm">
+                    <button type="button" onClick={() => setFinish('Brillo')} className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}>
                       Brillo
                     </button>
-                    <button type="button" onClick={() => setFinish('Mate')} className={`flex-1 px-4 py-2 text-sm rounded-r-md border border-l-0 ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}>
+                    <button type="button" onClick={() => setFinish('Mate')} className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}>
                       Mate
                     </button>
                   </div>
@@ -177,13 +180,16 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
 
               {relatedProducts.map((p) => (
-                <Link key={p._id} href={`/productos/detail/${p._id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group">
-                  <div className="relative w-full h-56">
-                    <Image src={p.images?.[0] || p.imageUrl || '/placeholder.png'} alt={p.nombre} fill style={{ objectFit: "contain" }} className="group-hover:scale-105 transition-transform duration-300" />
+                <Link key={p._id} href={`/productos/detail/${p._id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
+                  <div className="relative w-full aspect-square">
+                    <Image src={p.images?.[0] || p.imageUrl || '/placeholder.png'} alt={p.nombre} fill style={{ objectFit: "cover" }} className="group-hover:scale-105 transition-transform duration-300" />
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg truncate text-gray-800">{p.nombre}</h3>
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">{p.nombre}</h3>
                     {getCardDisplayPrice(p) && <p className="text-pink-500 font-semibold mt-2">$U {getCardDisplayPrice(p)}</p>}
+                  </div>
+                  <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
+                    Ver más
                   </div>
                 </Link>
               ))}
@@ -191,7 +197,7 @@ export default function ProductDetailPage({ product, relatedProducts, initialRev
           </section>
         )}
 
-        {product && <ProductReviewSection productId={product._id} initialReviews={initialReviews} totalReviews={totalReviews} />}
+        
       </main>
     </>
   );
@@ -226,12 +232,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return { props: { product: null, relatedProducts: [], initialReviews: [], totalReviews: 0 } };
     }
 
-    // 3. Fetch reviews and count sequentially
-    const initialReviews = await Review.find({ productId: new mongoose.Types.ObjectId(product._id), status: 'approved' })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .lean();
-    const totalReviews = await Review.countDocuments({ productId: new mongoose.Types.ObjectId(product._id), status: 'approved' });
+
 
     // 4. Fetch related products directly
     let relatedProducts: IProduct[] = [];
@@ -249,10 +250,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       props: {
         product: product, // Already a plain object from the API
         relatedProducts: relatedProducts.map(serialize),
-        initialReviews: initialReviews.map(serialize),
-        totalReviews: totalReviews,
-      },
-    };
+      },    };
 
   } catch (error) {
     console.error(`Error fetching product details for id: ${id}`, error);
