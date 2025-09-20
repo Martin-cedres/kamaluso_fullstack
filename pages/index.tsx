@@ -1,12 +1,14 @@
-
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
-import { getProductHref } from "../lib/utils"; // Importar la función de utilidad
-import SeoMeta from "../components/SeoMeta"; // Importar el nuevo componente SEO
+import { getProductHref } from "../lib/utils";
+import SeoMeta from "../components/SeoMeta";
+import { categorias } from "../lib/categorias"; // Importar categorías estáticas
+import connectDB from '../lib/mongoose';
+import Product from '../models/Product';
+import { GetStaticProps } from "next";
 
-// Definir una interfaz para los objetos de categoría y producto para mayor seguridad de tipos
+// Interfaces
 interface Categoria {
   _id: string;
   nombre: string;
@@ -19,41 +21,20 @@ interface Product {
   nombre: string;
   imageUrl?: string;
   alt?: string;
-  categoria?: string; // Add this line
-  slug?: string; // Add this line
-  precio?: number; // Add this line
-  precioFlex?: number; // Add this line
-  precioDura?: number; // Add this line
-  tapa?: string; // Add this line
-  // Añade otros campos de producto que necesites
+  categoria?: string;
+  slug?: string;
+  precio?: number;
+  precioFlex?: number;
+  precioDura?: number;
+  tapa?: string;
 }
 
-export default function Home() {
-  const [destacados, setDestacados] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Categoria[]>([]);
+interface HomeProps {
+  destacados: Product[];
+  categories: Categoria[];
+}
 
-  useEffect(() => {
-    // Cargar productos destacados
-    fetch("/api/products/listar?destacado=true")
-      .then((res) => res.json())
-      .then((data) => {
-        setDestacados(data.products.slice(0, 4)); // Mostrar solo los primeros 4
-      })
-      .catch((err) => {
-        console.error("Error cargando destacados:", err);
-        setDestacados([]);
-      });
-
-    // Cargar categorías
-    fetch("/api/categorias/listar")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch((err) => {
-        console.error("Error cargando categorías:", err);
-        setCategories([]);
-      });
-  }, []);
-
+export default function Home({ destacados, categories }: HomeProps) {
   const getCardPrice = (product: Product) => {
     if (product.precioDura && product.precioFlex) {
       return (
@@ -145,7 +126,27 @@ export default function Home() {
           </div>
         </section>
 
-        </main>
+      </main>
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  await connectDB();
+
+  // Fetch featured products
+  const destacadosData = await Product.find({ destacado: true }).limit(4).lean();
+  const destacados = JSON.parse(JSON.stringify(destacadosData));
+
+  // Categories are static, but we pass them as props for consistency
+  const categoriesData = categorias.map(cat => ({...cat, _id: cat.id}));
+
+
+  return {
+    props: {
+      destacados,
+      categories: categoriesData,
+    },
+    revalidate: 3600, // Revalidate once per hour
+  };
+};

@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Navbar from "../../components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,9 +7,11 @@ import { categorias } from '../../lib/categorias';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import SeoMeta from '../../components/SeoMeta';
+import connectDB from '../../lib/mongoose';
+import Product from '../../models/Product';
 
 // Interfaces
-interface Product {
+interface IProduct {
   _id: string;
   nombre: string;
   descripcion?: string;
@@ -37,36 +39,44 @@ interface Category {
 
 interface CategoriaPageProps {
   category: Category | null;
+  initialProducts: IProduct[];
+  initialTotalPages: number;
 }
 
 // Componente principal
-export default function CategoryPage({ category: initialCategory }: CategoriaPageProps) {
+export default function CategoryPage({ category, initialProducts, initialTotalPages }: CategoriaPageProps) {
   const router = useRouter();
   const { categoria: categorySlug } = router.query;
 
   // Estados
-  const [products, setProducts] = useState<Product[]>([]);
-  const [category, setCategory] = useState<Category | null>(initialCategory);
+  const [products, setProducts] = useState<IProduct[]>(initialProducts);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Debounce para el término de búsqueda
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       setCurrentPage(1); // Reset page to 1 on new search
-    }, 500); // 500ms delay
+    }, 500);
 
     return () => {
       clearTimeout(timerId);
     };
   }, [searchTerm]);
 
-  // Efecto para cargar productos
+  // Efecto para cargar productos en paginación y búsqueda
   useEffect(() => {
+    // No ejecutar en la carga inicial ya que tenemos los datos de getStaticProps
+    if (currentPage === 1 && debouncedSearchTerm === '') {
+      setProducts(initialProducts);
+      setTotalPages(initialTotalPages);
+      return;
+    }
+
     if (categorySlug) {
       setLoading(true);
       const fetchProducts = async () => {
@@ -88,10 +98,10 @@ export default function CategoryPage({ category: initialCategory }: CategoriaPag
 
       fetchProducts();
     }
-  }, [categorySlug, currentPage, debouncedSearchTerm]);
+  }, [categorySlug, currentPage, debouncedSearchTerm, initialProducts, initialTotalPages]);
 
   // Función para obtener el precio de la tarjeta
-  const getCardPrice = (product: Product) => {
+  const getCardPrice = (product: IProduct) => {
     if (product.precioDura && product.precioFlex) {
       return (
         <>
@@ -220,12 +230,47 @@ export default function CategoryPage({ category: initialCategory }: CategoriaPag
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { categoria } = context.query;
+export const getStaticPaths: GetStaticPaths = async () => {
+  const paths = categorias.map((cat) => ({
+    params: { categoria: cat.slug },
+  }));
+
+  return {
+    paths,
+    fallback: false,
+  };
+};
+
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { categoria } = context.params;
   const category = categorias.find(c => c.slug === categoria) || null;
 
-  // We only pass the category object, the products will be fetched client-side
+  if (!category) {
+    return { notFound: true };
+  }
+
+  await connectDB();
+
+  const page = 1;
+  const limit = 12; // O el número de productos por página que prefieras
+  const query = { categoria: category.nombre };
+
+  const productsData = await Product.find(query)
+    .limit(limit)
+    .skip((page - 1) * limit)
+    .lean();
+  
+  const totalProducts = await Product.countDocuments(query);
+
+  const initialProducts = JSON.parse(JSON.stringify(productsData));
+  const initialTotalPages = Math.ceil(totalProducts / limit);
+
   return {
-    props: { category },
+    props: { 
+      category, 
+      initialProducts, 
+      initialTotalPages 
+    },
+    revalidate: 3600, // Revalidate once per hour
   };
 };

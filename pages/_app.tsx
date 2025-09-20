@@ -1,24 +1,30 @@
+
 import '../styles/globals.css'
 import type { AppProps } from 'next/app'
-
 import { SessionProvider } from 'next-auth/react';
 import { CartProvider } from '../context/CartContext';
-import { CategoryProvider } from '../context/CategoryContext'; // Import CategoryProvider
+import { CategoryProvider } from '../context/CategoryContext';
 import Navbar from '../components/Navbar';
-import Head from 'next/head'; // Import Head
-
+import Head from 'next/head';
 import Footer from '../components/Footer';
 import WhatsAppButton from '../components/WhatsAppButton';
 import { Toaster } from 'react-hot-toast';
+import { Inter } from 'next/font/google';
+
+// Setup next/font
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <SessionProvider session={pageProps.session}>
-      <Head> {/* Added Head component */}
+      <Head>
         <link rel="icon" href="/logo.webp" type="image/webp" />
       </Head>
       <CartProvider>
-        <CategoryProvider> {/* Wrap with CategoryProvider */}
+        <CategoryProvider>
           <Toaster
             position="bottom-right"
             toastOptions={{
@@ -47,7 +53,8 @@ export default function App({ Component, pageProps }: AppProps) {
               },
             }}
           />
-          <div className="flex flex-col min-h-screen">
+          {/* Apply the font class to the main container */}
+          <div className={`${inter.variable} font-sans flex flex-col min-h-screen`}>
             <Navbar />
             <main className="flex-grow">
               <Component {...pageProps} />

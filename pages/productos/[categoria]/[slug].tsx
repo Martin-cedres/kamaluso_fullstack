@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import Navbar from "../../../components/Navbar";
 import Image from "next/image";
@@ -6,32 +6,18 @@ import Link from "next/link";
 import { useCart } from "../../../context/CartContext";
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import connectDB from '../../../lib/mongoose';
+import Product, { IProduct } from '../../../models/Product';
+import { useRouter } from 'next/router';
 
-interface Product {
-  _id: string;
-  nombre: string;
-  descripcion?: string;
-  precio?: number;
-  precioDura?: number;
-  categoria?: string;
-  destacado?: boolean;
-  imageUrl?: string;
-  images?: string[];
-  alt?: string;
-  slug?: string;
-  tapa?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  precioFlex?: number;
+interface ProductDetailProps {
+  product: IProduct | null;
 }
 
-interface Props {
-  product: Product | null;
-}
-
-export default function ProductDetailPage({ product }: Props) {
+export default function ProductDetailPage({ product }: ProductDetailProps) {
   const { addToCart } = useCart();
-  const [finish, setFinish] = useState<string | null>(null); // Estado para el acabado
+  const [finish, setFinish] = useState<string | null>(null);
+  const router = useRouter();
 
   const getDisplayPrice = () => {
     if (!product) return null;
@@ -68,6 +54,10 @@ export default function ProductDetailPage({ product }: Props) {
       toast.success(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
     }
   };
+
+  if (router.isFallback) {
+    return <div>Cargando...</div>;
+  }
 
   if (!product) return (
     <>
@@ -224,25 +214,39 @@ export default function ProductDetailPage({ product }: Props) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { slug, categoria } = context.query;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+export const getStaticPaths: GetStaticPaths = async () => {
+  await connectDB();
+  const products = await Product.find({ slug: { $exists: true }, categoria: { $exists: true } }).limit(10).lean();
+
+  const paths = products.map((product) => ({
+    params: { categoria: product.categoria, slug: product.slug },
+  }));
+
+  return {
+    paths,
+    fallback: 'blocking',
+  };
+};
+
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { slug, categoria } = context.params;
 
   try {
-    const res = await fetch(`${baseUrl}/api/products/listar?slug=${slug}&categoria=${categoria}`);
-    if (!res.ok) {
-      return { props: { product: null } };
+    await connectDB();
+    const productData = await Product.findOne({ slug, categoria }).lean();
+
+    if (!productData) {
+      return { notFound: true };
     }
-    const data = await res.json();
-    const product = data[0] || null;
+
+    const product = JSON.parse(JSON.stringify(productData));
 
     return {
       props: { product },
+      revalidate: 3600, // Revalidate once per hour
     };
   } catch (error) {
     console.error('Error fetching product:', error);
-    return {
-      props: { product: null },
-    };
+    return { notFound: true };
   }
 };

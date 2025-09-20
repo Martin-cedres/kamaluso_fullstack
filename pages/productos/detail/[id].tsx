@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Navbar from "../../../components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,13 +6,9 @@ import { useRouter } from "next/router";
 import { useCart } from "../../../context/CartContext";
 import { useState, useEffect } from 'react';
 import SeoMeta from '../../../components/SeoMeta';
-
 import toast from 'react-hot-toast';
-
-// Import the correct Mongoose connection function and models
 import connectDB from '../../../lib/mongoose';
 import Product, { IProduct } from '../../../models/Product';
-
 import mongoose from 'mongoose';
 
 // This interface is for the props passed to the component
@@ -60,7 +56,6 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     }
   }, [product?._id]);
 
-  // ... (rest of the component logic remains the same) ...
   const handlePrevImage = () => {
     if (!product?.images || product.images.length < 2) return;
     const currentIndex = product.images.findIndex(img => img === selectedImage);
@@ -102,6 +97,10 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
       toast.success(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
     }
   };
+
+  if (router.isFallback) {
+    return <div>Cargando...</div>;
+  }
 
   if (!product) return (
     <>
@@ -203,59 +202,59 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
   );
 }
 
-const serialize = (doc: any) => {
-  if (!doc) return null;
-  return JSON.parse(JSON.stringify(doc));
+export const getStaticPaths: GetStaticPaths = async () => {
+  await connectDB();
+  const products = await Product.find({}).limit(10).lean(); // Pre-build 10 pages
+
+  const paths = products.map((product) => ({
+    params: { id: product._id.toString() },
+  }));
+
+  return {
+    paths,
+    fallback: 'blocking',
+  };
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { id } = context.query;
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { id } = context.params;
 
-  if (!id || typeof id !== 'string') {
+  if (!id || typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) {
     return { notFound: true };
   }
 
   try {
-    // 1. Connect to the database using the Mongoose-specific function
     await connectDB();
 
-    // 2. Fetch Product using the original, robust API endpoint method
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const productRes = await fetch(`${baseUrl}/api/products/listar?_id=${id}`);
-    if (!productRes.ok) {
-      return { props: { product: null, relatedProducts: [] } };
-    }
-    const productData = await productRes.json();
-    const product = productData.products && productData.products.length > 0 ? productData.products[0] : null;
+    const productData = await Product.findById(id).lean();
 
-    if (!product) {
-      return { props: { product: null, relatedProducts: [] } };
+    if (!productData) {
+      return { notFound: true };
     }
 
+    const product = JSON.parse(JSON.stringify(productData));
 
-
-    // 4. Fetch related products directly
-    let relatedProducts: IProduct[] = [];
+    let relatedProductsData: IProduct[] = [];
     if (product.categoria) {
-      relatedProducts = await Product.find({
+      relatedProductsData = await Product.find({
         categoria: product.categoria,
         _id: { $ne: new mongoose.Types.ObjectId(product._id) },
       })
         .limit(4)
         .lean();
     }
+    const relatedProducts = JSON.parse(JSON.stringify(relatedProductsData));
 
-    // 5. Return all props, serializing where necessary
     return {
       props: {
-        product: product, // Already a plain object from the API
-        relatedProducts: relatedProducts.map(serialize),
-      },    };
+        product,
+        relatedProducts,
+      },
+      revalidate: 3600, // Revalidate once per hour
+    };
 
   } catch (error) {
     console.error(`Error fetching product details for id: ${id}`, error);
-    return {
-      props: { product: null, relatedProducts: [] },
-    };
+    return { notFound: true };
   }
 };
