@@ -48,6 +48,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
   const [finish, setFinish] = useState<string | null>(null);
 
+
   useEffect(() => {
     if (product?.images?.[0]) {
       setSelectedImage(product.images[0]);
@@ -152,6 +153,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
               {displayPrice && <p className="text-pink-500 font-semibold text-2xl mb-6">$U {displayPrice}</p>}
 
               <p className="text-gray-600 mb-6">{product.descripcion}</p>
+              {/* Solo mostrar selectores de textura para productos con Tapa Dura */}
               {product.tapa === 'Tapa Dura' && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Textura de tapas</label>

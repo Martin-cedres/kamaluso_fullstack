@@ -54,7 +54,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 sm:p-8 lg:p-10">
+      <main className="flex-1 p-6 sm:p-8 lg:p-10 pt-20">
         {children}
       </main>
     </div>

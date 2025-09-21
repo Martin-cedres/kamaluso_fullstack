@@ -66,7 +66,8 @@ export default function Admin() {
     try {
       const res = await fetch("/api/products/listar");
       const data = await res.json();
-      setProductos(Array.isArray(data) ? data : []);
+      // El API devuelve { products: [...], currentPage: ..., totalPages: ... }
+      setProductos(Array.isArray(data.products) ? data.products : []);
     } catch (e) {
       console.error("Error fetch productos:", e);
       setProductos([]);
