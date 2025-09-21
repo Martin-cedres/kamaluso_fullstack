@@ -38,3 +38,4 @@ async function getDynamicUrlsSync() {
 
 module.exports = { getDynamicUrlsSync };
 
+module.exports = { getDynamicUrlsSync };
