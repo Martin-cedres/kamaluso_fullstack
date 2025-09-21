@@ -5,7 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "postbuild": "next-sitemap"
+    "postbuild": "next-sitemap",
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
@@ -29,10 +30,10 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
-    "sharp": "^0.34.3",
-    "yet-another-react-lightbox": "^3.25.0"
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.5.3",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/aws-sdk": "^0.0.42",
     "@types/lodash": "^4.17.20",
@@ -40,6 +41,7 @@
     "@types/nodemailer": "^7.0.1",
     "@types/react": "19.1.10",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "3.4",
     "ts-node": "^10.9.2",

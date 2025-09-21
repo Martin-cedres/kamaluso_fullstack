@@ -58,7 +58,10 @@ export default function Home({ destacados, categories }: HomeProps) {
 
   return (
     <>
-      <SeoMeta />
+      <SeoMeta 
+        title="Papelería Personalizada en Uruguay | Agendas y Libretas | Kamaluso"
+        description="Encuentra agendas, libretas y planners 100% personalizados en Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo el Uruguay!"
+      />
 
       <Navbar />
 
@@ -66,7 +69,7 @@ export default function Home({ destacados, categories }: HomeProps) {
         {/* Hero */}
         <section className="flex flex-col items-center justify-center text-center px-6 py-24">
           <Image src="/logo.webp" alt="Logo Kamaluso" width={140} height={140} className="mb-6" />
-          <h1 className="text-5xl font-bold mb-4">Papelería Personalizada</h1>
+          <h1 className="text-5xl font-bold mb-4">Papelería Personalizada en Uruguay</h1>
           <p className="text-lg text-gray-600 mb-8">Agendas, libretas y cuadernos únicos. <br /> ✨ Envíos a todo Uruguay ✨</p>
         </section>
 

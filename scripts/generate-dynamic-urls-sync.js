@@ -1,29 +1,40 @@
+require('dotenv').config({ path: '.env.local' });
 const mongoose = require('mongoose');
 
-const MONGO_URI = process.env.MONGO_URI; // tu conexión a MongoDB
+const MONGODB_URI = process.env.MONGODB_URI;
 
-// Modelo de producto, ajusta según tu esquema real
+// Definimos un esquema simple que coincida con los campos que necesitamos
 const productSchema = new mongoose.Schema({
-  slug: String
+  slug: String,
+  categoria: String,
 });
 
+// Evita recompilar el modelo si ya existe
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 
 async function getDynamicUrlsSync() {
+  let connection;
   try {
-    await mongoose.connect(MONGO_URI);
+    if (!MONGODB_URI) {
+      throw new Error('La variable de entorno MONGODB_URI no está definida.');
+    }
+    connection = await mongoose.connect(MONGODB_URI);
 
-    const products = await Product.find({}, 'slug').lean();
+    const products = await Product.find({}, 'slug categoria').lean();
 
-    // Devuelve rutas completas para cada producto
-    const urls = products.map(p => `/productos/${p.slug}`);
-
-    await mongoose.disconnect();
+    const urls = products.map(p => `/productos/${p.categoria}/${p.slug}`);
+    
     return urls;
   } catch (error) {
     console.error('Error generando URLs dinámicas:', error);
     return [];
+  } finally {
+    // Asegurarse de que la conexión se cierre
+    if (connection) {
+      await mongoose.disconnect();
+    }
   }
 }
 
 module.exports = { getDynamicUrlsSync };
+

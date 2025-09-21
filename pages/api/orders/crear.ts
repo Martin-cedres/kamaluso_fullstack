@@ -107,10 +107,52 @@ const generateEmailContent = (order: OrderForDB) => {
   };
 };
 
+const paymentMethodText: Record<string, string> = {
+  brou: "Transferencia Bancaria BROU",
+  oca_blue: "Depósito OCA Blue",
+  mi_dinero: "Mi Dinero",
+  prex: "Prex",
+  abitab: "Giro ABITAB",
+  red_pagos: "Giro RED PAGOS",
+  pago_en_local: "Pago en Local",
+  pago_efectivo_local: "Pago en Efectivo en Local",
+  mercado_pago_online: "Pagado con Tarjeta (Mercado Pago)",
+};
+
 const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
     const itemsList = generateItemsHTML(order.items);
     const shippingInfo = generateShippingHTML(order.shippingDetails);
     const priceSummary = generatePriceSummaryHTML(order);
+    let paymentInstructions = '';
+
+    switch (order.paymentMethod) {
+      case 'brou':
+        paymentInstructions = '<p><strong>Instrucciones BROU:</strong> Realiza una transferencia o depósito al BROU, caja de ahorro en pesos Nro. 001199848-00001 Nro. Cuenta anterior 013.0123275 Titular Martín CEDRÉS). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'oca_blue':
+        paymentInstructions = '<p><strong>Instrucciones OCA Blue:</strong> Deposita en OCA Blue (Nro. 0216811). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'mi_dinero':
+        paymentInstructions = '<p><strong>Instrucciones Mi Dinero:</strong> Deposito Mi Dinero (Transferencia por APP Nro. Cuenta 7537707). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'prex':
+        paymentInstructions = '<p><strong>Instrucciones Prex:</strong> Deposito Prex (Nro. Cuenta 1216437 Nombre Katherine Silva). Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'abitab':
+        paymentInstructions = '<p><strong>Instrucciones ABITAB:</strong> GIROS por ABITAB a nombre de Katherine SILVA C.I 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'red_pagos':
+        paymentInstructions = '<p><strong>Instrucciones RED PAGOS:</strong> GIROS por RED PAGOS a nombre de Katherine SILVA C.I 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+        break;
+      case 'pago_en_local':
+        paymentInstructions = '<p><strong>Instrucciones Pago en Local:</strong> Puedes pagar  en nuestro local al retirar tu pedido, por el medio que elija en ese momento.</p>';
+        break;
+      case 'pago_efectivo_local':
+        paymentInstructions = '<p><strong>Instrucciones Pago en Efectivo en Local:</strong> Puedes pagar en efectivo en nuestro local al retirar tu pedido.</p>';
+        break;
+      default:
+        paymentInstructions = '<p>No se encontraron instrucciones de pago específicas para el método seleccionado.</p>';
+    }
 
     return {
         subject: `¡Tienes un nuevo Pedido!`,
@@ -126,14 +168,26 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Resumen del Pedido</h2>
             <table style="width:100%; border-collapse:collapse; margin-bottom:15px;">
-                <!-- ... table headers ... -->
+                <thead>
+                  <tr>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:left;">Producto</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center;">Cantidad</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:right;">Subtotal</th>
+                  </tr>
+                </thead>
                 <tbody>
                     ${itemsList}
                 </tbody>
             </table>
             ${priceSummary}
 
-            {/* ... other details ... */}
+            <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Método de Pago</h2>
+            <p><strong>Método:</strong> ${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
+            ${paymentInstructions}
+
+            <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
+            ${shippingInfo}
+
             <p style="text-align:center; margin-top:20px;">ID del Pedido: ${orderId}</p>
         </div>
         `,
@@ -192,18 +246,28 @@ export default async function handler(
         await Coupon.updateOne({ code: orderDetails.couponCode.toUpperCase() }, { $inc: { usedCount: 1 } });
       }
 
-      // 5. Send emails with the correct, detailed pricing
-      if (newOrder.email) {
-        const emailContent = generateEmailContent(newOrder);
-        await transporter.sendMail({ from: process.env.EMAIL_SERVER_USER, to: newOrder.email, subject: emailContent.subject, html: emailContent.html });
-      }
-      const adminEmailContent = generateAdminEmailContent(newOrder, orderId);
-      await transporter.sendMail({ from: process.env.EMAIL_SERVER_USER, to: 'kamalusosanjose@gmail.com', subject: adminEmailContent.subject, html: adminEmailContent.html });
+      // 5. Handle response and emails based on payment method
+      if (newOrder.paymentMethod === 'mercado_pago_online') {
+        // For Mercado Pago, just return the ID and total. Emails will be sent via webhook.
+        res.status(200).json({
+          message: 'Order created pending payment',
+          orderId,
+          total: newOrder.total,
+        });
+      } else {
+        // For other payment methods, send emails immediately
+        if (newOrder.email) {
+          const emailContent = generateEmailContent(newOrder);
+          await transporter.sendMail({ from: process.env.EMAIL_SERVER_USER, to: newOrder.email, subject: emailContent.subject, html: emailContent.html });
+        }
+        const adminEmailContent = generateAdminEmailContent(newOrder, orderId);
+        await transporter.sendMail({ from: process.env.EMAIL_SERVER_USER, to: 'kamalusosanjose@gmail.com', subject: adminEmailContent.subject, html: adminEmailContent.html });
 
-      res.status(200).json({ 
-        message: 'Order created successfully!', 
-        orderId,
-      });
+        res.status(200).json({ 
+          message: 'Order created successfully!', 
+          orderId,
+        });
+      }
 
     } catch (error) {
       console.error('Error processing order:', error);

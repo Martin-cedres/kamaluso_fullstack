@@ -1,0 +1,23 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "pages/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "MONGODB_URI": "@mongodb_uri",
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXTAUTH_URL": "@nextauth_url",
+    "MERCADOPAGO_ACCESS_TOKEN": "@mercadopago_access_token",
+    "AWS_ACCESS_KEY_ID": "@aws_access_key_id",
+    "AWS_SECRET_ACCESS_KEY": "@aws_secret_access_key",
+    "AWS_REGION": "@aws_region",
+    "AWS_S3_BUCKET": "@aws_s3_bucket",
+    "NODEMAILER_EMAIL": "@nodemailer_email",
+    "NODEMAILER_PASSWORD": "@nodemailer_password",
+    "NEXT_PUBLIC_BASE_URL": "@next_public_base_url"
+  }
+}

@@ -127,8 +127,8 @@ export default function CategoryPage({ category, initialProducts, initialTotalPa
     );
   }
 
-  const pageTitle = `${category.nombre} | Kamaluso Papelería`;
-  const pageDescription = category.descripcion;
+  const pageTitle = `${category.nombre} Personalizadas en Uruguay | Kamaluso`;
+  const pageDescription = `${category.descripcion}. Calidad y diseño único con envío a todo Uruguay.`;
   const canonicalUrl = `/productos/${category.slug}`;
 
   return (

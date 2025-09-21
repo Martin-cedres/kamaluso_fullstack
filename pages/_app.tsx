@@ -6,10 +6,16 @@ import { CartProvider } from '../context/CartContext';
 import { CategoryProvider } from '../context/CategoryContext';
 import Navbar from '../components/Navbar';
 import Head from 'next/head';
-import Footer from '../components/Footer';
-import WhatsAppButton from '../components/WhatsAppButton';
+import Script from 'next/script';
+import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
 import { Inter } from 'next/font/google';
+
+// Dynamically import components
+const DynamicFooter = dynamic(() => import('../components/Footer'));
+const DynamicWhatsAppButton = dynamic(() => import('../components/WhatsAppButton'), {
+  ssr: false,
+});
 
 // Setup next/font
 const inter = Inter({
@@ -59,8 +65,8 @@ export default function App({ Component, pageProps }: AppProps) {
             <main className="flex-grow">
               <Component {...pageProps} />
             </main>
-            <WhatsAppButton />
-            <Footer />
+            <DynamicWhatsAppButton />
+            <DynamicFooter />
           </div>
         </CategoryProvider>
       </CartProvider>

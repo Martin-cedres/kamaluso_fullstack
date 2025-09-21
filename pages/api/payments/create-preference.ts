@@ -1,15 +1,11 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
-import connectDB from '@/lib/mongoose';
-import { validateAndCalculateDiscount } from '@/lib/couponValidator';
 
-// Validate Access Token
 if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
   throw new Error("MERCADOPAGO_ACCESS_TOKEN is not defined in environment variables");
 }
 
-// Init Mercado Pago client
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
 });
@@ -21,34 +17,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    await connectDB();
-    const { items, couponCode } = req.body;
+    const { orderId, total } = req.body;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: 'Cart items are required' });
+    if (!orderId || typeof total === 'undefined') {
+      return res.status(400).json({ message: 'Order ID and total are required' });
     }
 
-    // 1. Calculate subtotal on the server
-    const subtotal = items.reduce((acc, item) => acc + (Number(item.precio) * Number(item.quantity)), 0);
-
-    let finalTotal = subtotal;
-
-    // 2. If coupon is provided, validate it and get the final total
-    if (couponCode) {
-      const couponResult = await validateAndCalculateDiscount(couponCode, items, subtotal);
-      if (couponResult.success && couponResult.newCartTotal) {
-        finalTotal = couponResult.newCartTotal;
-      }
-      // If coupon is invalid, we proceed with the subtotal
-    }
-
-    // 3. Create a single preference item with the final total
     const preferenceItem = {
-      id: 'order-total',
+      id: orderId,
       title: 'Total de tu compra en Kamaluso Papelería',
       description: 'Resumen de tu pedido completo',
       quantity: 1,
-      unit_price: finalTotal,
+      unit_price: total,
       currency_id: 'UYU',
     };
 
@@ -56,12 +36,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const preferenceData = {
       items: [preferenceItem],
+      external_reference: orderId,
+      notification_url: `${baseUrl}/api/webhooks/mercadopago`,
       back_urls: {
-        success: `${baseUrl}/checkout/success`,
-        failure: `${baseUrl}/checkout/failure`,
-        pending: `${baseUrl}/checkout/pending`,
+        success: `${baseUrl}/checkout/success?orderId=${orderId}`,
+        failure: `${baseUrl}/checkout/failure?orderId=${orderId}`,
+        pending: `${baseUrl}/checkout/pending?orderId=${orderId}`,
       },
-      // auto_return: 'approved', // Keep disabled for debugging if needed
+      auto_return: 'approved',
     };
 
     const preference = new Preference(client);

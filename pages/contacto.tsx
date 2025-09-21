@@ -1,5 +1,5 @@
+import { GetStaticProps } from 'next';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import SeoMeta from '../components/SeoMeta';
 import Link from 'next/link';
 
@@ -37,8 +37,12 @@ export default function ContactoPage() {
           </div>
         </div>
       </main>
-
-    
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  return {
+    props: {},
+  };
+};

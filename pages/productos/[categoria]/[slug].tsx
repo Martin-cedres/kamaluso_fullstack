@@ -202,6 +202,15 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
           </div>
         </div>
 
+        {/* B2B Callout Section */}
+        <section className="max-w-6xl mx-auto mt-16 bg-pink-50 p-8 rounded-2xl shadow-inner text-center">
+          <h2 className="text-2xl font-semibold mb-3 text-gray-800">¿Buscas este producto para tu Empresa?</h2>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">Ofrecemos personalización con tu logo y descuentos por volumen. Ideal para regalos corporativos, eventos o merchandising.</p>
+          <Link href="/regalos-empresariales" className="bg-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition-transform transform hover:scale-105">
+            Ver Opciones para Empresas
+          </Link>
+        </section>
+
         {/* Productos relacionados */}
         <section className="mt-16">
           <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>

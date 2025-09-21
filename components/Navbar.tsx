@@ -59,6 +59,10 @@ export default function Navbar() {
             {dropdownOpen && <CategoryMenu />}
           </div>
 
+          <Link href="/regalos-empresariales" className="text-gray-900 font-medium hover:text-pink-500 transition">
+            Regalos Empresariales
+          </Link>
+
           <Link href="/contacto" className="text-gray-900 font-medium hover:text-pink-500 transition">
             Contacto
           </Link>
@@ -120,6 +124,10 @@ export default function Navbar() {
             </button>
             {dropdownOpen && <CategoryMenu isMobile={true} />}
           </div>
+
+          <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
+            Regalos Empresariales
+          </Link>
 
           <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>
             Contacto
