@@ -21,6 +21,7 @@ type OrderRequestBody = {
   email?: string
   notes?: string
   couponCode?: string // Added coupon code
+  paymentDetails?: any // Added for Mercado Pago details
 }
 
 // This will be the shape of the object stored in the DB
@@ -29,6 +30,7 @@ type OrderForDB = OrderRequestBody & {
   discountAmount?: number
   createdAt: Date
   status: string
+  externalReference?: string
 }
 
 // --- EMAIL GENERATION ---
