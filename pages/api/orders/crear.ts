@@ -3,6 +3,7 @@ import clientPromise from '../../../lib/mongodb'
 import { transporter } from '../../../lib/nodemailer'
 import { validateAndCalculateDiscount } from '../../../lib/couponValidator'
 import Coupon from '../../../models/Coupon'
+import connectDB from '../../../lib/mongoose'
 
 // --- TYPES ---
 type ShippingDetails = {
@@ -44,8 +45,12 @@ const generateItemsHTML = (items: any[]) => {
          ${item.nombre}
          ${item.finish ? `<br><small>Acabado: ${item.finish}</small>` : ''}
        </td>
-       <td style="padding:8px; border:1px solid #ddd; text-align:center;">${item.quantity}</td>
-       <td style="padding:8px; border:1px solid #ddd; text-align:right;">$U ${(item.precio * item.quantity).toFixed(2)}</td>
+       <td style="padding:8px; border:1px solid #ddd; text-align:center;">${
+         item.quantity
+       }</td>
+       <td style="padding:8px; border:1px solid #ddd; text-align:right;">$U ${(
+         item.precio * item.quantity
+       ).toFixed(2)}</td>
      </tr>`,
     )
     .join('')
@@ -67,11 +72,17 @@ const generateShippingHTML = (shippingDetails: ShippingDetails) => {
 }
 
 const generatePriceSummaryHTML = (order: OrderForDB) => {
-  let html = `<p style="text-align:right;">Subtotal: $U ${order.subtotal.toFixed(2)}</p>`
+  let html = `<p style="text-align:right;">Subtotal: $U ${order.subtotal.toFixed(
+    2,
+  )}</p>`
   if (order.discountAmount && order.discountAmount > 0) {
-    html += `<p style="text-align:right; color: #2ecc71;">Descuento (${order.couponCode}): -$U ${order.discountAmount.toFixed(2)}</p>`
+    html += `<p style="text-align:right; color: #2ecc71;">Descuento (${
+      order.couponCode
+    }): -$U ${order.discountAmount.toFixed(2)}</p>`
   }
-  html += `<p style="text-align:right; font-weight:bold; font-size:1.2em;">Total: $U ${order.total.toFixed(2)}</p>`
+  html += `<p style="text-align:right; font-weight:bold; font-size:1.2em;">Total: $U ${order.total.toFixed(
+    2,
+  )}</p>`
   return html
 }
 
@@ -127,7 +138,9 @@ const generateEmailContent = (order: OrderForDB) => {
     subject: `Gracias por tu compra en Papeleria Personalizada Kamaluso`,
     html: `
       <div style="font-family: Arial, sans-serif; color:#333; line-height:1.5; max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border-radius:8px;">
-        <h1 style="text-align:center; color:#e91e63;">¡Gracias por tu compra, ${order.name}!</h1>
+        <h1 style="text-align:center; color:#e91e63;">¡Gracias por tu compra, ${
+          order.name
+        }!</h1>
         <p style="text-align:center;">Hemos recibido tu pedido y lo estamos preparando.</p>
         
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles del Cliente</h2>
@@ -151,7 +164,9 @@ const generateEmailContent = (order: OrderForDB) => {
         ${priceSummary}
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Método de Pago</h2>
-        <p><strong>Método:</strong> ${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
+        <p><strong>Método:</strong> ${
+          paymentMethodText[order.paymentMethod] || 'No especificado'
+        }</p>
         ${paymentInstructions}
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
@@ -226,7 +241,9 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
             
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles del Cliente</h2>
             <p><strong>Nombre:</strong> ${order.name}</p>
-            <p><strong>Email:</strong> ${order.email || 'No proporcionado'}</p>
+            <p><strong>Email:</strong> ${
+              order.email || 'No proporcionado'
+            }</p>
             <p><strong>Teléfono:</strong> ${order.phone}</p>
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Resumen del Pedido</h2>
@@ -245,7 +262,9 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
             ${priceSummary}
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Método de Pago</h2>
-            <p><strong>Método:</strong> ${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
+            <p><strong>Método:</strong> ${
+              paymentMethodText[order.paymentMethod] || 'No especificado'
+            }</p>
             ${paymentInstructions}
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
@@ -264,9 +283,13 @@ export default async function handler(
   res: NextApiResponse,
 ) {
   if (req.method === 'POST') {
+    console.log('[CREAR ORDEN] API route started.')
     try {
       await connectDB() // Establish Mongoose connection
+      console.log('[CREAR ORDEN] Mongoose connection established.')
+
       const orderDetails: OrderRequestBody = req.body
+      console.log('[CREAR ORDEN] Received order details:', orderDetails)
 
       // 1. Calculate subtotal on the server for security
       const subtotal = orderDetails.items.reduce(
@@ -279,6 +302,9 @@ export default async function handler(
 
       // 2. If coupon is provided, validate it and recalculate total
       if (orderDetails.couponCode) {
+        console.log(
+          `[CREAR ORDEN] Validating coupon: ${orderDetails.couponCode}`,
+        )
         const couponResult = await validateAndCalculateDiscount(
           orderDetails.couponCode,
           orderDetails.items,
@@ -288,12 +314,15 @@ export default async function handler(
         if (couponResult.success && couponResult.discountAmount) {
           discountAmount = couponResult.discountAmount
           finalTotal = subtotal - discountAmount
+          console.log(
+            `[CREAR ORDEN] Coupon applied. Discount: ${discountAmount}`,
+          )
         }
-        // If coupon is not valid, we simply ignore it and proceed with the subtotal
       }
 
       const client = await clientPromise
       const db = client.db()
+      console.log('[CREAR ORDEN] Native MongoDB driver client connected.')
 
       // 3. Create the order object for the database
       const newOrder: OrderForDB = {
@@ -308,8 +337,17 @@ export default async function handler(
             externalReference: orderDetails.paymentDetails.tempOrderId,
           }),
       }
+      console.log(
+        '[CREAR ORDEN] newOrder object prepared for insertion:',
+        newOrder,
+      )
 
       const result = await db.collection('orders').insertOne(newOrder)
+      console.log(
+        '[CREAR ORDEN] Order inserted successfully. Result:',
+        result,
+      )
+
       const orderId = result.insertedId.toHexString()
 
       // 4. Increment coupon usage count if applicable
@@ -318,11 +356,16 @@ export default async function handler(
           { code: orderDetails.couponCode.toUpperCase() },
           { $inc: { usedCount: 1 } },
         )
+        console.log(
+          `[CREAR ORDEN] Coupon usage count incremented for ${orderDetails.couponCode}`,
+        )
       }
 
       // 5. Handle response and emails based on payment method
       if (newOrder.paymentMethod === 'mercado_pago_online') {
-        // For Mercado Pago, just return the ID and total. Emails will be sent via webhook.
+        console.log(
+          '[CREAR ORDEN] Mercado Pago order. Deferring email to webhook.',
+        )
         res.status(200).json({
           message: 'Order created pending payment',
           orderId,
@@ -330,6 +373,7 @@ export default async function handler(
         })
       } else {
         // For other payment methods, send emails immediately
+        console.log('[CREAR ORDEN] Non-MP order. Sending emails now.')
         if (newOrder.email) {
           const emailContent = generateEmailContent(newOrder)
           await transporter.sendMail({
@@ -352,8 +396,13 @@ export default async function handler(
           orderId,
         })
       }
-    } catch (error) {
-      console.error('Error processing order:', error)
+    } catch (error: any) {
+      console.error('--- [CREAR ORDEN] FATAL ERROR ---')
+      console.error('Error Name:', error.name)
+      console.error('Error Message:', error.message)
+      console.error('Error Stack:', error.stack)
+      console.error('Full Error Object:', error)
+      console.error('--- END FATAL ERROR ---')
       res.status(500).json({ message: 'Internal Server Error' })
     }
   } else {
