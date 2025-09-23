@@ -300,9 +300,10 @@ export default async function handler(
         total: finalTotal, // Use the final, server-calculated total
         createdAt: new Date(),
         status: 'pendiente',
-        ...(orderDetails.paymentMethod === 'mercado_pago_online' && {
-          externalReference: orderDetails.paymentDetails.tempOrderId,
-        }),
+        ...(orderDetails.paymentMethod === 'mercado_pago_online' &&
+          orderDetails.paymentDetails && {
+            externalReference: orderDetails.paymentDetails.tempOrderId,
+          }),
       }
 
       const result = await db.collection('orders').insertOne(newOrder)
