@@ -1,23 +1,23 @@
-import Head from 'next/head';
+import Head from 'next/head'
 
 interface SeoMetaProps {
-  title?: string;
-  description?: string;
-  image?: string;
-  url?: string;
-  type?: string;
+  title?: string
+  description?: string
+  image?: string
+  url?: string
+  type?: string
 }
 
-const SeoMeta = ({ 
+const SeoMeta = ({
   title = 'Papelería Personalizada | Kamaluso',
   description = 'Kamaluso ofrece agendas, libretas y cuadernos personalizables en San José de Mayo. Envíos a todo Uruguay.',
   image = '/logo.webp',
   url = '/',
-  type = 'website'
+  type = 'website',
 }: SeoMetaProps) => {
-  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.papeleriapersonalizada.uy';
-  const absoluteImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
-  const absoluteUrl = url.startsWith('http') ? url : `${siteUrl}${url}`;
+  const siteUrl = 'https://www.papeleriapersonalizada.uy'
+  const absoluteImage = image.startsWith('http') ? image : `${siteUrl}${image}`
+  const absoluteUrl = url.startsWith('http') ? url : `${siteUrl}${url}`
 
   return (
     <Head>
@@ -40,7 +40,7 @@ const SeoMeta = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={absoluteImage} />
     </Head>
-  );
-};
+  )
+}
 
-export default SeoMeta;
+export default SeoMeta

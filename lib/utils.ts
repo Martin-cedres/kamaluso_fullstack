@@ -1,4 +1,3 @@
-
 // lib/utils.ts
 
 /**
@@ -8,10 +7,10 @@
  * @returns El string normalizado.
  */
 export function toSlug(s: any): string {
-  return String(s || "")
+  return String(s || '')
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "-");
+    .replace(/\s+/g, '-')
 }
 
 /**
@@ -21,10 +20,10 @@ export function toSlug(s: any): string {
  */
 export function getProductHref(p: any): string {
   // Always use _id for the most robust linking
-  const productId = p._id || "";
+  const productId = p._id || ''
   if (productId) {
-    return `/productos/detail/${encodeURIComponent(productId)}`;
+    return `/productos/detail/${encodeURIComponent(productId)}`
   }
   // Fallback if no _id (should not happen if products come from DB)
-  return `/productos/detail/not-found`;
+  return `/productos/detail/not-found`
 }

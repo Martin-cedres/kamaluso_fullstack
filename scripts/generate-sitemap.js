@@ -1,25 +1,31 @@
-require('dotenv').config({ path: ['.env.local', '.env'] });
-const fs = require('fs');
-const { MongoClient } = require('mongodb');
+require('dotenv').config({ path: ['.env.local', '.env'] })
+const fs = require('fs')
+const { MongoClient } = require('mongodb')
 
-const MONGODB_URI = process.env.MONGODB_URI; // Assuming this env var exists
+const MONGODB_URI = process.env.MONGODB_URI // Assuming this env var exists
 
-const BASE_URL = 'https://www.papeleriapersonalizada.uy';
+const BASE_URL = 'https://www.papeleriapersonalizada.uy'
 
 async function generateSitemap() {
-  console.log('Generating sitemap...');
+  console.log('Generating sitemap...')
 
   if (!MONGODB_URI) {
-    console.error('MONGODB_URI is not defined. Cannot generate sitemap.');
-    process.exit(1);
+    console.error('MONGODB_URI is not defined. Cannot generate sitemap.')
+    process.exit(1)
   }
 
-  const client = new MongoClient(MONGODB_URI);
-  await client.connect();
-  const db = client.db();
+  const client = new MongoClient(MONGODB_URI)
+  await client.connect()
+  const db = client.db()
 
-  const products = await db.collection('products').find({}, { projection: { categoria: 1, slug: 1 } }).toArray();
-  const categories = await db.collection('categories').find({}, { projection: { slug: 1 } }).toArray();
+  const products = await db
+    .collection('products')
+    .find({}, { projection: { categoria: 1, slug: 1 } })
+    .toArray()
+  const categories = await db
+    .collection('categories')
+    .find({}, { projection: { slug: 1 } })
+    .toArray()
 
   const sitemap = `
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -45,7 +51,7 @@ async function generateSitemap() {
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-      `;
+      `
     })
     .join('')}
 
@@ -58,19 +64,19 @@ async function generateSitemap() {
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
-      `;
+      `
     })
     .join('')}
 </urlset>
-  `;
+  `
 
-  fs.writeFileSync('public/sitemap.xml', sitemap);
+  fs.writeFileSync('public/sitemap.xml', sitemap)
 
-  console.log('Sitemap generated successfully!');
-  client.close();
+  console.log('Sitemap generated successfully!')
+  client.close()
 }
 
-generateSitemap().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+generateSitemap().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})

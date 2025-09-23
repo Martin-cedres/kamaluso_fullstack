@@ -1,49 +1,71 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 interface PostFormProps {
   initialData?: {
-    _id?: string;
-    title: string;
-    subtitle?: string;
-    content: string;
-    slug: string;
-    tags?: string[];
-  };
-  onSubmit: (data: any) => void;
-  isEditMode?: boolean;
+    _id?: string
+    title: string
+    subtitle?: string
+    content: string
+    slug: string
+    tags?: string[]
+  }
+  onSubmit: (data: any) => void
+  isEditMode?: boolean
 }
 
-const BlogForm = ({ initialData, onSubmit, isEditMode = false }: PostFormProps) => {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [subtitle, setSubtitle] = useState(initialData?.subtitle || '');
-  const [content, setContent] = useState(initialData?.content || '');
-  const [slug, setSlug] = useState(initialData?.slug || '');
-  const [tags, setTags] = useState(initialData?.tags?.join(', ') || '');
+const BlogForm = ({
+  initialData,
+  onSubmit,
+  isEditMode = false,
+}: PostFormProps) => {
+  const [title, setTitle] = useState(initialData?.title || '')
+  const [subtitle, setSubtitle] = useState(initialData?.subtitle || '')
+  const [content, setContent] = useState(initialData?.content || '')
+  const [slug, setSlug] = useState(initialData?.slug || '')
+  const [tags, setTags] = useState(initialData?.tags?.join(', ') || '')
 
   // Auto-generate slug from title if in create mode and slug is empty
   useEffect(() => {
     if (!isEditMode && title && !slug) {
-      setSlug(title.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-'));
+      setSlug(
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9 -]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-'),
+      )
     }
-  }, [title, slug, isEditMode]);
+  }, [title, slug, isEditMode])
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     const formData = {
       title,
       subtitle: subtitle || undefined,
       content,
       slug,
-      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) || undefined,
+      tags:
+        tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0) || undefined,
       ...(isEditMode && initialData?._id && { _id: initialData._id }), // Include _id for edit mode
-    };
-    onSubmit(formData);
-  };
+    }
+    onSubmit(formData)
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 bg-white p-6 rounded-lg shadow-md"
+    >
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">Título</label>
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Título
+        </label>
         <input
           type="text"
           id="title"
@@ -55,7 +77,12 @@ const BlogForm = ({ initialData, onSubmit, isEditMode = false }: PostFormProps) 
       </div>
 
       <div>
-        <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700">Subtítulo (Opcional)</label>
+        <label
+          htmlFor="subtitle"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Subtítulo (Opcional)
+        </label>
         <input
           type="text"
           id="subtitle"
@@ -66,7 +93,12 @@ const BlogForm = ({ initialData, onSubmit, isEditMode = false }: PostFormProps) 
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700">Contenido</label>
+        <label
+          htmlFor="content"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Contenido
+        </label>
         <textarea
           id="content"
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 h-64"
@@ -77,7 +109,12 @@ const BlogForm = ({ initialData, onSubmit, isEditMode = false }: PostFormProps) 
       </div>
 
       <div>
-        <label htmlFor="slug" className="block text-sm font-medium text-gray-700">Slug (URL amigable)</label>
+        <label
+          htmlFor="slug"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Slug (URL amigable)
+        </label>
         <input
           type="text"
           id="slug"
@@ -89,7 +126,12 @@ const BlogForm = ({ initialData, onSubmit, isEditMode = false }: PostFormProps) 
       </div>
 
       <div>
-        <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiquetas (separadas por comas)</label>
+        <label
+          htmlFor="tags"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Etiquetas (separadas por comas)
+        </label>
         <input
           type="text"
           id="tags"
@@ -106,7 +148,7 @@ const BlogForm = ({ initialData, onSubmit, isEditMode = false }: PostFormProps) 
         {isEditMode ? 'Actualizar Artículo' : 'Crear Artículo'}
       </button>
     </form>
-  );
-};
+  )
+}
 
-export default BlogForm;
+export default BlogForm

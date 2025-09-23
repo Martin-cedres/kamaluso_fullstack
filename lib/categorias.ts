@@ -17,4 +17,4 @@ export const categorias = [
     imagen: '/categorias/tapa-flex.png',
     keywords: ['tapa flex', 'flex'],
   },
-];
+]

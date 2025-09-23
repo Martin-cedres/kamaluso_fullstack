@@ -1,26 +1,32 @@
-
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { MercadoPagoConfig, Preference } from 'mercadopago'
 
 if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-  throw new Error("MERCADOPAGO_ACCESS_TOKEN is not defined in environment variables");
+  throw new Error(
+    'MERCADOPAGO_ACCESS_TOKEN is not defined in environment variables',
+  )
 }
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
-});
+})
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
+    res.setHeader('Allow', ['POST'])
+    return res.status(405).json({ message: `Method ${req.method} Not Allowed` })
   }
 
   try {
-    const { orderId, total } = req.body;
+    const { orderId, total } = req.body
 
     if (!orderId || typeof total === 'undefined') {
-      return res.status(400).json({ message: 'Order ID and total are required' });
+      return res
+        .status(400)
+        .json({ message: 'Order ID and total are required' })
     }
 
     const preferenceItem = {
@@ -30,9 +36,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       quantity: 1,
       unit_price: total,
       currency_id: 'UYU',
-    };
+    }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const isProduction = process.env.NODE_ENV === 'production'
+    let baseUrl
+    if (isProduction) {
+      baseUrl = 'https://www.papeleriapersonalizada.uy'
+    } else {
+      const host = req.headers.host || 'localhost:3000'
+      baseUrl = `http://${host}`
+    }
+    console.log('--- DEBUG MP BASE URL ---')
+    console.log('isProduction:', isProduction)
+    console.log('req.headers.host:', req.headers.host)
+    console.log('Final baseUrl:', baseUrl)
+    console.log('--- END DEBUG MP BASE URL ---')
 
     const preferenceData = {
       items: [preferenceItem],
@@ -44,16 +62,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         pending: `${baseUrl}/checkout/pending?orderId=${orderId}`,
       },
       auto_return: 'approved',
-    };
+    }
 
-    const preference = new Preference(client);
-    const result = await preference.create({ body: preferenceData });
+    const preference = new Preference(client)
+    const result = await preference.create({ body: preferenceData })
 
-    res.status(201).json({ init_point: result.init_point });
-
+    res.status(201).json({ init_point: result.init_point })
   } catch (error: any) {
-    console.error('Error creating Mercado Pago preference:', error);
-    const errorMessage = error.cause?.message || error.message || 'Internal Server Error creating preference';
-    res.status(500).json({ message: errorMessage });
+    console.error('Error creating Mercado Pago preference:', error)
+    const errorMessage =
+      error.cause?.message ||
+      error.message ||
+      'Internal Server Error creating preference'
+    res.status(500).json({ message: errorMessage })
   }
 }

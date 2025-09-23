@@ -1,11 +1,11 @@
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import NextAuth from 'next-auth'
+import GoogleProvider from 'next-auth/providers/google'
 
 const adminEmails = [
-  "kamalusosanjose@gmail.com",
-  "martinfernandocedres@gmail.com",
-  "katherinesilvalong@gmail.com",
-];
+  'kamalusosanjose@gmail.com',
+  'martinfernandocedres@gmail.com',
+  'katherinesilvalong@gmail.com',
+]
 
 export default NextAuth({
   providers: [
@@ -16,26 +16,26 @@ export default NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user && user.email) {
-        token.id = user.id;
+        token.id = user.id
         if (adminEmails.includes(user.email)) {
-          token.role = "admin";
+          token.role = 'admin'
         } else {
-          token.role = "user";
+          token.role = 'user'
         }
       }
-      return token;
+      return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.id = token.id
+        session.user.role = token.role
       }
-      return session;
+      return session
     },
   },
-});
+})

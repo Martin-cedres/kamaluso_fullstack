@@ -1,21 +1,21 @@
-import { GetStaticProps, GetStaticPaths } from 'next';
-import Head from 'next/head';
-import Navbar from '../../components/Navbar';
-import SeoMeta from '../../components/SeoMeta';
+import { GetStaticProps, GetStaticPaths } from 'next'
+import Head from 'next/head'
+import Navbar from '../../components/Navbar'
+import SeoMeta from '../../components/SeoMeta'
 
 interface Post {
-  _id: string;
-  title: string;
-  subtitle?: string; // Added
-  slug: string;
-  content: string;
-  excerpt?: string;
-  createdAt: string;
-  tags?: string[]; // Added
+  _id: string
+  title: string
+  subtitle?: string // Added
+  slug: string
+  content: string
+  excerpt?: string
+  createdAt: string
+  tags?: string[] // Added
 }
 
 interface Props {
-  post: Post | null;
+  post: Post | null
 }
 
 export default function BlogPostPage({ post }: Props) {
@@ -27,29 +27,29 @@ export default function BlogPostPage({ post }: Props) {
           <p className="text-gray-500 text-xl">Post no encontrado.</p>
         </main>
       </>
-    );
+    )
   }
 
-  const pageTitle = `${post.title} | Blog de Kamaluso`;
-  const pageDescription = post.excerpt || post.content.substring(0, 155);
-  const canonicalUrl = `/blog/${post.slug}`;
+  const pageTitle = `${post.title} | Blog de Kamaluso`
+  const pageDescription = post.excerpt || post.content.substring(0, 155)
+  const canonicalUrl = `/blog/${post.slug}`
   // const pageImage = post.coverImage; // Removed as blog is simplified without images
 
   const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": post.title,
-    "description": pageDescription,
-    "datePublished": post.createdAt,
-    "author": {
-        "@type": "Organization",
-        "name": "Kamaluso"
-    }
-  };
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: pageDescription,
+    datePublished: post.createdAt,
+    author: {
+      '@type': 'Organization',
+      name: 'Kamaluso',
+    },
+  }
 
   return (
     <>
-      <SeoMeta 
+      <SeoMeta
         title={pageTitle}
         description={pageDescription}
         url={canonicalUrl}
@@ -69,12 +69,22 @@ export default function BlogPostPage({ post }: Props) {
         <div className="max-w-4xl mx-auto">
           <article>
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-            {post.subtitle && <h2 className="text-2xl font-semibold text-gray-700 mb-4">{post.subtitle}</h2>} {/* Added subtitle */}
-            <p className="text-gray-500 mb-2">Publicado el {new Date(post.createdAt).toLocaleDateString()}</p>
+            {post.subtitle && (
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                {post.subtitle}
+              </h2>
+            )}{' '}
+            {/* Added subtitle */}
+            <p className="text-gray-500 mb-2">
+              Publicado el {new Date(post.createdAt).toLocaleDateString()}
+            </p>
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-8">
-                {post.tags.map(tag => (
-                  <span key={tag} className="bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-pink-100 text-pink-800 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -88,35 +98,35 @@ export default function BlogPostPage({ post }: Props) {
         </div>
       </main>
     </>
-  );
+  )
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
   // Pre-render no paths at build; generate on-demand
-  return { paths: [], fallback: 'blocking' };
-};
+  return { paths: [], fallback: 'blocking' }
+}
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { slug } = context.params || {} as { slug?: string };
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const { slug } = context.params || ({} as { slug?: string })
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
   if (!slug || typeof slug !== 'string') {
-    return { notFound: true };
+    return { notFound: true }
   }
 
   try {
-    const res = await fetch(`${baseUrl}/api/blog/${slug}`);
+    const res = await fetch(`${baseUrl}/api/blog/${slug}`)
     if (!res.ok) {
-      return { notFound: true, revalidate: 300 };
+      return { notFound: true, revalidate: 300 }
     }
-    const post = await res.json();
+    const post = await res.json()
 
     return {
       props: { post },
       revalidate: 900, // 15 min
-    };
+    }
   } catch (error) {
-    console.error('Error fetching post:', error);
-    return { notFound: true, revalidate: 300 };
+    console.error('Error fetching post:', error)
+    return { notFound: true, revalidate: 300 }
   }
-};
+}

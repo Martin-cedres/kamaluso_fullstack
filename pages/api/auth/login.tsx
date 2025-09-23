@@ -1,28 +1,28 @@
-"use client";
+'use client'
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { signIn } from 'next-auth/react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const router = useRouter();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await signIn("credentials", {
+    e.preventDefault()
+    const result = await signIn('credentials', {
       email,
       password,
       redirect: false,
-    });
+    })
 
     if (result?.ok) {
-      router.push("/admin");
+      router.push('/admin')
     } else {
-      alert("Credenciales incorrectas");
+      alert('Credenciales incorrectas')
     }
-  };
+  }
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -53,5 +53,5 @@ export default function LoginPage() {
         </button>
       </form>
     </div>
-  );
+  )
 }

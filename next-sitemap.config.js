@@ -1,5 +1,5 @@
 /** @type {import('next-sitemap').IConfig} */
-const { getDynamicUrlsSync } = require('./scripts/generate-dynamic-urls-sync');
+const { getDynamicUrlsSync } = require('./scripts/generate-dynamic-urls-sync')
 
 module.exports = {
   siteUrl: 'https://www.papeleriapersonalizada.uy',
@@ -10,9 +10,7 @@ module.exports = {
       { userAgent: '*', disallow: '/admin' },
       { userAgent: '*', disallow: '/api/' },
     ],
-    additionalSitemaps: [
-      `https://www.papeleriapersonalizada.uy/sitemap.xml`,
-    ],
+    additionalSitemaps: [`https://www.papeleriapersonalizada.uy/sitemap.xml`],
   },
   changefreq: 'weekly',
   priority: 0.7,
@@ -20,12 +18,11 @@ module.exports = {
   exclude: ['/admin/*'], // Exclude only admin routes
   additionalPaths: async (config) => {
     // This part for dynamic URLs seems correct and will be preserved
-    const dynamicUrls = await getDynamicUrlsSync();
-    return dynamicUrls.map(url => ({
+    const dynamicUrls = await getDynamicUrlsSync()
+    return dynamicUrls.map((url) => ({
       loc: `${config.siteUrl}${url}`,
       changefreq: 'weekly',
-      priority: 0.8
-    }));
-  }
-};
-
+      priority: 0.8,
+    }))
+  },
+}

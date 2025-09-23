@@ -1,94 +1,106 @@
-import { GetStaticProps, GetStaticPaths } from 'next';
-import Head from 'next/head';
-import Navbar from "../../../components/Navbar";
-import Image from "next/image";
-import Link from "next/link";
-import { useCart } from "../../../context/CartContext";
-import { useState } from 'react';
-import toast from 'react-hot-toast';
-import connectDB from '../../../lib/mongoose';
-import Product, { IProduct } from '../../../models/Product';
-import { useRouter } from 'next/router';
+import { GetStaticProps, GetStaticPaths } from 'next'
+import Head from 'next/head'
+import Navbar from '../../../components/Navbar'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useCart } from '../../../context/CartContext'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
+import connectDB from '../../../lib/mongoose'
+import Product, { IProduct } from '../../../models/Product'
+import { useRouter } from 'next/router'
 
 interface ProductDetailProps {
-  product: IProduct | null;
+  product: IProduct | null
 }
 
 export default function ProductDetailPage({ product }: ProductDetailProps) {
-  const { addToCart } = useCart();
-  const [finish, setFinish] = useState<string | null>(null);
-  const router = useRouter();
+  const { addToCart } = useCart()
+  const [finish, setFinish] = useState<string | null>(null)
+  const router = useRouter()
 
   const getDisplayPrice = () => {
-    if (!product) return null;
-    if (product.precioDura) return product.precioDura;
-    if (product.precioFlex) return product.precioFlex;
-    if (product.precio) return product.precio;
-    return null;
-  };
+    if (!product) return null
+    if (product.precioDura) return product.precioDura
+    if (product.precioFlex) return product.precioFlex
+    if (product.precio) return product.precio
+    return null
+  }
 
-  const displayPrice = getDisplayPrice();
+  const displayPrice = getDisplayPrice()
 
   const handleAddToCart = () => {
     if (product) {
       if (product.tapa === 'Tapa Dura' && finish === null) {
-        toast.error("Por favor, selecciona una textura para la tapa.");
-        return;
+        toast.error('Por favor, selecciona una textura para la tapa.')
+        return
       }
 
-      const priceToUse = displayPrice;
-      if (priceToUse === undefined || priceToUse === null || isNaN(priceToUse)) {
-        toast.error("Este producto no se puede agregar al carrito porque no tiene un precio definido.");
-        return;
+      const priceToUse = displayPrice
+      if (
+        priceToUse === undefined ||
+        priceToUse === null ||
+        isNaN(priceToUse)
+      ) {
+        toast.error(
+          'Este producto no se puede agregar al carrito porque no tiene un precio definido.',
+        )
+        return
       }
-      
+
       const itemToAdd = {
         _id: String(product._id),
         nombre: product.nombre,
         precio: priceToUse,
         imageUrl: product.images?.[0] || product.imageUrl,
         finish: product.tapa === 'Tapa Dura' ? finish : undefined,
-      };
+      }
 
-      addToCart(itemToAdd);
-      toast.success(`${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`);
+      addToCart(itemToAdd)
+      toast.success(
+        `${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`,
+      )
     }
-  };
-
-  if (router.isFallback) {
-    return <div>Cargando...</div>;
   }
 
-  if (!product) return (
-    <>
-      <Navbar />
-      <main className="min-h-screen flex items-center justify-center pt-32">
-        <p className="text-gray-500 text-xl">Producto no encontrado.</p>
-      </main>
-    </>
-  );
+  if (router.isFallback) {
+    return <div>Cargando...</div>
+  }
 
-  const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`;
-  const pageDescription = product.seoDescription || product.descripcion || "Encuentra los mejores artículos de papelería personalizada en Kamaluso.";
-  const pageImage = product.images?.[0] || product.imageUrl || "/logo.webp";
-  const canonicalUrl = `https://www.papeleriapersonalizada.uy/productos/${product.categoria}/${product.slug}`;
+  if (!product)
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen flex items-center justify-center pt-32">
+          <p className="text-gray-500 text-xl">Producto no encontrado.</p>
+        </main>
+      </>
+    )
+
+  const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`
+  const pageDescription =
+    product.seoDescription ||
+    product.descripcion ||
+    'Encuentra los mejores artículos de papelería personalizada en Kamaluso.'
+  const pageImage = product.images?.[0] || product.imageUrl || '/logo.webp'
+  const canonicalUrl = `https://www.papeleriapersonalizada.uy/productos/${product.categoria}/${product.slug}`
 
   const productSchema = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": product.nombre,
-    "image": pageImage,
-    "description": pageDescription,
-    "sku": product._id,
-    "offers": {
-      "@type": "Offer",
-      "url": canonicalUrl,
-      "priceCurrency": "UYU",
-      "price": displayPrice,
-      "availability": "https://schema.org/InStock",
-      "itemCondition": "https://schema.org/NewCondition"
-    }
-  };
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.nombre,
+    image: pageImage,
+    description: pageDescription,
+    sku: product._id,
+    offers: {
+      '@type': 'Offer',
+      url: canonicalUrl,
+      priceCurrency: 'UYU',
+      price: displayPrice,
+      availability: 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  }
 
   return (
     <>
@@ -119,15 +131,16 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-6">
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
-
           {/* Imágenes */}
           <div className="flex-1">
             <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
               <Image
-                src={product.images?.[0] || product.imageUrl || "/placeholder.png"}
+                src={
+                  product.images?.[0] || product.imageUrl || '/placeholder.png'
+                }
                 alt={product.alt || product.nombre}
                 fill
-                style={{ objectFit: "cover" }}
+                style={{ objectFit: 'cover' }}
                 className="rounded-2xl"
               />
             </div>
@@ -135,12 +148,15 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
             {product.images && product.images.length > 1 && (
               <div className="flex gap-4 mt-4 overflow-x-auto">
                 {product.images.map((img, i) => (
-                  <div key={i} className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 border-pink-500">
+                  <div
+                    key={i}
+                    className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 border-pink-500"
+                  >
                     <Image
                       src={img}
                       alt={product.alt || product.nombre}
                       fill
-                      style={{ objectFit: "cover" }}
+                      style={{ objectFit: 'cover' }}
                       className="rounded-xl"
                     />
                   </div>
@@ -164,7 +180,9 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
               {/* Selector de Acabado Condicional */}
               {product.tapa === 'Tapa Dura' && (
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Textura de tapas</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Textura de tapas
+                  </label>
                   <div className="flex rounded-xl shadow-sm">
                     <button
                       type="button"
@@ -204,58 +222,76 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
 
         {/* B2B Callout Section */}
         <section className="max-w-6xl mx-auto mt-16 bg-pink-50 p-8 rounded-2xl shadow-inner text-center">
-          <h2 className="text-2xl font-semibold mb-3 text-gray-800">¿Buscas este producto para tu Empresa?</h2>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">Ofrecemos personalización con tu logo y descuentos por volumen. Ideal para regalos corporativos, eventos o merchandising.</p>
-          <Link href="/regalos-empresariales" className="bg-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition-transform transform hover:scale-105">
+          <h2 className="text-2xl font-semibold mb-3 text-gray-800">
+            ¿Buscas este producto para tu Empresa?
+          </h2>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Ofrecemos personalización con tu logo y descuentos por volumen.
+            Ideal para regalos corporativos, eventos o merchandising.
+          </p>
+          <Link
+            href="/regalos-empresariales"
+            className="bg-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition-transform transform hover:scale-105"
+          >
             Ver Opciones para Empresas
           </Link>
         </section>
 
         {/* Productos relacionados */}
         <section className="mt-16">
-          <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
+          <h2 className="text-3xl font-semibold mb-8 text-center">
+            Productos relacionados
+          </h2>
           <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-6xl mx-auto">
             {/* Mapear productos relacionados si querés */}
           </div>
         </section>
       </main>
     </>
-  );
+  )
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  await connectDB();
-  const products = await Product.find({ slug: { $exists: true }, categoria: { $exists: true } }).limit(10).lean();
+  await connectDB()
+  const products = await Product.find({
+    slug: { $exists: true },
+    categoria: { $exists: true },
+  })
+    .limit(10)
+    .lean()
 
   const paths = products.map((product) => ({
-    params: { categoria: String(product.categoria), slug: String(product.slug) },
-  }));
+    params: {
+      categoria: String(product.categoria),
+      slug: String(product.slug),
+    },
+  }))
 
   return {
     paths,
     fallback: 'blocking',
-  };
-};
+  }
+}
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { slug, categoria } = context.params;
+  const { slug, categoria } = context.params
 
   try {
-    await connectDB();
-    const productData = await Product.findOne({ slug, categoria }).lean();
+    await connectDB()
+    const productData = await Product.findOne({ slug, categoria }).lean()
 
     if (!productData) {
-      return { notFound: true };
+      return { notFound: true }
     }
 
-    const product = JSON.parse(JSON.stringify(productData));
+    const product = JSON.parse(JSON.stringify(productData))
 
     return {
       props: { product },
       revalidate: 3600, // Revalidate once per hour
-    };
+    }
   } catch (error) {
-    console.error('Error fetching product:', error);
-    return { notFound: true };
+    console.error('Error fetching product:', error)
+    return { notFound: true }
   }
-};
+}

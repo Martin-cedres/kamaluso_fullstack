@@ -1,19 +1,19 @@
-import React from "react";
-import Link from "next/link";
-import Image from "next/image";
+import React from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 
 export interface Product {
-  id: string;
-  nombre: string;
-  precio: number;
-  tipo: "tapa dura" | "tapa flex";
-  categoria: string;
-  slug: string;
-  imagen: string;
+  id: string
+  nombre: string
+  precio: number
+  tipo: 'tapa dura' | 'tapa flex'
+  categoria: string
+  slug: string
+  imagen: string
 }
 
 interface ProductCardProps {
-  product: Product;
+  product: Product
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
@@ -21,7 +21,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="flex flex-col h-full rounded-2xl border border-transparent overflow-hidden shadow-md transition-shadow hover:shadow-lg hover:shadow-pink-500/50 hover:border-2 hover:border-pink-500/50">
       <Link
         href={{
-          pathname: "/productos/[categoria]/[slug]",
+          pathname: '/productos/[categoria]/[slug]',
           query: { categoria: product.categoria, slug: product.slug },
         }}
         className="flex flex-col h-full"
@@ -53,12 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </span>
       </Link>
     </div>
-  );
-};
+  )
+}
 
-export default ProductCard;
-
-
-
-
-
+export default ProductCard
