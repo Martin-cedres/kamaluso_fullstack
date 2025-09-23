@@ -265,6 +265,7 @@ export default async function handler(
 ) {
   if (req.method === 'POST') {
     try {
+      await connectDB() // Establish Mongoose connection
       const orderDetails: OrderRequestBody = req.body
 
       // 1. Calculate subtotal on the server for security
