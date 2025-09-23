@@ -128,11 +128,11 @@ export default async function handler(
 
     console.log('Webhook recibido:', { topic, paymentId })
 
-    if (topic !== 'payment' && topic !== 'merchant_order') {
-      console.log(
-        `Webhook ignorado: Tópico no es 'payment' o 'merchant_order' (es '${topic}')`,
-      )
-      return res.status(200).send('Webhook received but ignored')
+    if (topic !== 'payment') {
+      console.log(`Webhook ignorado: Tópico no es 'payment' (es '${topic}')`)
+      return res
+        .status(200)
+        .send('Webhook received but ignored (not a payment topic)')
     }
 
     if (!paymentId) {
