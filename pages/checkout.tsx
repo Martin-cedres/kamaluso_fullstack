@@ -129,6 +129,9 @@ export default function CheckoutPage() {
           appliedCoupon,
           // Store the temp ID to create the real order on the success page
           tempOrderId: tempOrderId,
+          // Add cart items and total for order creation on success page
+          items: cartItems,
+          total: total,
         }
         localStorage.setItem('checkout_form_data', JSON.stringify(formData))
 
