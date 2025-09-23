@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import SeoMeta from '../../components/SeoMeta';
@@ -54,19 +54,21 @@ export default function BlogIndexPage({ posts }: Props) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+export const getStaticProps: GetStaticProps = async () => {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   try {
     const res = await fetch(`${baseUrl}/api/blog/listar`);
     const posts = await res.json();
 
     return {
       props: { posts },
+      revalidate: 600, // 10 min
     };
   } catch (error) {
     console.error('Error fetching posts:', error);
     return {
       props: { posts: [] },
+      revalidate: 600,
     };
   }
 };

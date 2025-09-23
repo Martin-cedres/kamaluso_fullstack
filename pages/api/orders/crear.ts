@@ -72,7 +72,39 @@ const generateEmailContent = (order: OrderForDB) => {
   const itemsList = generateItemsHTML(order.items);
   const shippingInfo = generateShippingHTML(order.shippingDetails);
   const priceSummary = generatePriceSummaryHTML(order);
-  // ... (payment instructions logic remains the same)
+
+  let paymentInstructions = '';
+  switch (order.paymentMethod) {
+    case 'brou':
+      paymentInstructions = '<p><strong>Instrucciones BROU:</strong> Realiza una transferencia o depósito al BROU, caja de ahorro en pesos Nro. 001199848-00001 (Cuenta anterior 013.0123275, Titular Martín CEDRÉS). Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'oca_blue':
+      paymentInstructions = '<p><strong>Instrucciones OCA Blue:</strong> Deposita en OCA Blue (Nro. 0216811). Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'mi_dinero':
+      paymentInstructions = '<p><strong>Instrucciones Mi Dinero:</strong> Transferencia por APP Mi Dinero (Nro. Cuenta 7537707). Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'prex':
+      paymentInstructions = '<p><strong>Instrucciones Prex:</strong> Depósito Prex (Nro. Cuenta 1216437, Nombre Katherine Silva). Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'abitab':
+      paymentInstructions = '<p><strong>Instrucciones ABITAB:</strong> GIROS a nombre de Katherine SILVA C.I 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'red_pagos':
+      paymentInstructions = '<p><strong>Instrucciones RED PAGOS:</strong> GIROS a nombre de Katherine SILVA C.I 4.798.217-8. Envía el comprobante a nuestro WhatsApp.</p>';
+      break;
+    case 'pago_en_local':
+      paymentInstructions = '<p><strong>Pago en Local:</strong> Puedes pagar en nuestro local al retirar tu pedido, por el medio que elijas en ese momento.</p>';
+      break;
+    case 'pago_efectivo_local':
+      paymentInstructions = '<p><strong>Efectivo en Local:</strong> Puedes pagar en efectivo en nuestro local al retirar tu pedido.</p>';
+      break;
+    case 'mercado_pago_online':
+      paymentInstructions = '<p><strong>Mercado Pago:</strong> Tu pago será procesado por Mercado Pago. Te notificaremos cuando esté aprobado.</p>';
+      break;
+    default:
+      paymentInstructions = '<p>No se encontraron instrucciones de pago específicas para el método seleccionado.</p>';
+  }
 
   return {
     subject: `Gracias por tu compra en Papeleria Personalizada Kamaluso`,
@@ -101,7 +133,12 @@ const generateEmailContent = (order: OrderForDB) => {
         </table>
         ${priceSummary}
 
-        {/* Payment and shipping info... */}
+        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Método de Pago</h2>
+        <p><strong>Método:</strong> ${paymentMethodText[order.paymentMethod] || 'No especificado'}</p>
+        ${paymentInstructions}
+
+        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
+        ${shippingInfo}
       </div>
     `,
   };

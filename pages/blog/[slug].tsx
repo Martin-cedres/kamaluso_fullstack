@@ -1,4 +1,4 @@
-import { GetServerSideProps } from 'next';
+import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import Navbar from '../../components/Navbar';
 import SeoMeta from '../../components/SeoMeta';
@@ -91,24 +91,32 @@ export default function BlogPostPage({ post }: Props) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { slug } = context.query;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+export const getStaticPaths: GetStaticPaths = async () => {
+  // Pre-render no paths at build; generate on-demand
+  return { paths: [], fallback: 'blocking' };
+};
+
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { slug } = context.params || {} as { slug?: string };
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+  if (!slug || typeof slug !== 'string') {
+    return { notFound: true };
+  }
 
   try {
     const res = await fetch(`${baseUrl}/api/blog/${slug}`);
     if (!res.ok) {
-      return { props: { post: null } };
+      return { notFound: true, revalidate: 300 };
     }
     const post = await res.json();
 
     return {
       props: { post },
+      revalidate: 900, // 15 min
     };
   } catch (error) {
     console.error('Error fetching post:', error);
-    return {
-      props: { post: null },
-    };
+    return { notFound: true, revalidate: 300 };
   }
 };

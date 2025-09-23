@@ -46,5 +46,6 @@ export default function SobreNosotrosPage() {
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {},
+    revalidate: 86400,
   };
 };

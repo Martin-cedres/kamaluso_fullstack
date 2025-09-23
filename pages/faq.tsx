@@ -57,5 +57,7 @@ export default function FaqPage() {
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {},
+    // Revalidate once per day
+    revalidate: 86400,
   };
 };
