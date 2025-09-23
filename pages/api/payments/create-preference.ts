@@ -21,22 +21,23 @@ export default async function handler(
   }
 
   try {
-    const { orderId, total } = req.body
+    const { orderId, total, items } = req.body
 
-    if (!orderId || typeof total === 'undefined') {
+    if (!orderId || typeof total === 'undefined' || !Array.isArray(items)) {
       return res
         .status(400)
-        .json({ message: 'Order ID and total are required' })
+        .json({ message: 'Order ID, total, and items array are required' })
     }
 
-    const preferenceItem = {
-      id: orderId,
-      title: 'Total de tu compra en Kamaluso Papelería',
-      description: 'Resumen de tu pedido completo',
-      quantity: 1,
-      unit_price: total,
+    // Map cart items to Mercado Pago preference item format
+    const preferenceItems = items.map((item) => ({
+      id: item._id,
+      title: item.nombre,
+      description: item.finish || 'Producto', // Use finish as description or a default
+      quantity: item.quantity,
+      unit_price: item.precio,
       currency_id: 'UYU',
-    }
+    }))
 
     const isProduction = process.env.NODE_ENV === 'production'
     let baseUrl
@@ -46,14 +47,9 @@ export default async function handler(
       const host = req.headers.host || 'localhost:3000'
       baseUrl = `http://${host}`
     }
-    console.log('--- DEBUG MP BASE URL ---')
-    console.log('isProduction:', isProduction)
-    console.log('req.headers.host:', req.headers.host)
-    console.log('Final baseUrl:', baseUrl)
-    console.log('--- END DEBUG MP BASE URL ---')
 
     const preferenceData = {
-      items: [preferenceItem],
+      items: preferenceItems, // Use the detailed items array
       external_reference: orderId,
       notification_url: `${baseUrl}/api/webhooks/mercadopago`,
       back_urls: {

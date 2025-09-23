@@ -111,6 +111,7 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             orderId: tempOrderId,
             total: total,
+            items: cartItems, // Add the items here
           }),
         })
 

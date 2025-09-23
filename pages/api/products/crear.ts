@@ -122,6 +122,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   })
 }
 
-export default function (req: NextApiRequest, res: NextApiResponse) {
+export default function CreateProductAuthWrapper(req: NextApiRequest, res: NextApiResponse) {
   requireAuth(req, res, () => handler(req, res))
 }

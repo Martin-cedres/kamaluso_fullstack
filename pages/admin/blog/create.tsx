@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import AdminLayout from '../../../components/AdminLayout'
-import BlogForm from './form'
+import BlogForm from '../../../components/BlogForm'
 import toast from 'react-hot-toast'
 
 export default function AdminBlogCreate() {

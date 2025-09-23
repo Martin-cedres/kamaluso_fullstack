@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import AdminLayout from '../../components/AdminLayout'
@@ -141,31 +141,38 @@ const AdminPedidosPage = () => {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  const fetchOrders = useCallback(
-    debounce(async (page: number, status: string, search: string) => {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: '20',
-      })
-      if (status) params.append('status', status)
-      if (search) params.append('search', search)
+  const debouncedFetchOrders = useMemo(
+    () =>
+      debounce(async (page: number, status: string, search: string) => {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: '20',
+        })
+        if (status) params.append('status', status)
+        if (search) params.append('search', search)
 
-      const res = await fetch(`/api/orders/listar?${params.toString()}`)
-      const data = await res.json()
-      setOrders(data.orders)
-      setTotalPages(data.totalPages)
-      setCurrentPage(data.currentPage)
-    }, 300),
-    [],
+        try {
+          const res = await fetch(`/api/orders/listar?${params.toString()}`)
+          const data = await res.json()
+          setOrders(data.orders)
+          setTotalPages(data.totalPages)
+          setCurrentPage(data.currentPage)
+        } catch (error) {
+          console.error("Error fetching orders:", error)
+        }
+      }, 300),
+    [], // useMemo dependency array is empty to create the debounced function only once
   )
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/api/auth/signin')
-    } else if (status === 'authenticated') {
-      fetchOrders(currentPage, statusFilter, searchTerm)
+    if (status === 'authenticated') {
+      debouncedFetchOrders(currentPage, statusFilter, searchTerm)
     }
-  }, [status, router, currentPage, statusFilter, searchTerm, fetchOrders])
+    // Cleanup on unmount
+    return () => {
+      debouncedFetchOrders.cancel()
+    }
+  }, [status, currentPage, statusFilter, searchTerm, debouncedFetchOrders])
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
@@ -175,7 +182,7 @@ const AdminPedidosPage = () => {
         body: JSON.stringify({ orderId, status: newStatus }),
       })
       if (res.ok) {
-        fetchOrders(currentPage, statusFilter, searchTerm)
+        debouncedFetchOrders(currentPage, statusFilter, searchTerm)
       } else {
         console.error('Failed to update order status')
       }

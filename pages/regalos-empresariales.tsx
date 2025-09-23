@@ -10,8 +10,8 @@ export default function RegalosEmpresarialesPage() {
     {
       name: 'Agendas Personalizadas',
       description:
-        'Agendas diarias o semanales con tapa dura o flexible, personalizadas con tu logo y colores corporativos.',
-      imageUrl: '/logo.webp', // Reemplazar con imagen de ejemplo
+        'Agendas diarias, dos días por página o semanales, con tapa dura o flexible, personalizadas con tu logo y colores corporativos.',
+      imageUrl: '/regalo-agenda-empresarial.webp', // Reemplazar con imagen de ejemplo
     },
     {
       name: 'Libretas Corporativas',

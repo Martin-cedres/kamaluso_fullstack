@@ -56,7 +56,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     } else if (product?.imageUrl) {
       setSelectedImage(product.imageUrl)
     }
-  }, [product?._id])
+  }, [product])
 
   const handlePrevImage = () => {
     if (!product?.images || product.images.length < 2) return

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import AdminLayout from '../../../../components/AdminLayout'
@@ -20,7 +20,7 @@ export default function AdminCouponEdit() {
     }
   }, [session, status, router])
 
-  const fetchCoupon = async () => {
+  const fetchCoupon = useCallback(async () => {
     try {
       setLoading(true)
       // Fetch coupon by code (assuming listar endpoint can filter by code)
@@ -39,7 +39,7 @@ export default function AdminCouponEdit() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [code])
 
   useEffect(() => {
     if (status === 'authenticated' && code) {

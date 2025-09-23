@@ -30,6 +30,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default function (req: NextApiRequest, res: NextApiResponse) {
+export default function DeleteProductAuthWrapper(req: NextApiRequest, res: NextApiResponse) {
   requireAuth(req, res, () => handler(req, res))
 }
