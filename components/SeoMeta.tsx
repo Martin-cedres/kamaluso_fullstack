@@ -26,9 +26,9 @@ const SeoMeta = ({
       <link rel="canonical" href={absoluteUrl} />
 
       {/* Favicon */}
-      <link rel="icon" href="/logo.webp" type="image/webp" />
-      <link rel="shortcut icon" href="/logo.webp" type="image/webp" />
-      <link rel="apple-touch-icon" href="/logo.webp" />
+      <link rel="icon" href="/favicon.ico" sizes="any" />
+      <link rel="shortcut icon" href="/favicon.ico" />
+      <link rel="apple-touch-icon" href="/favicon.ico" />
 
       {/* Open Graph / Facebook, WhatsApp, etc. */}
       <meta property="og:type" content={type} />

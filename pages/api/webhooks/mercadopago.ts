@@ -158,16 +158,23 @@ export default async function handler(
     const db = dbClient.db()
     console.log('Conexión a DB exitosa.')
 
-    const orderId = mpPayment.external_reference
-    const orderObjectId = new ObjectId(orderId)
+    const externalReference = mpPayment.external_reference
 
-    console.log(`3. Buscando la orden con ID: ${orderId}`)
-    const order = await db.collection('orders').findOne({ _id: orderObjectId })
+    console.log(`3. Buscando la orden con externalReference: ${externalReference}`)
+    const order = await db
+      .collection('orders')
+      .findOne({ externalReference: externalReference })
 
     if (!order) {
-      console.log(`Error: No se encontró ninguna orden con el ID ${orderId}`)
+      console.log(
+        `Error: No se encontró ninguna orden con el externalReference ${externalReference}`,
+      )
       return res.status(404).json({ message: 'Order not found' })
     }
+
+    // From now on, use the real _id from the found order
+    const orderObjectId = order._id
+    const orderId = orderObjectId.toHexString()
 
     if (order.status === 'pagado') {
       console.log(
