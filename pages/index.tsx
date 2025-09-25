@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import Head from 'next/head' // Importo Head para añadir el schema
 import Navbar from '../components/Navbar'
 import { getProductHref } from '../lib/utils'
 import SeoMeta from '../components/SeoMeta'
@@ -72,12 +73,44 @@ export default function Home({ destacados, categories }: HomeProps) {
     return null
   }
 
+  // --- Mis datos para el Schema de Google --- //
+  const siteUrl = 'https://www.papeleriapersonalizada.uy'
+  // Aquí defino los datos de mi organización y sitio web para que Google los entienda.
+  // Esto puede ayudar a que aparezca la caja de búsqueda de mi sitio en Google.
+  const siteSchema = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      url: siteUrl,
+      logo: `${siteUrl}/logo.webp`,
+      name: 'Kamaluso Papelería',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      url: siteUrl,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${siteUrl}/productos?search={search_term_string}`,
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ]
+
   return (
     <>
       <SeoMeta
         title="Papelería Personalizada en Uruguay | Agendas y Libretas | Kamaluso"
         description="Encuentra agendas, libretas y planners 100% personalizados en Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo el Uruguay!"
       />
+      <Head>
+        {/* Inyecto los datos estructurados de mi sitio para que Google los lea */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteSchema) }}
+          key="site-jsonld"
+        />
+      </Head>
 
       <Navbar />
 

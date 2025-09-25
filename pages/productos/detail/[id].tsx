@@ -1,4 +1,5 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
+import Head from 'next/head'
 import Navbar from '../../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -6,6 +7,7 @@ import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
 import { useState, useEffect } from 'react'
 import SeoMeta from '../../../components/SeoMeta'
+import Breadcrumbs from '../../../components/Breadcrumbs'
 import toast from 'react-hot-toast'
 import connectDB from '../../../lib/mongoose'
 import Product, { IProduct } from '../../../models/Product'
@@ -123,7 +125,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     return <div>Cargando...</div>
   }
 
-  if (!product)
+  if (!product) {
     return (
       <>
         <Navbar />
@@ -132,6 +134,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         </main>
       </>
     )
+  }
 
   const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`
   const pageDescription =
@@ -140,6 +143,61 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     'Encuentra los mejores artículos de papelería personalizada en Kamaluso.'
   const pageImage = product.images?.[0] || product.imageUrl || '/logo.webp'
   const canonicalUrl = `/productos/detail/${product._id}`
+  const siteUrl = 'https://www.papeleriapersonalizada.uy'
+
+  // --- Mis datos para los Breadcrumbs --- //
+  const breadcrumbItems = [
+    { name: 'Inicio', href: '/' },
+    {
+      name:
+        typeof product.categoria === 'string'
+          ? product.categoria.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+          : 'Productos',
+      href:
+        typeof product.categoria === 'string'
+          ? `/productos/${product.categoria}`
+          : '/productos',
+    },
+    {
+      name: product.nombre,
+      href: `/productos/detail/${product._id}`,
+    },
+  ]
+
+  // --- Mi Schema para Google --- //
+
+  // Aquí defino el schema del producto para que Google entienda mejor la información.
+  const productSchema = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.nombre,
+    image: pageImage.startsWith('http') ? pageImage : `${siteUrl}${pageImage}`,
+    description: pageDescription,
+    sku: product._id,
+    offers: {
+      '@type': 'Offer',
+      url: `${siteUrl}${canonicalUrl}`,
+      priceCurrency: 'UYU',
+      price: displayPrice,
+      availability: 'https://schema.org/InStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Kamaluso Papelería',
+      },
+    },
+  }
+
+  // Aquí defino el schema de los breadcrumbs para que Google los muestre en los resultados.
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: `${siteUrl}${item.href}`,
+    })),
+  }
 
   return (
     <>
@@ -150,132 +208,151 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         url={canonicalUrl}
         type="product"
       />
+      <Head>
+        {/* Inyecto los datos estructurados en la página para que Google los lea */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+          key="product-jsonld"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+          key="breadcrumb-jsonld"
+        />
+      </Head>
+
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-6 pb-16">
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
-          <div className="flex-1">
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
-              <Image
-                src={selectedImage || '/placeholder.png'}
-                alt={product.alt || product.nombre}
-                fill
-                style={{ objectFit: 'cover' }}
-                className="rounded-2xl transition-opacity duration-300"
-                key={selectedImage}
-              />
-              {product.images && product.images.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevImage}
-                    className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
-                    aria-label="Imagen anterior"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={handleNextImage}
-                    className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
-                    aria-label="Siguiente imagen"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-                </>
-              )}
-            </div>
-            {product.images && product.images.length > 1 && (
-              <div className="flex gap-4 mt-4 overflow-x-auto p-2">
-                {product.images.map((img, i) => (
-                  <div
-                    key={i}
-                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectedImage === img ? 'border-4 border-pink-500' : 'border-2 border-transparent hover:border-pink-300'}`}
-                    onClick={() => setSelectedImage(img)}
-                  >
-                    <Image
-                      src={img}
-                      alt={`${product.alt || product.nombre} thumbnail ${i + 1}`}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      className="rounded-lg"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <Breadcrumbs items={breadcrumbItems} />
           </div>
-          <div className="flex-1 flex flex-col justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
-              {displayPrice && (
-                <p className="text-pink-500 font-semibold text-2xl mb-6">
-                  $U {displayPrice}
-                </p>
-              )}
-
-              <p className="text-gray-600 mb-6">{product.descripcion}</p>
-              {/* Solo mostrar selectores de textura para productos con Tapa Dura */}
-              {product.tapa === 'Tapa Dura' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Textura de tapas
-                  </label>
-                  <div className="flex rounded-xl shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-12">
+            <div className="flex-1">
+              <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
+                <Image
+                  src={selectedImage || '/placeholder.png'}
+                  alt={product.alt || product.nombre}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  className="rounded-2xl transition-opacity duration-300"
+                  key={selectedImage}
+                />
+                {product.images && product.images.length > 1 && (
+                  <>
                     <button
-                      type="button"
-                      onClick={() => setFinish('Brillo')}
-                      className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={handlePrevImage}
+                      className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
+                      aria-label="Imagen anterior"
                     >
-                      Brillo
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
                     </button>
                     <button
-                      type="button"
-                      onClick={() => setFinish('Mate')}
-                      className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={handleNextImage}
+                      className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
+                      aria-label="Siguiente imagen"
                     >
-                      Mate
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
                     </button>
-                  </div>
+                  </>
+                )}
+              </div>
+              {product.images && product.images.length > 1 && (
+                <div className="flex gap-4 mt-4 overflow-x-auto p-2">
+                  {product.images.map((img, i) => (
+                    <div
+                      key={i}
+                      className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectedImage === img ? 'border-4 border-pink-500' : 'border-2 border-transparent hover:border-pink-300'}`}
+                      onClick={() => setSelectedImage(img)}
+                    >
+                      <Image
+                        src={img}
+                        alt={`${product.alt || product.nombre} thumbnail ${i + 1}`}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="rounded-lg"
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <button
-                onClick={handleAddToCart}
-                className="bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
-              >
-                Agregar al carrito
-              </button>
-              <button
-                onClick={() => router.back()}
-                className="px-6 py-3 rounded-2xl border border-pink-500 text-pink-500 font-semibold text-center hover:bg-pink-50 transition"
-              >
-                Ir atrás
-              </button>
+            <div className="flex-1 flex flex-col justify-between">
+              <div>
+                <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
+                {displayPrice && (
+                  <p className="text-pink-500 font-semibold text-2xl mb-6">
+                    $U {displayPrice}
+                  </p>
+                )}
+
+                <p className="text-gray-600 mb-6">{product.descripcion}</p>
+                {/* Solo mostrar selectores de textura para productos con Tapa Dura */}
+                {product.tapa === 'Tapa Dura' && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Textura de tapas
+                    </label>
+                    <div className="flex rounded-xl shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setFinish('Brillo')}
+                        className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                      >
+                        Brillo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFinish('Mate')}
+                        className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                      >
+                        Mate
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                <button
+                  onClick={handleAddToCart}
+                  className="bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
+                >
+                  Agregar al carrito
+                </button>
+                <button
+                  onClick={() => router.back()}
+                  className="px-6 py-3 rounded-2xl border border-pink-500 text-pink-500 font-semibold text-center hover:bg-pink-50 transition"
+                >
+                  Ir atrás
+                </button>
+              </div>
             </div>
           </div>
         </div>

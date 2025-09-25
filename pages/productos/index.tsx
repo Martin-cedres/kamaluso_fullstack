@@ -55,7 +55,7 @@ export default function ProductsPage() {
 
     fetch(apiUrl)
       .then((res) => res.json())
-      .then((data) => setProducts(data))
+      .then((data) => setProducts(data.products || []))
       .catch(() => setProducts([]))
   }, [router.isReady, categoria, subCategoria])
 

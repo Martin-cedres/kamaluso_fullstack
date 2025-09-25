@@ -2,6 +2,8 @@ import { GetStaticProps } from 'next'
 import Link from 'next/link'
 import Navbar from '../../components/Navbar'
 import SeoMeta from '../../components/SeoMeta'
+import connectDB from '../../lib/mongoose'
+import Post from '../../models/Post'
 
 interface Post {
   _id: string
@@ -69,20 +71,19 @@ export default function BlogIndexPage({ posts }: Props) {
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   try {
-    const res = await fetch(`${baseUrl}/api/blog/listar`)
-    const posts = await res.json()
+    await connectDB()
+    const postsData = await Post.find({}).sort({ createdAt: -1 }).lean()
+    const posts = JSON.parse(JSON.stringify(postsData))
 
     return {
       props: { posts },
       revalidate: 600, // 10 min
     }
   } catch (error) {
-    console.error('Error fetching posts:', error)
+    console.error('Error fetching posts for blog index:', error)
     return {
       props: { posts: [] },
-      revalidate: 600,
     }
   }
 }

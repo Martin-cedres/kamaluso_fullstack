@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { ObjectId } from 'mongodb'
 import clientPromise from '../../../lib/mongodb'
-import { requireAuth } from '../../../lib/auth'
+import { withAuth } from '../../../lib/auth' // Importación corregida
 
 export const config = { api: { bodyParser: false } }
 
@@ -193,6 +193,5 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   })
 }
 
-export default function EditProductAuthWrapper(req: NextApiRequest, res: NextApiResponse) {
-  requireAuth(req, res, () => handler(req, res))
-}
+// Exportación corregida
+export default withAuth(handler)

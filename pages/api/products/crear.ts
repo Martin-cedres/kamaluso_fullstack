@@ -6,7 +6,7 @@ import os from 'os' // Importar el módulo os
 import { v4 as uuidv4 } from 'uuid'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import clientPromise from '../../../lib/mongodb'
-import { requireAuth } from '../../../lib/auth'
+import { withAuth } from '../../../lib/auth' // Importación corregida
 
 export const config = { api: { bodyParser: false } }
 
@@ -52,6 +52,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .json({ error: 'Error al procesar formulario', detalles: String(err) })
 
     try {
+      const categoria = fields.categoria as string;
+      if (!categoria || !['tapa-dura', 'tapa-flex'].includes(categoria)) {
+        return res.status(400).json({
+          error: 'La categoría es obligatoria y debe ser "tapa-dura" o "tapa-flex".',
+        });
+      }
+
       const filePrincipal = (files.image || files.imagen) as any
       if (!filePrincipal)
         return res.status(400).json({ error: 'Falta la imagen principal' })
@@ -85,7 +92,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         precio: parseFloat(String(fields.precio || '0')) || 0,
         precioFlex: parseFloat(String(fields.precioFlex || '0')) || 0,
         precioDura: parseFloat(String(fields.precioDura || '0')) || 0,
-        categoria: String(fields.categoria || 'sublimable'),
+        categoria: categoria,
         subCategoria: subCategoriaField ? [subCategoriaField] : [],
         tapa: String(fields.tapa || ''),
         seoTitle: String(fields.seoTitle || ''),
@@ -122,6 +129,5 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   })
 }
 
-export default function CreateProductAuthWrapper(req: NextApiRequest, res: NextApiResponse) {
-  requireAuth(req, res, () => handler(req, res))
-}
+// Exportación corregida
+export default withAuth(handler)

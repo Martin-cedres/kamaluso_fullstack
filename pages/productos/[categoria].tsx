@@ -1,4 +1,5 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
+import Head from 'next/head' // Importo Head
 import Navbar from '../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -7,6 +8,7 @@ import { categorias } from '../../lib/categorias'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import SeoMeta from '../../components/SeoMeta'
+import Breadcrumbs from '../../components/Breadcrumbs'
 import connectDB from '../../lib/mongoose'
 import Product from '../../models/Product'
 
@@ -163,6 +165,25 @@ export default function CategoryPage({
   const pageTitle = `${category.nombre} Personalizadas en Uruguay | Kamaluso`
   const pageDescription = `${category.descripcion}. Calidad y diseño único con envío a todo Uruguay.`
   const canonicalUrl = `/productos/${category.slug}`
+  const siteUrl = 'https://www.papeleriapersonalizada.uy'
+
+  // --- Mis datos para los Breadcrumbs --- //
+  const breadcrumbItems = [
+    { name: 'Inicio', href: '/' },
+    { name: category.nombre, href: `/productos/${category.slug}` },
+  ]
+
+  // Aquí defino el schema de los breadcrumbs para que Google los muestre en los resultados.
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: `${siteUrl}${item.href}`,
+    })),
+  }
 
   return (
     <>
@@ -172,10 +193,21 @@ export default function CategoryPage({
         image={category.imagen || '/logo.webp'}
         url={canonicalUrl}
       />
+      {/* Inyecto los datos estructurados de los breadcrumbs para que Google los lea */}
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+          key="breadcrumb-jsonld"
+        />
+      </Head>
 
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <Breadcrumbs items={breadcrumbItems} />
+          </div>
           <h1 className="text-3xl md:text-4xl font-semibold text-center mb-4">
             {category.nombre}
           </h1>

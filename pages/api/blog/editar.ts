@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import mongoose from 'mongoose'
 import connectDB from '../../../lib/mongoose'
 import Post from '../../../models/Post'
-import { requireAuth } from '../../../lib/auth'
+import { withAuth } from '../../../lib/auth' // Importación corregida
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'PUT') {
@@ -50,6 +50,5 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 }
 
-export default function EditBlogAuthWrapper(req: NextApiRequest, res: NextApiResponse) {
-  requireAuth(req, res, () => handler(req, res))
-}
+// Exportación corregida
+export default withAuth(handler)

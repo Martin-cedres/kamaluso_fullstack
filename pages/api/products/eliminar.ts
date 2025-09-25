@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { ObjectId } from 'mongodb'
 import clientPromise from '../../../lib/mongodb'
-import { requireAuth } from '../../../lib/auth'
+import { withAuth } from '../../../lib/auth' // Importación corregida
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE')
@@ -30,6 +30,5 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default function DeleteProductAuthWrapper(req: NextApiRequest, res: NextApiResponse) {
-  requireAuth(req, res, () => handler(req, res))
-}
+// Exportación corregida
+export default withAuth(handler)

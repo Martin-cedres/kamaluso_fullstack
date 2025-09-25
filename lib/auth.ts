@@ -1,5 +1,7 @@
 // lib/auth.ts
 import jwt from 'jsonwebtoken'
+import { getToken } from 'next-auth/jwt'
+import type { NextApiRequest, NextApiResponse, NextApiHandler } from 'next'
 
 // Clave secreta para JWT
 const secret = process.env.NEXTAUTH_SECRET || 'secret_default'
@@ -12,24 +14,23 @@ export function generarToken(payload: any) {
 }
 
 /**
- * Middleware para proteger rutas de la API
+ * Higher-Order Function para proteger rutas de la API.
+ * Envuelve un handler y comprueba la autenticación antes de ejecutarlo.
  */
-import { getToken } from 'next-auth/jwt'
-import type { NextApiRequest, NextApiResponse } from 'next'
+export const withAuth = (handler: NextApiHandler) => {
+  return async (req: NextApiRequest, res: NextApiResponse) => {
+    const token = await getToken({ req, secret })
 
-export async function requireAuth(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  next: () => void,
-) {
-  const token = await getToken({ req, secret })
+    if (!token) {
+      return res
+        .status(401)
+        .json({ error: 'No autorizado. Debes iniciar sesión.' })
+    }
 
-  if (!token) {
-    return res
-      .status(401)
-      .json({ error: 'No autorizado. Debes iniciar sesión.' })
+    // Opcional: adjuntar el token/usuario al request si el handler lo necesita
+    // (req as any).user = token;
+
+    // Si la autenticación es exitosa, llama al handler original.
+    return handler(req, res)
   }
-
-  ;(req as any).user = token
-  next()
 }
