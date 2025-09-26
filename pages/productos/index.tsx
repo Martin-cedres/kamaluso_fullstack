@@ -3,108 +3,68 @@ import { useRouter } from 'next/router'
 import Navbar from '../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getProductHref } from '../../lib/utils' // Usamos la utilidad de URL
-import SeoMeta from '../../components/SeoMeta'
+import { getProductHref } from '../../lib/utils';
+import SeoMeta from '../../components/SeoMeta';
+import ProductCard from '../../components/ProductCard'; // Importar ProductCard
 
 interface Product {
-  _id: string
-  nombre: string
-  descripcion?: string
-  precio?: number
-  precioFlex?: number
-  precioDura?: number
-  categoria?: string
-  subCategoria?: string
-  destacado?: boolean
-  imageUrl?: string
-  images?: string[]
-  alt?: string
-  slug?: string
-  tapa?: string
+  _id: string;
+  nombre: string;
+  precio?: number;
+  precioFlex?: number;
+  precioDura?: number;
+  categoria?: string;
+  slug?: string;
+  imageUrl?: string;
+  averageRating?: number;
+  numReviews?: number;
+  tapa?: string;
 }
 
-const ITEMS_PER_PAGE = 16
+const ITEMS_PER_PAGE = 16;
 
 export default function ProductsPage() {
-  const router = useRouter()
-  const { categoria, subCategoria } = router.query
+  const router = useRouter();
+  const { categoria, subCategoria } = router.query;
 
-  const [products, setProducts] = useState<Product[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [title, setTitle] = useState('Productos')
+  const [products, setProducts] = useState<Product[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [title, setTitle] = useState('Productos');
 
   useEffect(() => {
-    if (!router.isReady) return
+    if (!router.isReady) return;
 
-    let apiUrl = '/api/products/listar'
-    const queryParams = new URLSearchParams()
+    let apiUrl = '/api/products/listar';
+    const queryParams = new URLSearchParams();
 
     if (categoria) {
-      queryParams.append('categoria', categoria as string)
-      setTitle(categoria as string)
+      queryParams.append('categoria', categoria as string);
+      setTitle(categoria as string);
     }
     if (subCategoria) {
-      queryParams.append('subCategoria', subCategoria as string)
-      // Si hay subcategoría, el título es más específico
-      setTitle(subCategoria as string)
+      queryParams.append('subCategoria', subCategoria as string);
+      setTitle(subCategoria as string);
     }
 
     if (queryParams.toString()) {
-      apiUrl += `?${queryParams.toString()}`
+      apiUrl += `?${queryParams.toString()}`;
     }
 
     fetch(apiUrl)
       .then((res) => res.json())
       .then((data) => setProducts(data.products || []))
-      .catch(() => setProducts([]))
-  }, [router.isReady, categoria, subCategoria])
+      .catch(() => setProducts([]));
+  }, [router.isReady, categoria, subCategoria]);
 
-  const indexOfLast = currentPage * ITEMS_PER_PAGE
-  const indexOfFirst = indexOfLast - ITEMS_PER_PAGE
-  const currentProducts = products.slice(indexOfFirst, indexOfLast)
-  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE)
-
-  const getCardPrice = (product: Product) => {
-    if (product.precioDura && product.precioFlex) {
-      return (
-        <>
-          <p className="text-pink-500 font-semibold text-lg mb-1">
-            Dura: $U {product.precioDura}
-          </p>
-          <p className="text-pink-500 font-semibold text-lg mb-4">
-            Flex: $U {product.precioFlex}
-          </p>
-        </>
-      )
-    }
-    if (product.precioDura) {
-      return (
-        <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precioDura}
-        </p>
-      )
-    }
-    if (product.precioFlex) {
-      return (
-        <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precioFlex}
-        </p>
-      )
-    }
-    if (product.precio) {
-      return (
-        <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precio}
-        </p>
-      )
-    }
-    return null
-  }
+  const indexOfLast = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirst = indexOfLast - ITEMS_PER_PAGE;
+  const currentProducts = products.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
 
   const formattedTitle =
     typeof title === 'string'
       ? title.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-      : 'Productos'
+      : 'Productos';
 
   return (
     <>
@@ -119,39 +79,25 @@ export default function ProductsPage() {
           {formattedTitle}
         </h1>
 
-        <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {currentProducts.length === 0 && (
-            <p className="text-center w-full text-gray-500">
+            <p className="text-center w-full col-span-full text-gray-500">
               No se encontraron productos para esta selección.
             </p>
           )}
 
           {currentProducts.map((product) => (
-            <Link key={product._id} href={getProductHref(product)}>
-              <div className="w-64 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col cursor-pointer">
-                <div className="relative w-full h-48">
-                  <Image
-                    src={product.imageUrl || '/placeholder.png'}
-                    alt={product.alt || product.nombre}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    className="rounded-xl"
-                  />
-                </div>
-
-                <div className="p-4 text-center flex flex-col flex-grow">
-                  <h3 className="font-semibold text-lg mb-2">
-                    {product.nombre}
-                  </h3>
-
-                  <div>{getCardPrice(product)}</div>
-
-                  <div className="inline-block bg-pink-500 text-white px-4 py-2 rounded-xl shadow mt-auto">
-                    Ver más
-                  </div>
-                </div>
-              </div>
-            </Link>
+            <ProductCard key={product._id} product={{
+              id: product._id,
+              nombre: product.nombre,
+              precio: product.precioDura || product.precioFlex || product.precio || 0,
+              tipo: product.tapa === 'Tapa Dura' ? 'tapa dura' : 'tapa flex',
+              categoria: product.categoria || '',
+              slug: product.slug || '',
+              imagen: product.imageUrl || '/placeholder.png',
+              averageRating: product.averageRating,
+              numReviews: product.numReviews,
+            }} />
           ))}
         </div>
 
@@ -174,5 +120,5 @@ export default function ProductsPage() {
         )}
       </main>
     </>
-  )
+  );
 }

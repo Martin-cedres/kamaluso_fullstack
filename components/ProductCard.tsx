@@ -1,19 +1,22 @@
-import React from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import StarRating from './StarRating'; // Importar StarRating
 
 export interface Product {
-  id: string
-  nombre: string
-  precio: number
-  tipo: 'tapa dura' | 'tapa flex'
-  categoria: string
-  slug: string
-  imagen: string
+  id: string;
+  nombre: string;
+  precio: number;
+  tipo: 'tapa dura' | 'tapa flex';
+  categoria: string;
+  slug: string;
+  imagen: string;
+  averageRating?: number;
+  numReviews?: number;
 }
 
 interface ProductCardProps {
-  product: Product
+  product: Product;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
@@ -41,6 +44,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <h2 className="text-lg font-bold text-gray-800 mb-1 line-clamp-2">
             {product.nombre}
           </h2>
+          
+          {/* Rating de Estrellas */}
+          {product.numReviews && product.numReviews > 0 && product.averageRating ? (
+            <div className="flex items-center my-2">
+              <StarRating rating={product.averageRating} />
+              <span className="text-xs text-gray-500 ml-2">
+                ({product.numReviews})
+              </span>
+            </div>
+          ) : (
+            <div className="my-2 h-6">{/* Placeholder to keep height consistent */ }</div>
+          )}
+
           <p className="text-sm text-gray-500 mb-2">Tipo: {product.tipo}</p>
           <p className="text-xl font-semibold text-pink-500 mb-0">
             ${product.precio}
@@ -53,7 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </span>
       </Link>
     </div>
-  )
-}
+  );
+};
 
-export default ProductCard
+export default ProductCard;

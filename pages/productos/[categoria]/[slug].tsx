@@ -3,18 +3,25 @@ import Head from 'next/head'
 import Navbar from '../../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useCart } from '../../../context/CartContext'
-import { useState } from 'react'
-import toast from 'react-hot-toast'
-import connectDB from '../../../lib/mongoose'
-import Product, { IProduct } from '../../../models/Product'
-import { useRouter } from 'next/router'
+import { useCart } from '../../../context/CartContext';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import connectDB from '../../../lib/mongoose';
+import Product, { IProduct } from '../../../models/Product';
+import Review, { IReview } from '../../../models/Review'; // Import Review model and interface
+import { useRouter } from 'next/router';
+import StarRating from '../../../components/StarRating';
+import ReviewList from '../../../components/ReviewList';
+import ReviewForm from '../../../components/ReviewForm';
 
 interface ProductDetailProps {
-  product: IProduct | null
+  product: IProduct | null;
+  reviews: IReview[];
+  reviewCount: number;
+  averageRating: string;
 }
 
-export default function ProductDetailPage({ product }: ProductDetailProps) {
+export default function ProductDetailPage({ product, reviews, reviewCount, averageRating }: ProductDetailProps) {
   const { addToCart } = useCart()
   const [finish, setFinish] = useState<string | null>(null)
   const router = useRouter()
@@ -168,7 +175,15 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
           {/* Información del producto */}
           <div className="flex-1 flex flex-col justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
+              <h1 className="text-4xl font-bold mb-2">{product.nombre}</h1>
+              {reviewCount > 0 && (
+                <div className="flex items-center mb-4">
+                  <StarRating rating={parseFloat(averageRating)} />
+                  <span className="text-gray-600 ml-2">
+                    ({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})
+                  </span>
+                </div>
+              )}
               {displayPrice && (
                 <p className="text-pink-500 font-semibold text-2xl mb-6">
                   $U {displayPrice}
@@ -237,6 +252,20 @@ export default function ProductDetailPage({ product }: ProductDetailProps) {
           </Link>
         </section>
 
+        {/* Reviews Section */}
+        <section className="mt-16 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-semibold mb-8 text-center">
+            Opiniones de nuestros clientes
+          </h2>
+          <div className="space-y-12">
+            <ReviewForm
+              productId={product._id}
+              onReviewSubmit={() => router.replace(router.asPath)} // Re-run getStaticProps
+            />
+            <ReviewList reviews={reviews} />
+          </div>
+        </section>
+
         {/* Productos relacionados */}
         <section className="mt-16">
           <h2 className="text-3xl font-semibold mb-8 text-center">
@@ -284,14 +313,27 @@ export const getStaticProps: GetStaticProps = async (context) => {
       return { notFound: true }
     }
 
-    const product = JSON.parse(JSON.stringify(productData))
+    const product = JSON.parse(JSON.stringify(productData));
+
+    // Fetch approved reviews and calculate average rating
+    const reviewsData = await Review.find({ product: product._id, isApproved: true }).sort({ createdAt: -1 }).lean();
+    const reviews = JSON.parse(JSON.stringify(reviewsData));
+    const reviewCount = reviews.length;
+    const averageRating = reviewCount > 0
+      ? reviews.reduce((acc: number, item: any) => item.rating + acc, 0) / reviewCount
+      : 0;
 
     return {
-      props: { product },
+      props: {
+        product,
+        reviews,
+        reviewCount,
+        averageRating: averageRating.toFixed(1),
+      },
       revalidate: 3600, // Revalidate once per hour
     }
   } catch (error) {
-    console.error('Error fetching product:', error)
-    return { notFound: true }
+    console.error('Error fetching product:', error);
+    return { notFound: true };
   }
-}
+};

@@ -1,16 +1,26 @@
 // lib/auth.ts
 import jwt from 'jsonwebtoken'
-import { getToken } from 'next-auth/jwt'
-import type { NextApiRequest, NextApiResponse, NextApiHandler } from 'next'
+import { getToken } from 'next-auth/jwt';
+import type { NextApiRequest, NextApiResponse, NextApiHandler } from 'next';
+import { JWT } from 'next-auth/jwt';
 
 // Clave secreta para JWT
-const secret = process.env.NEXTAUTH_SECRET || 'secret_default'
+const secret = process.env.NEXTAUTH_SECRET || 'secret_default';
+
+/**
+ * Checks if the user is an administrator.
+ * @param token The JWT token from next-auth.
+ * @returns True if the user has the 'admin' role, false otherwise.
+ */
+export const isAdmin = (token: JWT | null): boolean => {
+  return token?.role === 'admin';
+};
 
 /**
  * Genera un token JWT con el payload recibido
  */
 export function generarToken(payload: any) {
-  return jwt.sign(payload, secret, { expiresIn: '7d' })
+  return jwt.sign(payload, secret, { expiresIn: '7d' });
 }
 
 /**

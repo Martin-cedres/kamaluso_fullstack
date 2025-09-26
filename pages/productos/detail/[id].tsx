@@ -8,9 +8,13 @@ import { useCart } from '../../../context/CartContext'
 import { useState, useEffect } from 'react'
 import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
+import StarRating from '../../../components/StarRating';
+import ReviewList from '../../../components/ReviewList';
+import ReviewForm from '../../../components/ReviewForm';
 import toast from 'react-hot-toast'
 import connectDB from '../../../lib/mongoose'
 import Product, { IProduct } from '../../../models/Product'
+import Review, { IReview } from '../../../models/Review';
 import mongoose from 'mongoose'
 
 // This interface is for the props passed to the component
@@ -42,9 +46,12 @@ const getCardDisplayPrice = (product: ProductProp) => {
 interface Props {
   product: ProductProp | null
   relatedProducts: ProductProp[]
+  reviews: IReview[]
+  reviewCount: number
+  averageRating: string
 }
 
-export default function ProductDetailPage({ product, relatedProducts }: Props) {
+export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating }: Props) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [selectedImage, setSelectedImage] = useState<string | undefined>(
@@ -185,6 +192,26 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         name: 'Kamaluso Papelería',
       },
     },
+    aggregateRating: reviewCount > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: averageRating,
+      reviewCount: reviewCount,
+    } : undefined,
+    review: reviews.map((review) => ({
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: review.user.name,
+      },
+      datePublished: new Date(review.createdAt).toISOString(),
+      reviewBody: review.comment,
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: review.rating,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    })),
   }
 
   // Aquí defino el schema de los breadcrumbs para que Google los muestre en los resultados.
@@ -307,6 +334,14 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
             <div className="flex-1 flex flex-col justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
+                {reviewCount > 0 && (
+                  <div className="flex items-center mb-4">
+                    <StarRating rating={parseFloat(averageRating)} />
+                    <span className="text-gray-600 ml-2">
+                      ({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})
+                    </span>
+                  </div>
+                )}
                 {displayPrice && (
                   <p className="text-pink-500 font-semibold text-2xl mb-6">
                     $U {displayPrice}
@@ -356,6 +391,20 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
             </div>
           </div>
         </div>
+
+                {/* Reviews Section */}
+        <section className="mt-16 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-semibold mb-8 text-center">
+            Opiniones de nuestros clientes
+          </h2>
+          <div className="space-y-12">
+            <ReviewForm
+              productId={product._id}
+              onReviewSubmit={() => window.location.reload()}
+            />
+            <ReviewList reviews={reviews} />
+          </div>
+        </section>
 
         {relatedProducts.length > 0 && (
           <section className="mt-16">
@@ -433,6 +482,16 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
     const product = JSON.parse(JSON.stringify(productData))
 
+    // Fetch approved reviews
+    const reviewsData = await Review.find({ product: product._id, isApproved: true }).sort({ createdAt: -1 }).lean();
+    const reviews = JSON.parse(JSON.stringify(reviewsData));
+
+    // Calculate average rating from approved reviews
+    const reviewCount = reviews.length;
+    const averageRating = reviewCount > 0
+      ? reviews.reduce((acc: number, item: IReview) => item.rating + acc, 0) / reviewCount
+      : 0;
+
     let relatedProductsData: IProduct[] = []
     if (product.categoria) {
       relatedProductsData = await Product.find({
@@ -448,6 +507,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         product,
         relatedProducts,
+        reviews,
+        reviewCount,
+        averageRating: averageRating.toFixed(1),
       },
       revalidate: 3600, // Revalidate once per hour
     }

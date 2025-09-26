@@ -1,7 +1,8 @@
 import mongoose, { Document, Schema, Model } from 'mongoose'
 
 export interface IProduct extends Document {
-  nombre: string
+  _id: string;
+  nombre: string;
   slug: string
   descripcion: string
   precio: number
@@ -18,7 +19,9 @@ export interface IProduct extends Document {
   status: string
   destacado: boolean
   imageUrl: string
-  images?: string[]
+  images?: string[];
+  averageRating?: number;
+  numReviews?: number;
 }
 
 const productSchema: Schema<IProduct> = new Schema(

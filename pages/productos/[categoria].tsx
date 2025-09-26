@@ -8,25 +8,28 @@ import { categorias } from '../../lib/categorias'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import SeoMeta from '../../components/SeoMeta'
-import Breadcrumbs from '../../components/Breadcrumbs'
-import connectDB from '../../lib/mongoose'
-import Product from '../../models/Product'
+import Breadcrumbs from '../../components/Breadcrumbs';
+import connectDB from '../../lib/mongoose';
+import Product from '../../models/Product';
+import ProductCard from '../../components/ProductCard'; // Importar ProductCard
 
 // Interfaces
 interface IProduct {
-  _id: string
-  nombre: string
-  descripcion?: string
-  precio?: number
-  precioFlex?: number
-  precioDura?: number
-  categoria?: string
-  destacado?: boolean
-  imageUrl?: string
-  images?: string[]
-  alt?: string
-  slug?: string
-  tapa?: string
+  _id: string;
+  nombre: string;
+  descripcion?: string;
+  precio?: number;
+  precioFlex?: number;
+  precioDura?: number;
+  categoria?: string;
+  destacado?: boolean;
+  imageUrl?: string;
+  images?: string[];
+  alt?: string;
+  slug?: string;
+  tapa?: string;
+  averageRating?: number;
+  numReviews?: number;
 }
 
 interface Category {
@@ -258,28 +261,17 @@ export default function CategoryPage({
                 )}
 
                 {products.map((product) => (
-                  <Link key={product._id} href={getProductHref(product)}>
-                    <div className="bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col cursor-pointer h-full">
-                      <div className="relative w-full aspect-square">
-                        <Image
-                          src={product.imageUrl || '/placeholder.png'}
-                          alt={product.alt || product.nombre}
-                          fill
-                          style={{ objectFit: 'cover' }}
-                          className=""
-                        />
-                      </div>
-                      <div className="p-4 text-center flex flex-col flex-grow">
-                        <h3 className="font-semibold text-lg mb-2 flex-grow">
-                          {product.nombre}
-                        </h3>
-                        <div>{getCardPrice(product)}</div>
-                      </div>
-                      <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
-                        Ver más
-                      </div>
-                    </div>
-                  </Link>
+                  <ProductCard key={product._id} product={{
+                    id: product._id,
+                    nombre: product.nombre,
+                    precio: product.precioDura || product.precioFlex || product.precio || 0,
+                    tipo: product.tapa === 'Tapa Dura' ? 'tapa dura' : 'tapa flex',
+                    categoria: product.categoria || '',
+                    slug: product.slug || '',
+                    imagen: product.imageUrl || '/placeholder.png',
+                    averageRating: product.averageRating,
+                    numReviews: product.numReviews,
+                  }} />
                 ))}
               </div>
 
@@ -334,21 +326,55 @@ export const getStaticProps: GetStaticProps = async (context) => {
     return { notFound: true }
   }
 
-  await connectDB()
+  await connectDB();
 
-  const page = 1
-  const limit = 12 // O el número de productos por página que prefieras
-  const query = { categoria: category.slug }
+  const page = 1;
+  const limit = 12;
+  const query = { categoria: category.slug };
 
-  const productsData = await Product.find(query)
-    .limit(limit)
-    .skip((page - 1) * limit)
-    .lean()
+  const aggregationPipeline = [
+    { $match: query },
+    { $sort: { creadoEn: -1 } },
+    { $skip: (page - 1) * limit },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: 'reviews',
+        localField: '_id',
+        foreignField: 'product',
+        as: 'reviews',
+      },
+    },
+    {
+      $addFields: {
+        approvedReviews: {
+          $filter: {
+            input: '$reviews',
+            as: 'review',
+            cond: { $eq: ['$$review.isApproved', true] },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        averageRating: { $avg: '$approvedReviews.rating' },
+        numReviews: { $size: '$approvedReviews' },
+      },
+    },
+    { $project: { reviews: 0, approvedReviews: 0 } },
+  ];
 
-  const totalProducts = await Product.countDocuments(query)
+  const productsData = await Product.aggregate(aggregationPipeline as any[]);
 
-  const initialProducts = JSON.parse(JSON.stringify(productsData))
-  const initialTotalPages = Math.ceil(totalProducts / limit)
+  const totalProducts = await Product.countDocuments(query);
+
+  const initialProducts = JSON.parse(JSON.stringify(productsData)).map((p:any) => ({
+    ...p,
+    averageRating: p.averageRating === null ? 0 : p.averageRating,
+    numReviews: p.numReviews || 0,
+  }));
+  const initialTotalPages = Math.ceil(totalProducts / limit);
 
   return {
     props: {
