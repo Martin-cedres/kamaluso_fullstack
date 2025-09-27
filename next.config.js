@@ -12,6 +12,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
     ],
   },
 }

@@ -3,40 +3,11 @@ import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
 import os from 'os' // Importar el módulo os
-import { v4 as uuidv4 } from 'uuid'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import clientPromise from '../../../lib/mongodb'
-import { withAuth } from '../../../lib/auth' // Importación corregida
+import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la utilidad compartida
+import clientPromise from '../../../lib/mongodb';
+import { withAuth } from '../../../lib/auth';
 
-export const config = { api: { bodyParser: false } }
-
-const s3 = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
-
-const uploadFileToS3 = async (file: formidable.File) => {
-  if (!file || !file.filepath) throw new Error('Archivo inválido')
-  const buffer = fs.readFileSync(file.filepath)
-  const ext = path.extname(file.originalFilename || '') || '.webp'
-  const key = `productos/${uuidv4()}${ext}`
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key,
-      Body: buffer,
-      ContentType: file.mimetype || 'application/octet-stream',
-      ACL: 'public-read',
-    }),
-  )
-  try {
-    fs.unlinkSync(file.filepath)
-  } catch (e) {}
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
-}
+export const config = { api: { bodyParser: false } };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'POST')
@@ -53,17 +24,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     try {
       const categoria = fields.categoria as string;
-      if (!categoria || !['tapa-dura', 'tapa-flex'].includes(categoria)) {
+      if (!categoria) { // Simplemente chequear que la categoría exista
         return res.status(400).json({
-          error: 'La categoría es obligatoria y debe ser "tapa-dura" o "tapa-flex".',
+          error: 'La categoría es un campo obligatorio.',
         });
       }
 
       const filePrincipal = (files.image || files.imagen) as any
       if (!filePrincipal)
         return res.status(400).json({ error: 'Falta la imagen principal' })
-      const fp = Array.isArray(filePrincipal) ? filePrincipal[0] : filePrincipal
-      const imageUrl = await uploadFileToS3(fp as formidable.File)
+      const fp = Array.isArray(filePrincipal) ? filePrincipal[0] : filePrincipal;
+      const imageUrl = await uploadFileToS3(fp as formidable.File, 'productos');
 
       const filesArray: formidable.File[] = []
       Object.keys(files).forEach((k) => {
@@ -77,8 +48,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const imagesUrls: string[] = []
       for (const f of filesArray) {
         if (f && f.filepath) {
-          const url = await uploadFileToS3(f as formidable.File)
-          imagesUrls.push(url)
+          const url = await uploadFileToS3(f as formidable.File, 'productos');
+          imagesUrls.push(url);
         }
       }
       imagesUrls.unshift(imageUrl)

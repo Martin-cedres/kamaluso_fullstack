@@ -45,12 +45,32 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         res.status(200).json(updatedReview);
       } catch (error) {
         console.error('Error al actualizar la reseña:', error);
+        res.status(500).json({ error: 'Error al actualizar la reseña' });
+      }
+      break;
+
+    case 'DELETE':
+      try {
+        const { reviewId } = req.body;
+        if (!reviewId) {
+          return res.status(400).json({ error: 'Falta el parámetro reviewId' });
+        }
+
+        const deletedReview = await Review.findByIdAndDelete(reviewId);
+
+        if (!deletedReview) {
+          return res.status(404).json({ error: 'Reseña no encontrada' });
+        }
+
+        res.status(200).json({ message: 'Reseña eliminada correctamente' });
+      } catch (error) {
+        console.error('Error al eliminar la reseña:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
       }
       break;
 
     default:
-      res.setHeader('Allow', ['GET', 'PUT']);
+      res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
       res.status(405).end(`Método ${req.method} no permitido`);
   }
 };

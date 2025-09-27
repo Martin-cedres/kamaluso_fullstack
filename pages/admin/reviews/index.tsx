@@ -65,6 +65,27 @@ const AdminReviewsPage = () => {
     }
   };
 
+  const handleDelete = async (reviewId: string) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta reseña? Esta acción es irreversible.')) {
+      try {
+        const res = await fetch('/api/admin/reviews', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewId }),
+        });
+
+        if (res.ok) {
+          toast.success('Reseña eliminada.');
+          setReviews(reviews.filter(r => r._id !== reviewId));
+        } else {
+          toast.error('No se pudo eliminar la reseña.');
+        }
+      } catch (error) {
+        toast.error('Error al eliminar la reseña.');
+      }
+    }
+  };
+
   if (loading) {
     return <AdminLayout><div>Cargando reseñas...</div></AdminLayout>;
   }
@@ -96,12 +117,13 @@ const AdminReviewsPage = () => {
                     {review.isApproved ? 'Aprobado' : 'Pendiente'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                   {!review.isApproved ? (
                     <button onClick={() => handleApproval(review._id, true)} className="text-indigo-600 hover:text-indigo-900">Aprobar</button>
                   ) : (
-                    <button onClick={() => handleApproval(review._id, false)} className="text-red-600 hover:text-red-900">Desaprobar</button>
+                    <button onClick={() => handleApproval(review._id, false)} className="text-yellow-600 hover:text-yellow-900">Desaprobar</button>
                   )}
+                  <button onClick={() => handleDelete(review._id)} className="text-red-600 hover:text-red-900">Eliminar</button>
                 </td>
               </tr>
             ))}

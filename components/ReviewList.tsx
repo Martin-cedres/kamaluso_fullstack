@@ -44,7 +44,18 @@ const ReviewList = ({ reviews }: ReviewListProps) => {
             <div className="my-1">
               <StarRating rating={review.rating} />
             </div>
-            <p className="text-gray-600">{review.comment}</p>
+            <p className="text-gray-600 whitespace-pre-wrap">{review.comment}</p>
+            {review.imageUrl && (
+              <div className="mt-4">
+                <Image
+                  src={review.imageUrl}
+                  alt={`Imagen de la reseña de ${review.user.name}`}
+                  width={200} // Un tamaño razonable para la vista de lista
+                  height={200}
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            )}
           </div>
         </div>
       ))}

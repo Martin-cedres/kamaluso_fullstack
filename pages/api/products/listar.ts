@@ -79,7 +79,7 @@ export default async function handler(
 
     const aggregationPipeline = [
       { $match: query },
-      { $sort: { creadoEn: -1 } },
+      { $sort: { createdAt: -1 } },
       { $skip: skip },
       { $limit: limitNum },
       {
@@ -109,9 +109,8 @@ export default async function handler(
       },
       {
         $project: {
-          reviews: 0, // Don't send all reviews to the client
-          approvedReviews: 0,
-          // Include original fields
+          // No mezclar inclusiones y exclusiones. Solo incluir lo necesario.
+          // _id se incluye por defecto.
           nombre: 1,
           slug: 1,
           descripcion: 1,
@@ -129,10 +128,9 @@ export default async function handler(
           destacado: 1,
           imageUrl: 1,
           images: 1,
-          creadoEn: 1,
-          actualizadoEn: 1,
+          createdAt: 1,
+          updatedAt: 1,
           tapa: 1,
-          // Add new calculated fields
           averageRating: 1,
           numReviews: 1,
         },

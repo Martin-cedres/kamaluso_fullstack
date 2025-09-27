@@ -10,6 +10,7 @@ export interface IReview extends Document {
   };
   rating: number;
   comment: string;
+  imageUrl?: string;
   isApproved: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +39,7 @@ const reviewSchema: Schema<IReview> = new Schema(
       required: true,
       trim: true,
     },
+    imageUrl: { type: String },
     isApproved: {
       type: Boolean,
       default: false,

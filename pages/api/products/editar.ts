@@ -3,47 +3,19 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
-import { v4 as uuidv4 } from 'uuid'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import { ObjectId } from 'mongodb'
-import clientPromise from '../../../lib/mongodb'
-import { withAuth } from '../../../lib/auth' // Importación corregida
+import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la utilidad compartida
+import { ObjectId } from 'mongodb';
+import os from 'os'; // Importar os
+import clientPromise from '../../../lib/mongodb';
+import { withAuth } from '../../../lib/auth';
 
-export const config = { api: { bodyParser: false } }
-
-const s3 = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
-
-const uploadFileToS3 = async (file: formidable.File) => {
-  if (!file || !file.filepath) throw new Error('Archivo inválido para S3')
-  const buffer = fs.readFileSync(file.filepath)
-  const ext = path.extname(file.originalFilename || '') || '.webp'
-  const key = `productos/${uuidv4()}${ext}`
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key,
-      Body: buffer,
-      ContentType: file.mimetype || 'application/octet-stream',
-      ACL: 'public-read',
-    }),
-  )
-  try {
-    fs.unlinkSync(file.filepath)
-  } catch (e) {}
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
-}
+export const config = { api: { bodyParser: false } };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'PUT')
-    return res.status(405).json({ error: 'Método no permitido' })
+    return res.status(405).json({ error: 'Método no permitido' });
 
-  const form = formidable({ multiples: true, uploadDir: '/tmp' })
+  const form = formidable({ multiples: true, uploadDir: os.tmpdir() }); // Usar el directorio temporal del SO
 
   form.parse(req, async (err, fields, files) => {
     if (err)
@@ -76,17 +48,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const updateDoc: any = {}
 
       // Campos de texto directos
-      if (fields.nombre) updateDoc.nombre = fields.nombre
-      if (fields.slug) updateDoc.slug = fields.slug
-      if (fields.descripcion) updateDoc.descripcion = fields.descripcion
-      if (fields.seoTitle) updateDoc.seoTitle = fields.seoTitle
+      if (fields.nombre) updateDoc.nombre = String(fields.nombre)
+      if (fields.slug) updateDoc.slug = String(fields.slug)
+      if (fields.descripcion) updateDoc.descripcion = String(fields.descripcion)
+      if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle)
       if (fields.seoDescription)
-        updateDoc.seoDescription = fields.seoDescription
-      if (fields.alt) updateDoc.alt = fields.alt
-      if (fields.notes) updateDoc.notes = fields.notes
-      if (fields.status) updateDoc.status = fields.status
-      if (fields.categoria) updateDoc.categoria = fields.categoria
-      if (fields.tapa) updateDoc.tapa = fields.tapa
+        updateDoc.seoDescription = String(fields.seoDescription)
+      if (fields.alt) updateDoc.alt = String(fields.alt)
+      if (fields.notes) updateDoc.notes = String(fields.notes)
+      if (fields.status) updateDoc.status = String(fields.status)
+      if (fields.categoria) updateDoc.categoria = String(fields.categoria)
+      if (fields.tapa) updateDoc.tapa = String(fields.tapa)
 
       // Campo de precio (numérico)
       if (fields.precio) {
@@ -123,8 +95,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (filePrincipal) {
         const fp = Array.isArray(filePrincipal)
           ? filePrincipal[0]
-          : filePrincipal
-        updateDoc.imageUrl = await uploadFileToS3(fp as formidable.File)
+          : filePrincipal;
+        updateDoc.imageUrl = await uploadFileToS3(fp as formidable.File, 'productos');
       }
 
       const filesArray: formidable.File[] = []
@@ -141,8 +113,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const newImagesUrls: string[] = []
         for (const f of filesArray) {
           if (f && f.filepath) {
-            const url = await uploadFileToS3(f as formidable.File)
-            newImagesUrls.push(url)
+            const url = await uploadFileToS3(f as formidable.File, 'productos');
+            newImagesUrls.push(url);
           }
         }
         updateDoc.images = newImagesUrls

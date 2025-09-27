@@ -77,7 +77,6 @@ export default function Admin() {
     try {
       const res = await fetch('/api/products/listar')
       const data = await res.json()
-      // El API devuelve { products: [...], currentPage: ..., totalPages: ... }
       setProductos(Array.isArray(data.products) ? data.products : [])
     } catch (e) {
       console.error('Error fetch productos:', e)
@@ -196,8 +195,13 @@ export default function Admin() {
       const formData = new FormData()
       if (editId) formData.append('id', editId)
 
-      Object.keys(form).forEach((key) => formData.append(key, form[key]))
-      formData.append('categoria', selectedCategoria)
+      Object.keys(form).forEach((key) => {
+        // Evitar duplicar campos de categoría que se manejan por separado
+        if (key !== 'categoria' && key !== 'subCategoria') {
+          formData.append(key, form[key]);
+        }
+      });
+      formData.append('categoria', selectedCategoria);
       if (selectedSubCategoria) {
         formData.append('subCategoria', selectedSubCategoria)
       }
