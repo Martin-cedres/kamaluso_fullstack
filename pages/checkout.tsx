@@ -56,15 +56,27 @@ export default function CheckoutPage() {
   const [department, setDepartment] = useState(departments[0])
   const [shippingMethod, setShippingMethod] = useState('dac_domicilio')
   const [shippingNotes, setShippingNotes] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('brou')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('brou');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [surcharge, setSurcharge] = useState(0);
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.precio * item.quantity,
     0,
-  )
-  const couponDiscount = appliedCoupon?.discountAmount || 0
-  const total = subtotal - couponDiscount
+  );
+  const couponDiscount = appliedCoupon?.discountAmount || 0;
+  const baseTotal = subtotal - couponDiscount;
+
+  useEffect(() => {
+    if (paymentMethod === 'mercado_pago_online') {
+      const calculatedSurcharge = baseTotal * 0.10;
+      setSurcharge(calculatedSurcharge);
+    } else {
+      setSurcharge(0);
+    }
+  }, [paymentMethod, baseTotal]);
+
+  const total = baseTotal + surcharge;
 
   const getShippingDetails = () => {
     let details = {
@@ -110,8 +122,8 @@ export default function CheckoutPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: tempOrderId,
-            total: total,
-            items: cartItems, // Add the items here
+            items: cartItems,
+            paymentMethod: paymentMethod, // Enviar el método de pago
           }),
         })
 
@@ -249,6 +261,12 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-md text-green-600">
                     <span>Descuento Cupón</span>
                     <span>-$U {couponDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                {surcharge > 0 && (
+                  <div className="flex justify-between text-md text-orange-600">
+                    <span>Recargo por Mercado Pago (10%)</span>
+                    <span>+$U {surcharge.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold">

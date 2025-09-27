@@ -153,7 +153,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
             </div>
 
             {product.images && product.images.length > 1 && (
-              <div className="flex gap-4 mt-4 overflow-x-auto">
+              <div className="flex w-full gap-4 mt-4 overflow-x-auto p-2">
                 {product.images.map((img, i) => (
                   <div
                     key={i}

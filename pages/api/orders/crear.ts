@@ -27,9 +27,10 @@ type OrderRequestBody = {
 
 // This will be the shape of the object stored in the DB
 type OrderForDB = OrderRequestBody & {
-  subtotal: number
-  discountAmount?: number
-  createdAt: Date
+  subtotal: number;
+  discountAmount?: number;
+  surcharge?: number; // Add surcharge field
+  createdAt: Date;
   status: string
   externalReference?: string
 }
@@ -79,6 +80,9 @@ const generatePriceSummaryHTML = (order: OrderForDB) => {
     html += `<p style="text-align:right; color: #2ecc71;">Descuento (${
       order.couponCode
     }): -$U ${order.discountAmount.toFixed(2)}</p>`
+  }
+  if (order.surcharge && order.surcharge > 0) {
+    html += `<p style="text-align:right; color: #e67e22;">Recargo por Mercado Pago: +$U ${order.surcharge.toFixed(2)}</p>`
   }
   html += `<p style="text-align:right; font-weight:bold; font-size:1.2em;">Total: $U ${order.total.toFixed(
     2,
@@ -297,38 +301,51 @@ export default async function handler(
         0,
       )
 
-      let finalTotal = subtotal
-      let discountAmount = 0
+      let finalTotal = subtotal;
+      let discountAmount = 0;
+      let surcharge = 0; // Initialize surcharge
 
       // 2. If coupon is provided, validate it and recalculate total
       if (orderDetails.couponCode) {
         console.log(
           `[CREAR ORDEN] Validating coupon: ${orderDetails.couponCode}`,
-        )
+        );
         const couponResult = await validateAndCalculateDiscount(
           orderDetails.couponCode,
           orderDetails.items,
           subtotal,
-        )
+        );
 
         if (couponResult.success && couponResult.discountAmount) {
-          discountAmount = couponResult.discountAmount
-          finalTotal = subtotal - discountAmount
+          discountAmount = couponResult.discountAmount;
           console.log(
             `[CREAR ORDEN] Coupon applied. Discount: ${discountAmount}`,
-          )
+          );
         }
       }
 
-      const client = await clientPromise
-      const db = client.db()
-      console.log('[CREAR ORDEN] Native MongoDB driver client connected.')
+      // Calculate total after discount
+      let totalAfterDiscount = subtotal - discountAmount;
 
-      // 3. Create the order object for the database
+      // 3. Add surcharge for Mercado Pago
+      if (orderDetails.paymentMethod === 'mercado_pago_online') {
+        surcharge = totalAfterDiscount * 0.10;
+        console.log(`[CREAR ORDEN] Mercado Pago surcharge applied: ${surcharge}`);
+      }
+
+      // Calculate final total
+      finalTotal = totalAfterDiscount + surcharge;
+
+      const client = await clientPromise;
+      const db = client.db();
+      console.log('[CREAR ORDEN] Native MongoDB driver client connected.');
+
+      // 4. Create the order object for the database
       const newOrder: OrderForDB = {
         ...orderDetails,
         subtotal,
         discountAmount,
+        surcharge, // Add surcharge to the order object
         total: finalTotal, // Use the final, server-calculated total
         createdAt: new Date(),
         status: 'pendiente',
