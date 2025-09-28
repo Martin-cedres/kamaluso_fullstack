@@ -9,6 +9,7 @@ import Script from 'next/script'
 import dynamic from 'next/dynamic'
 import { Toaster } from 'react-hot-toast'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
 
 // Dynamically import components
 const DynamicFooter = dynamic(() => import('../components/Footer'))
@@ -68,6 +69,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <Navbar />
             <main className="flex-grow">
               <Component {...pageProps} />
+              <Analytics />
             </main>
             <DynamicWhatsAppButton />
             <DynamicFooter />
