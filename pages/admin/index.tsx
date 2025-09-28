@@ -42,6 +42,7 @@ export default function Admin() {
     status: 'activo',
     notes: '',
     destacado: false,
+    claveDeGrupo: '', // Añadir clave de grupo
   })
 
   // Nuevos estados para categorías dinámicas
@@ -172,6 +173,7 @@ export default function Admin() {
       status: 'activo',
       notes: '',
       destacado: false,
+      claveDeGrupo: '', // Resetear clave de grupo
     })
     if (allCategories.length > 0) {
       setSelectedCategoria(allCategories[0].slug)
@@ -359,7 +361,21 @@ export default function Admin() {
                 onChange={(e) =>
                   setForm((f: any) => ({ ...f, slug: e.target.value }))
                 }
-                placeholder="ej: agenda-semanal-2026"
+                className="w-full rounded-xl border px-3 py-2.5"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Clave de Grupo (para agrupar variantes)
+              </label>
+              <input
+                type="text"
+                value={form.claveDeGrupo || ''}
+                onChange={(e) =>
+                  setForm((f: any) => ({ ...f, claveDeGrupo: e.target.value }))
+                }
+                placeholder="ej: agenda-2026"
                 className="w-full rounded-xl border px-3 py-2.5"
               />
             </div>

@@ -50,6 +50,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Campos de texto directos
       if (fields.nombre) updateDoc.nombre = String(fields.nombre)
       if (fields.slug) updateDoc.slug = String(fields.slug)
+      if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo) // Añadir clave de grupo
       if (fields.descripcion) updateDoc.descripcion = String(fields.descripcion)
       if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle)
       if (fields.seoDescription)

@@ -59,6 +59,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const productoDoc: any = {
         nombre: String(fields.nombre || ''),
         slug: String(fields.slug || ''),
+        claveDeGrupo: String(fields.claveDeGrupo || ''), // Añadir clave de grupo
         descripcion: String(fields.descripcion || ''),
         precio: parseFloat(String(fields.precio || '0')) || 0,
         precioFlex: parseFloat(String(fields.precioFlex || '0')) || 0,

@@ -19,9 +19,10 @@ interface ProductDetailProps {
   reviews: IReview[];
   reviewCount: number;
   averageRating: string;
+  productVariants: IProduct[];
 }
 
-export default function ProductDetailPage({ product, reviews, reviewCount, averageRating }: ProductDetailProps) {
+export default function ProductDetailPage({ product, reviews, reviewCount, averageRating, productVariants }: ProductDetailProps) {
   const { addToCart } = useCart()
   const [finish, setFinish] = useState<string | null>(null)
   const router = useRouter()
@@ -142,22 +143,19 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           <div className="flex-1">
             <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
               <Image
-                src={
-                  product.images?.[0] || product.imageUrl || '/placeholder.png'
-                }
+                src={product.images?.[0] || product.imageUrl || '/placeholder.png'}
                 alt={product.alt || product.nombre}
                 fill
                 style={{ objectFit: 'cover' }}
                 className="rounded-2xl"
               />
             </div>
-
             {product.images && product.images.length > 1 && (
               <div className="flex w-full gap-4 mt-4 overflow-x-auto p-2">
                 {product.images.map((img, i) => (
                   <div
                     key={i}
-                    className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 border-pink-500"
+                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 border-pink-500`}
                   >
                     <Image
                       src={img}
@@ -189,8 +187,33 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                   $U {displayPrice}
                 </p>
               )}
-
               <p className="text-gray-600 mb-6">{product.descripcion}</p>
+
+              {/* Product Variants Section */}
+              {productVariants && productVariants.length > 0 && (
+                <section className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Variantes Disponibles</h3>
+                  <div className="flex w-full gap-3 pb-2 overflow-x-auto">
+                    {productVariants.map((variant) => (
+                      <Link key={variant._id} href={`/productos/${variant.categoria}/${variant.slug}`} className="block flex-shrink-0 w-28">
+                        <div className="bg-white rounded-lg border border-gray-200 hover:border-pink-500 hover:shadow-lg transition-all duration-300">
+                          <div className="relative w-full aspect-square">
+                            <Image
+                              src={variant.imageUrl || '/placeholder.png'}
+                              alt={variant.nombre}
+                              fill
+                              className="object-cover rounded-t-lg"
+                            />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs font-medium text-gray-700 truncate">{variant.nombre.split('-').pop()}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* Selector de Acabado Condicional */}
               {product.tapa === 'Tapa Dura' && (
@@ -235,23 +258,6 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           </div>
         </div>
 
-        {/* B2B Callout Section */}
-        <section className="max-w-6xl mx-auto mt-16 bg-pink-50 p-8 rounded-2xl shadow-inner text-center">
-          <h2 className="text-2xl font-semibold mb-3 text-gray-800">
-            ¿Buscas este producto para tu Empresa?
-          </h2>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            Ofrecemos personalización con tu logo y descuentos por volumen.
-            Ideal para regalos corporativos, eventos o merchandising.
-          </p>
-          <Link
-            href="/regalos-empresariales"
-            className="bg-pink-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition-transform transform hover:scale-105"
-          >
-            Ver Opciones para Empresas
-          </Link>
-        </section>
-
         {/* Reviews Section */}
         <section className="mt-16 max-w-4xl mx-auto">
           <h2 className="text-3xl font-semibold mb-8 text-center">
@@ -274,6 +280,23 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-6xl mx-auto">
             {/* Mapear productos relacionados si querés */}
           </div>
+        </section>
+
+        {/* B2B Callout Section */}
+        <section className="max-w-6xl mx-auto mt-16 bg-pink-50 p-8 rounded-2xl shadow-inner text-center">
+          <h2 className="text-2xl font-semibold mb-3 text-gray-800">
+            ¿Buscas este producto para tu Empresa?
+          </h2>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Ofrecemos personalización con tu logo y descuentos por volumen.
+            Ideal para regalos corporativos, eventos o merchandising.
+          </p>
+          <Link
+            href="/regalos-empresariales"
+            className="inline-block bg-pink-500 text-white px-4 py-2 md:px-6 md:py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition-transform transform hover:scale-105"
+          >
+            Ver Opciones para Empresas
+          </Link>
         </section>
       </main>
     </>
@@ -323,12 +346,23 @@ export const getStaticProps: GetStaticProps = async (context) => {
       ? reviews.reduce((acc: number, item: any) => item.rating + acc, 0) / reviewCount
       : 0;
 
+    // Fetch product variants if a group key exists
+    let productVariants = [];
+    if (product.claveDeGrupo) {
+      const variantsData = await Product.find({
+        claveDeGrupo: product.claveDeGrupo,
+        _id: { $ne: product._id } // Exclude the current product
+      }).lean();
+      productVariants = JSON.parse(JSON.stringify(variantsData));
+    }
+
     return {
       props: {
         product,
         reviews,
         reviewCount,
         averageRating: averageRating.toFixed(1),
+        productVariants, // Pass variants to the page
       },
       revalidate: 3600, // Revalidate once per hour
     }

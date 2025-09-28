@@ -22,12 +22,14 @@ export interface IProduct extends Document {
   images?: string[];
   averageRating?: number;
   numReviews?: number;
+  claveDeGrupo?: string;
 }
 
 const productSchema: Schema<IProduct> = new Schema(
   {
     nombre: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
+    claveDeGrupo: { type: String, trim: true, index: true }, // Nuevo campo
     descripcion: { type: String, required: true },
     precio: { type: Number, required: true },
     precioFlex: { type: Number, default: 0 },
