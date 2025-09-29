@@ -8,6 +8,7 @@ import { ObjectId } from 'mongodb';
 import os from 'os'; // Importar os
 import clientPromise from '../../../lib/mongodb';
 import { withAuth } from '../../../lib/auth';
+import { revalidateProductPaths } from '../../../lib/utils';
 
 export const config = { api: { bodyParser: false } };
 
@@ -155,6 +156,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         .updateOne({ _id: new ObjectId(productId) }, { $set: updateDoc })
 
       console.log('result:', result)
+
+      // Revalidar las páginas afectadas
+      const updatedProduct = await db.collection('products').findOne({ _id: new ObjectId(productId) });
+      if (updatedProduct && updatedProduct.slug && updatedProduct.categoria) {
+        await revalidateProductPaths(updatedProduct.categoria, updatedProduct.slug);
+      }
 
       res
         .status(200)

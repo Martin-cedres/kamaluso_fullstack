@@ -6,6 +6,7 @@ import os from 'os' // Importar el módulo os
 import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la utilidad compartida
 import clientPromise from '../../../lib/mongodb';
 import { withAuth } from '../../../lib/auth';
+import { revalidateProductPaths } from '../../../lib/utils';
 
 export const config = { api: { bodyParser: false } };
 
@@ -86,6 +87,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const client = await clientPromise
       const db = client.db('kamaluso')
       const result = await db.collection('products').insertOne(productoDoc)
+
+      // Revalidar las páginas afectadas
+      if (productoDoc.slug && productoDoc.categoria) {
+        await revalidateProductPaths(productoDoc.categoria, productoDoc.slug);
+      }
 
       res
         .status(201)
