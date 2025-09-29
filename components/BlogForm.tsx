@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 interface PostFormProps {
   initialData?: {
@@ -8,8 +9,9 @@ interface PostFormProps {
     content: string
     slug: string
     tags?: string[]
+    coverImage?: string
   }
-  onSubmit: (data: any) => void
+  onSubmit: (data: FormData) => void // Changed to FormData
   isEditMode?: boolean
 }
 
@@ -23,8 +25,11 @@ const BlogForm = ({
   const [content, setContent] = useState(initialData?.content || '')
   const [slug, setSlug] = useState(initialData?.slug || '')
   const [tags, setTags] = useState(initialData?.tags?.join(', ') || '')
+  const [coverImage, setCoverImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(
+    initialData?.coverImage || null,
+  )
 
-  // Auto-generate slug from title if in create mode and slug is empty
   useEffect(() => {
     if (!isEditMode && title && !slug) {
       setSlug(
@@ -37,19 +42,26 @@ const BlogForm = ({
     }
   }, [title, slug, isEditMode])
 
+  useEffect(() => {
+    if (!coverImage) return
+    const objectUrl = URL.createObjectURL(coverImage)
+    setPreview(objectUrl)
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [coverImage])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const formData = {
-      title,
-      subtitle: subtitle || undefined,
-      content,
-      slug,
-      tags:
-        tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0) || undefined,
-      ...(isEditMode && initialData?._id && { _id: initialData._id }), // Include _id for edit mode
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('subtitle', subtitle || '')
+    formData.append('content', content)
+    formData.append('slug', slug)
+    formData.append('tags', tags)
+    if (coverImage) {
+      formData.append('coverImage', coverImage)
+    }
+    if (isEditMode && initialData?._id) {
+      formData.append('_id', initialData._id)
     }
     onSubmit(formData)
   }
@@ -90,6 +102,35 @@ const BlogForm = ({
           value={subtitle}
           onChange={(e) => setSubtitle(e.target.value)}
         />
+      </div>
+
+      <div>
+        <label
+          htmlFor="coverImage"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Imagen de Portada
+        </label>
+        <input
+          type="file"
+          id="coverImage"
+          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
+          onChange={(e) =>
+            setCoverImage(e.target.files ? e.target.files[0] : null)
+          }
+          accept="image/*"
+        />
+        {preview && (
+          <div className="mt-4">
+            <Image
+              src={preview}
+              alt="Preview"
+              width={200}
+              height={100}
+              className="rounded-md object-cover"
+            />
+          </div>
+        )}
       </div>
 
       <div>

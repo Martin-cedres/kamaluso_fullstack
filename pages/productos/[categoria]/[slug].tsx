@@ -13,6 +13,9 @@ import { useRouter } from 'next/router';
 import StarRating from '../../../components/StarRating';
 import ReviewList from '../../../components/ReviewList';
 import ReviewForm from '../../../components/ReviewForm';
+import Breadcrumbs from '../../../components/Breadcrumbs';
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 interface ProductDetailProps {
   product: IProduct | null;
@@ -25,6 +28,10 @@ interface ProductDetailProps {
 export default function ProductDetailPage({ product, reviews, reviewCount, averageRating, productVariants }: ProductDetailProps) {
   const { addToCart } = useCart()
   const [finish, setFinish] = useState<string | null>(null)
+  const [activeImage, setActiveImage] = useState(
+    product?.images?.[0] || product?.imageUrl || '/placeholder.png',
+  )
+  const [open, setOpen] = useState(false);
   const router = useRouter()
 
   const getDisplayPrice = () => {
@@ -138,28 +145,60 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
 
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <Breadcrumbs
+              items={[
+                { name: 'Inicio', href: '/' },
+                {
+                  name: product.categoria,
+                  href: `/productos/${product.categoria}`,
+                },
+                {
+                  name: product.nombre,
+                  href: `/productos/${product.categoria}/${product.slug}`,
+                },
+              ]}
+            />
+          </div>
+          <div className="flex flex-col lg:flex-row gap-12">
           {/* Imágenes */}
           <div className="flex-1">
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
+            >
               <Image
-                src={product.images?.[0] || product.imageUrl || '/placeholder.png'}
+                src={activeImage}
                 alt={product.alt || product.nombre}
                 fill
                 style={{ objectFit: 'cover' }}
-                className="rounded-2xl"
+                className="rounded-2xl transition-transform duration-300 group-hover:scale-105"
               />
-            </div>
+            </button>
+
+            <Lightbox
+              open={open}
+              close={() => setOpen(false)}
+              slides={product.images?.map((img) => ({ src: img }))}
+            />
+
             {product.images && product.images.length > 1 && (
               <div className="flex w-full gap-4 mt-4 overflow-x-auto p-2">
                 {product.images.map((img, i) => (
                   <div
                     key={i}
-                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 border-pink-500`}
+                    onClick={() => setActiveImage(img)}
+                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 ${
+                      activeImage === img
+                        ? 'border-pink-500'
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
                   >
                     <Image
                       src={img}
-                      alt={product.alt || product.nombre}
+                      alt={`${product.alt || product.nombre} ${i + 1}`}
                       fill
                       style={{ objectFit: 'cover' }}
                       className="rounded-xl"
@@ -257,6 +296,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
             </div>
           </div>
         </div>
+      </div>
 
         {/* Reviews Section */}
         <section className="mt-16 max-w-4xl mx-auto">

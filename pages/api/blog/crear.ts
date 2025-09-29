@@ -1,45 +1,67 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import connectDB from '../../../lib/mongoose'
+import formidable from 'formidable'
+import os from 'os'
+import { withAuth } from '../../../lib/auth'
+import { uploadFileToS3 } from '../../../lib/s3-upload'
 import Post from '../../../models/Post'
-import { withAuth } from '../../../lib/auth' // Importación corregida
+
+export const config = { api: { bodyParser: false } }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' })
   }
 
-  await connectDB()
+  const form = formidable({ multiples: false, uploadDir: os.tmpdir() })
 
-  try {
-    const { title, slug, content, excerpt } = req.body
-
-    if (!title || !slug || !content) {
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
       return res
         .status(400)
-        .json({ error: 'Title, slug, and content are required' })
+        .json({ error: 'Error processing form', details: String(err) })
     }
 
-    const postDoc = {
-      title,
-      slug,
-      content,
-      excerpt: excerpt || content.substring(0, 150),
-    }
+    try {
+      const { title, slug, content, excerpt, subtitle, tags } = fields
 
-    const newPost = await Post.create(postDoc)
+      if (!title || !slug || !content) {
+        return res
+          .status(400)
+          .json({ error: 'Title, slug, and content are required' })
+      }
 
-    res
-      .status(201)
-      .json({ ok: true, message: 'Post created successfully', id: newPost._id })
-  } catch (error: any) {
-    console.error('CREATE POST ERROR:', error)
-    // Handle potential duplicate key error for slug
-    if (error.code === 11000) {
-      return res.status(409).json({ error: 'Slug already exists.' })
+      let coverImageUrl: string | undefined = undefined
+      const coverImageFile = files.coverImage as formidable.File | undefined
+
+      if (coverImageFile) {
+        coverImageUrl = await uploadFileToS3(coverImageFile, 'blog')
+      }
+
+      const postDoc = {
+        title: String(title),
+        slug: String(slug),
+        content: String(content),
+        excerpt: String(excerpt || ''),
+        subtitle: String(subtitle || ''),
+        tags: Array.isArray(tags) ? tags : String(tags || '').split(',').map(tag => tag.trim()),
+        coverImage: coverImageUrl,
+      }
+
+      const newPost = await Post.create(postDoc)
+
+      res.status(201).json({
+        ok: true,
+        message: 'Post created successfully',
+        id: newPost._id,
+      })
+    } catch (error: any) {
+      console.error('CREATE POST ERROR:', error)
+      if (error.code === 11000) {
+        return res.status(409).json({ error: 'Slug already exists.' })
+      }
+      res.status(500).json({ error: 'Internal Server Error' })
     }
-    res.status(500).json({ error: 'Internal Server Error' })
-  }
+  })
 }
 
-// Exportación corregida
 export default withAuth(handler)

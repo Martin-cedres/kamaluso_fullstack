@@ -12,6 +12,7 @@ interface Post {
   excerpt?: string
   createdAt: string
   tags?: string[] // Added
+  coverImage?: string // Added
 }
 
 interface Props {
@@ -33,7 +34,7 @@ export default function BlogPostPage({ post }: Props) {
   const pageTitle = `${post.title} | Blog de Kamaluso`
   const pageDescription = post.excerpt || post.content.substring(0, 155)
   const canonicalUrl = `/blog/${post.slug}`
-  // const pageImage = post.coverImage; // Removed as blog is simplified without images
+  const pageImage = post.coverImage || '/logo.webp'
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -41,6 +42,7 @@ export default function BlogPostPage({ post }: Props) {
     headline: post.title,
     description: pageDescription,
     datePublished: post.createdAt,
+    image: pageImage,
     author: {
       '@type': 'Organization',
       name: 'Kamaluso',
@@ -53,7 +55,7 @@ export default function BlogPostPage({ post }: Props) {
         title={pageTitle}
         description={pageDescription}
         url={canonicalUrl}
-        // image={pageImage} // Removed image prop as blog is simplified without images
+        image={pageImage}
         type="article"
       />
       {/* JSON-LD Schema for Google Rich Results */}
@@ -68,6 +70,15 @@ export default function BlogPostPage({ post }: Props) {
       <main className="min-h-screen bg-white pt-32 px-6">
         <div className="max-w-4xl mx-auto">
           <article>
+            {post.coverImage && (
+              <div className="relative w-full h-64 mb-8 rounded-lg overflow-hidden shadow-md">
+                <img
+                  src={post.coverImage || '/placeholder.png'}
+                  alt={post.title}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
+            )}
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
             {post.subtitle && (
               <h2 className="text-2xl font-semibold text-gray-700 mb-4">
@@ -78,8 +89,12 @@ export default function BlogPostPage({ post }: Props) {
             <p className="text-gray-500 mb-2">
               Publicado el {new Date(post.createdAt).toLocaleDateString()}
             </p>
+            <div className="prose lg:prose-xl max-w-none mb-8">
+              {/* Render the post content. If it's HTML, you'd use dangerouslySetInnerHTML */}
+              {post.content}
+            </div>
             {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-8">
+              <div className="flex flex-wrap gap-2 mt-8">
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
@@ -90,10 +105,6 @@ export default function BlogPostPage({ post }: Props) {
                 ))}
               </div>
             )}
-            <div className="prose lg:prose-xl max-w-none">
-              {/* Render the post content. If it's HTML, you'd use dangerouslySetInnerHTML */}
-              {post.content}
-            </div>
           </article>
         </div>
       </main>
@@ -120,6 +131,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
       return { notFound: true, revalidate: 300 }
     }
     const post = await res.json()
+
+    // Process tags to ensure it's an array of strings
+    if (post.tags && Array.isArray(post.tags) && post.tags.length > 0 && typeof post.tags[0] === 'string') {
+      post.tags = post.tags[0].split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
+    } else {
+      post.tags = []; // Ensure it's an empty array if not valid
+    }
 
     return {
       props: { post },

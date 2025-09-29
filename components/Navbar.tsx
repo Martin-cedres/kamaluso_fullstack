@@ -59,61 +59,69 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-6">
           <Link
             href="/"
-            className="text-gray-900 font-medium hover:text-pink-500 transition"
+            className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             Inicio
+            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
-          <div className="relative">
+          <div className="relative group">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="text-gray-900 font-medium hover:text-pink-500 transition flex items-center gap-1"
+              className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500 flex items-center gap-1"
             >
               Categorías ▾
+              <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
             </button>
             {dropdownOpen && <CategoryMenu />}
           </div>
 
           <Link
             href="/regalos-empresariales"
-            className="text-gray-900 font-medium hover:text-pink-500 transition"
+            className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             Regalos Empresariales
+            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
           <Link
             href="/contacto"
-            className="text-gray-900 font-medium hover:text-pink-500 transition"
+            className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             Contacto
+            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
           <Link
             href="/blog"
-            className="text-gray-900 font-medium hover:text-pink-500 transition"
+            className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             Blog
+            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
           {status === 'authenticated' && (
             <>
               <Link
                 href="/admin"
-                className="text-gray-900 font-medium hover:text-pink-500 transition"
+                className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
               >
                 Admin
+                <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
               </Link>
               <Link
                 href="/admin/pedidos"
-                className="text-gray-900 font-medium hover:text-pink-500 transition"
+                className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
               >
                 Pedidos
+                <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
               </Link>
               <button
                 onClick={() => signOut()}
-                className="text-gray-900 font-medium hover:text-pink-500 transition"
+                className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500"
               >
                 Logout
+                <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
               </button>
             </>
           )}

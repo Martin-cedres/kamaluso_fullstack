@@ -21,14 +21,11 @@ export default function AdminBlogCreate() {
     return null
   }
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: FormData) => {
     try {
       const res = await fetch('/api/blog/crear', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: formData,
       })
 
       if (!res.ok) {

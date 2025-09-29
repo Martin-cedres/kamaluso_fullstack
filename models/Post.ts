@@ -5,6 +5,9 @@ export interface IPost extends Document {
   slug: string
   content: string
   excerpt?: string
+  subtitle?: string
+  coverImage?: string
+  tags?: string[]
 }
 
 const postSchema: Schema<IPost> = new Schema(
@@ -13,6 +16,9 @@ const postSchema: Schema<IPost> = new Schema(
     slug: { type: String, required: true, unique: true },
     content: { type: String, required: true },
     excerpt: { type: String },
+    subtitle: { type: String },
+    coverImage: { type: String },
+    tags: [{ type: String }],
   },
   {
     timestamps: true, // This will add createdAt and updatedAt fields

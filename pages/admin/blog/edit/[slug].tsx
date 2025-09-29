@@ -35,16 +35,12 @@ export default function AdminBlogEdit() {
       const fetchPost = async () => {
         try {
           setLoading(true)
-          const res = await fetch(`/api/blog/listar?slug=${slug}`)
+          const res = await fetch(`/api/blog/${slug}`)
           if (!res.ok) {
             throw new Error(`Error fetching post: ${res.statusText}`)
           }
           const data = await res.json()
-          if (data && data.length > 0) {
-            setPost(data[0])
-          } else {
-            setError('Artículo no encontrado.')
-          }
+          setPost(data) // Expect a single post object
         } catch (err: any) {
           setError(err.message)
         } finally {
@@ -55,14 +51,11 @@ export default function AdminBlogEdit() {
     }
   }, [status, slug])
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: FormData) => {
     try {
       const res = await fetch('/api/blog/editar', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: formData,
       })
 
       if (!res.ok) {
