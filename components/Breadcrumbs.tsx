@@ -52,7 +52,7 @@ const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
                     </svg>
                   )}
                   {isLast ? (
-                    <span className="font-medium text-gray-800 cursor-default">
+                    <span className="font-medium text-gray-800 cursor-default inline-block max-w-[150px] align-middle truncate md:max-w-[250px]">
                       {item.name}
                     </span>
                   ) : (

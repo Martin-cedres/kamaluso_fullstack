@@ -37,6 +37,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
     product?.images?.[0] || product?.imageUrl || '/placeholder.png'
   );
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   useEffect(() => {
     if (isAnimating) {
@@ -187,6 +188,12 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
       </>
     )
 
+  const shortDescription = product?.descripcion
+    ? product.descripcion.length > 200
+      ? product.descripcion.substring(0, 200) + '...'
+      : product.descripcion
+    : '';
+
   const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`
   const pageDescription =
     product.seoDescription ||
@@ -251,9 +258,9 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
               ]}
             />
           </div>
-          <div className="flex flex-col lg:flex-row gap-12">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-start">
           {/* Imágenes */}
-          <div className="flex-1">
+          <div className="lg:sticky lg:top-28">
             <div className="relative">
               <button
                 type="button"
@@ -327,7 +334,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           </div>
 
           {/* Información del producto */}
-          <div className="flex-1 flex flex-col justify-between">
+          <div className="mt-10 lg:mt-0">
             <div>
               <h1 className="text-4xl font-bold mb-2">{product.nombre}</h1>
               {reviewCount > 0 && (
@@ -341,7 +348,20 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
               <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
                 $U {totalPrice}
               </p>
-              <p className="text-gray-600 mb-6">{product.descripcion}</p>
+              
+              <div className="text-gray-600 space-y-2 mb-6">
+                <p>
+                  {isDescriptionExpanded ? product.descripcion : shortDescription}
+                </p>
+                {product.descripcion.length > 200 && (
+                  <button 
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} 
+                    className="text-pink-500 font-semibold hover:underline text-sm"
+                  >
+                    {isDescriptionExpanded ? 'Ver menos' : 'Ver más'}
+                  </button>
+                )}
+              </div>
 
               {/* NEW Customization UI */}
               <div className="space-y-6">
@@ -394,7 +414,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                   }
 
                   // Special renderer for CoverDesignGallery
-                  if (groupName === 'Diseño Tapa Dura' || groupName === 'Diseño Tapa Flexible') {
+                  if (groupName.startsWith('Diseño de Tapa')) {
                     return (
                       <div key={groupName}>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -560,11 +580,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     // Add custom design option to cover design group
     const coverDesignGroup = product.customizationGroups?.find((g: any) => g.name === 'Diseño de Tapa');
     if (coverDesignGroup) {
-      coverDesignGroup.options.push({
-        name: 'Diseño Personalizado',
-        priceModifier: 0,
-        image: '/placeholder.png', // You can replace this with a more suitable image
-      });
+
     }
 
     // Fetch approved reviews and calculate average rating
