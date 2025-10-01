@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "es2019",
+    "outDir": "../.tmp_scripts",
+    "rootDir": "..",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "noEmit": false
+  },
+  "include": [
+    "./scripts/migrar-categorias-iniciales.ts",
+    "./lib/**/*.ts",
+    "./models/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

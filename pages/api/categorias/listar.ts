@@ -15,7 +15,7 @@ export default async function handler(
     const db = client.db('kamaluso')
 
     const categorias = await db
-      .collection('categorias')
+      .collection('categories')
       .find({})
       .sort({ nombre: 1 }) // Ordenar alfabéticamente
       .toArray()

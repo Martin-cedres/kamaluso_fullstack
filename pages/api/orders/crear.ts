@@ -39,23 +39,27 @@ type OrderForDB = OrderRequestBody & {
 
 const generateItemsHTML = (items: any[]) => {
   return items
-    .map(
-      (item) =>
-        `<tr>
+    .map((item) => {
+      let customizationsHTML = '';
+      if (item.customizations && typeof item.customizations === 'object') {
+        for (const [key, value] of Object.entries(item.customizations)) {
+          if (typeof value === 'string') { // Ensure value is a string to display
+            customizationsHTML += `<br><small><strong>${key}:</strong> ${value}</small>`;
+          }
+        }
+      }
+
+      return `<tr>
        <td style="padding:8px; border:1px solid #ddd;">
          ${item.nombre}
-         ${item.finish ? `<br><small>Acabado: ${item.finish}</small>` : ''}
+         ${customizationsHTML} 
        </td>
-       <td style="padding:8px; border:1px solid #ddd; text-align:center;">${
-         item.quantity
-       }</td>
-       <td style="padding:8px; border:1px solid #ddd; text-align:right;">$U ${(
-         item.precio * item.quantity
-       ).toFixed(2)}</td>
-     </tr>`,
-    )
-    .join('')
-}
+       <td style="padding:8px; border:1px solid #ddd; text-align:center;">${item.quantity}</td>
+       <td style="padding:8px; border:1px solid #ddd; text-align:right;">$U ${(item.precio * item.quantity).toFixed(2)}</td>
+     </tr>`;
+    })
+    .join('');
+};
 
 const generateShippingHTML = (shippingDetails: ShippingDetails) => {
   let html = `<p><strong>Método:</strong> ${shippingDetails.method}</p>`

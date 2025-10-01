@@ -30,9 +30,7 @@ export default function Admin() {
   // --- ESTADOS --- //
   const [form, setForm] = useState<any>({
     nombre: '',
-    precio: '',
-    precioFlex: '', // Add this line
-    precioDura: '', // Add this line
+    basePrice: '',
     descripcion: '',
     seoTitle: '',
     seoDescription: '',
@@ -42,8 +40,95 @@ export default function Admin() {
     status: 'activo',
     notes: '',
     destacado: false,
-    claveDeGrupo: '', // Añadir clave de grupo
+    claveDeGrupo: '',
+    customizationGroups: [],
   })
+
+  // Handlers para el nuevo UI de personalización
+  const handleCustomizationChange = (groupIndex: number, optionIndex: number, field: string, value: string) => {
+    const newGroups = [...form.customizationGroups];
+    const val = field === 'priceModifier' ? parseFloat(value) || 0 : value;
+    newGroups[groupIndex].options[optionIndex][field] = val;
+    setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
+  };
+
+  const handleGroupChange = (groupIndex: number, field: string, value: string) => {
+    const newGroups = [...form.customizationGroups];
+    newGroups[groupIndex][field] = value;
+    setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
+  };
+
+  const addCustomizationGroup = () => {
+    setForm((f: any) => ({
+      ...f,
+      customizationGroups: [...f.customizationGroups, { name: '', type: 'radio', options: [] }],
+    }));
+  };
+
+  const addTapaDesignGroup = (type: 'Tapa Dura' | 'Tapa Flexible') => {
+    const groupName = `Diseño de Tapa (${type})`;
+    if (form.customizationGroups.some((g: any) => g.name === groupName)) {
+      toast.error(`La galería de diseños de tapa para ${type} ya ha sido añadida.`);
+      return;
+    }
+    setForm((f: any) => ({
+      ...f,
+      customizationGroups: [...f.customizationGroups, { name: groupName, type: 'radio', options: [] }],
+    }));
+  };
+
+  const removeCustomizationGroup = (groupIndex: number) => {
+    const newGroups = [...form.customizationGroups];
+    newGroups.splice(groupIndex, 1);
+    setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
+  };
+
+  const addCustomizationOption = (groupIndex: number) => {
+    const newGroups = [...form.customizationGroups];
+    newGroups[groupIndex].options.push({ name: '', priceModifier: 0 });
+    setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
+  };
+
+  const removeCustomizationOption = (groupIndex: number, optionIndex: number) => {
+    const newGroups = [...form.customizationGroups];
+    newGroups[groupIndex].options.splice(optionIndex, 1);
+    setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
+  };
+
+
+  const [optionImages, setOptionImages] = useState<{ [key: string]: File | null }>({});
+  const [optionImagePreviews, setOptionImagePreviews] = useState<{ [key: string]: string }>({});
+
+  const handleOptionImageChange = (groupIndex: number, optionIndex: number, file: File | null) => {
+    const key = `g${groupIndex}o${optionIndex}`;
+    setOptionImages(prev => ({ ...prev, [key]: file }));
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setOptionImagePreviews(prev => ({ ...prev, [key]: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setOptionImagePreviews(prev => {
+        const newPreviews = { ...prev };
+        delete newPreviews[key];
+        return newPreviews;
+      });
+    }
+  };
+
+  const getOptionImagePreview = (groupIndex: number, optionIndex: number) => {
+    const key = `g${groupIndex}o${optionIndex}`;
+    if (optionImagePreviews[key]) {
+      return optionImagePreviews[key];
+    }
+    if (form.customizationGroups?.[groupIndex]?.options?.[optionIndex]?.image) {
+      return form.customizationGroups[groupIndex].options[optionIndex].image;
+    }
+    return null;
+  };
+
 
   // Nuevos estados para categorías dinámicas
   const [allCategories, setAllCategories] = useState<CategoriaData[]>([])
@@ -108,12 +193,12 @@ export default function Admin() {
     const newCategorySlug = e.target.value
     setSelectedCategoria(newCategorySlug)
     setSelectedSubCategoria('')
-    setForm((f: any) => ({ ...f, precio: '', precioFlex: '', precioDura: '' }))
+    setForm((f: any) => ({ ...f, basePrice: '' }))
   }
 
   const handleSubCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedSubCategoria(e.target.value)
-    setForm((f: any) => ({ ...f, precio: '', precioFlex: '', precioDura: '' }))
+    setForm((f: any) => ({ ...f, basePrice: '' }))
   }
 
   useEffect(() => {
@@ -163,7 +248,7 @@ export default function Admin() {
   const resetForm = () => {
     setForm({
       nombre: '',
-      precio: '',
+      basePrice: '',
       descripcion: '',
       seoTitle: '',
       seoDescription: '',
@@ -173,7 +258,8 @@ export default function Admin() {
       status: 'activo',
       notes: '',
       destacado: false,
-      claveDeGrupo: '', // Resetear clave de grupo
+      claveDeGrupo: '',
+      customizationGroups: [],
     })
     if (allCategories.length > 0) {
       setSelectedCategoria(allCategories[0].slug)
@@ -185,6 +271,8 @@ export default function Admin() {
     setImages([])
     setPreview(null)
     setPreviewsSecundarias([])
+    setOptionImages({});
+    setOptionImagePreviews({});
     setEditId(null)
     setShowForm(false)
   }
@@ -197,12 +285,23 @@ export default function Admin() {
       const formData = new FormData()
       if (editId) formData.append('id', editId)
 
+      // Handle form fields, excluding complex objects
       Object.keys(form).forEach((key) => {
-        // Evitar duplicar campos de categoría que se manejan por separado
-        if (key !== 'categoria' && key !== 'subCategoria') {
+        if (key !== 'customizationGroups' && key !== 'categoria' && key !== 'subCategoria') {
           formData.append(key, form[key]);
         }
       });
+
+      // Handle customizationGroups separately by stringifying it
+      formData.append('customizationGroups', JSON.stringify(form.customizationGroups));
+
+      // Append option images
+      Object.keys(optionImages).forEach(key => {
+        if (optionImages[key]) {
+          formData.append(`optionImage_${key}`, optionImages[key] as File);
+        }
+      });
+
       formData.append('categoria', selectedCategoria);
       if (selectedSubCategoria) {
         formData.append('subCategoria', selectedSubCategoria)
@@ -260,6 +359,8 @@ export default function Admin() {
       setEditId(String(p._id))
       setForm({
         ...p,
+        basePrice: p.basePrice || p.precio || '',
+        customizationGroups: p.customizationGroups || [],
         seoKeywords: Array.isArray(p.seoKeywords)
           ? p.seoKeywords.join(', ')
           : p.seoKeywords || '',
@@ -275,6 +376,8 @@ export default function Admin() {
       )
       setImage(null)
       setImages([])
+      setOptionImages({});
+      setOptionImagePreviews({});
       setShowForm(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err: any) {
@@ -287,6 +390,10 @@ export default function Admin() {
     allCategories.find((c) => c.slug === selectedCategoria)?.subCategorias || []
 
   const getDisplayPrice = (product: any) => {
+    if (product.basePrice) {
+      return `$U ${product.basePrice}`
+    }
+    // Fallback for old products
     if (product.precioDura && product.precioFlex) {
       return `$U ${product.precioDura} (Dura) / $U ${product.precioFlex} (Flex)`
     }
@@ -365,20 +472,6 @@ export default function Admin() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Clave de Grupo (para agrupar variantes)
-              </label>
-              <input
-                type="text"
-                value={form.claveDeGrupo || ''}
-                onChange={(e) =>
-                  setForm((f: any) => ({ ...f, claveDeGrupo: e.target.value }))
-                }
-                placeholder="ej: agenda-2026"
-                className="w-full rounded-xl border px-3 py-2.5"
-              />
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -424,68 +517,85 @@ export default function Admin() {
               </div>
             )}
 
-            {(() => {
-              const selectedCategory = allCategories.find(
-                (c) => c.slug === selectedCategoria,
-              )
-              if (selectedCategory?.nombre === 'Agendas') {
-                return (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Precio Tapa Dura
-                      </label>
-                      <input
-                        type="number"
-                        value={form.precioDura}
-                        onChange={(e) =>
-                          setForm((f: any) => ({
-                            ...f,
-                            precioDura: e.target.value,
-                          }))
-                        }
-                        placeholder="Ej: 900"
-                        className="w-full rounded-xl border px-3 py-2.5"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Precio Tapa Flexible
-                      </label>
-                      <input
-                        type="number"
-                        value={form.precioFlex}
-                        onChange={(e) =>
-                          setForm((f: any) => ({
-                            ...f,
-                            precioFlex: e.target.value,
-                          }))
-                        }
-                        placeholder="Ej: 800"
-                        className="w-full rounded-xl border px-3 py-2.5"
-                      />
-                    </div>
-                  </>
-                )
-              } else {
-                return (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Precio
-                    </label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Precio Base
+              </label>
+              <input
+                type="number"
+                value={form.basePrice}
+                onChange={(e) => setForm((f: any) => ({ ...f, basePrice: e.target.value }))}
+                placeholder="Ej: 2500"
+                className="w-full rounded-xl border px-3 py-2.5"
+                required
+              />
+            </div>
+
+            {/* Nuevo UI para Grupos de Personalización */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <h3 className="font-semibold text-md">Grupos de Personalización</h3>
+              {form.customizationGroups && form.customizationGroups.map((group: any, groupIndex: number) => (
+                <div key={groupIndex} className="p-3 border rounded-md bg-gray-50 space-y-3">
+                  <div className="flex items-center justify-between">
                     <input
-                      type="number"
-                      value={form.precio}
-                      onChange={(e) =>
-                        setForm((f: any) => ({ ...f, precio: e.target.value }))
-                      }
-                      placeholder="Ej: 750"
-                      className="w-full rounded-xl border px-3 py-2.5"
+                      type="text"
+                      value={group.name}
+                      onChange={(e) => handleGroupChange(groupIndex, 'name', e.target.value)}
+                      placeholder="Nombre del Grupo (ej: Tipo de Tapa)"
+                      readOnly={group.name === 'Diseño de Tapa'}
+                      className={`w-full mr-2 rounded-md border px-2 py-1.5 ${group.name === 'Diseño de Tapa' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                     />
+                    <select value={group.type} onChange={(e) => handleGroupChange(groupIndex, 'type', e.target.value)} className="rounded-md border px-2 py-1.5">
+                      <option value="radio">Selección Única</option>
+                      <option value="checkbox">Múltiples Opciones</option>
+                    </select>
+                    <button type="button" onClick={() => removeCustomizationGroup(groupIndex)} className="ml-2 text-red-500">Eliminar Grupo</button>
                   </div>
-                )
-              }
-            })()}
+                  <div className="space-y-2 pl-4">
+                    {group.options.map((option: any, optionIndex: number) => (
+                      <div key={optionIndex} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={option.name}
+                          onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'name', e.target.value)}
+                          placeholder="Nombre de la Opción"
+                          className="flex-grow rounded-md border px-2 py-1"
+                        />
+                        <input
+                          type="number"
+                          value={option.priceModifier}
+                          onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'priceModifier', e.target.value)}
+                          placeholder="Modificador de Precio"
+                          className="w-36 rounded-md border px-2 py-1"
+                        />
+                        <div className="w-48">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)}
+                            className="text-xs"
+                          />
+                          {getOptionImagePreview(groupIndex, optionIndex) && (
+                            <Image
+                              src={getOptionImagePreview(groupIndex, optionIndex)!}
+                              alt={`preview g${groupIndex}o${optionIndex}`}
+                              width={40}
+                              height={40}
+                              className="mt-1 object-cover rounded-md"
+                            />
+                          )}
+                        </div>
+                        <button type="button" onClick={() => removeCustomizationOption(groupIndex, optionIndex)} className="text-red-500 text-sm">Quitar</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => addCustomizationOption(groupIndex)} className="text-sm text-blue-600">+ Añadir Opción</button>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addCustomizationGroup} className="mt-2 text-sm font-semibold text-white bg-blue-600 px-3 py-1.5 rounded-md">+ Añadir Grupo de Personalización</button>
+              <button type="button" onClick={() => addTapaDesignGroup('Tapa Dura')} className="mt-2 ml-2 text-sm font-semibold text-white bg-teal-600 px-3 py-1.5 rounded-md">+ Añadir Galería de Diseños (Tapa Dura)</button>
+              <button type="button" onClick={() => addTapaDesignGroup('Tapa Flexible')} className="mt-2 ml-2 text-sm font-semibold text-white bg-teal-600 px-3 py-1.5 rounded-md">+ Añadir Galería de Diseños (Tapa Flexible)</button>
+            </div>
 
             <div className="flex items-center gap-2">
               <input

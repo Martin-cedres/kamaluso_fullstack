@@ -7,12 +7,12 @@ export interface Product {
   id: string;
   nombre: string;
   precio: number;
-  tipo: 'tapa dura' | 'tapa flex';
   categoria: string;
   slug: string;
   imagen: string;
   averageRating?: number;
   numReviews?: number;
+  isBasePrice?: boolean; // Nuevo: para indicar si es un precio base
 }
 
 interface ProductCardProps {
@@ -57,9 +57,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <div className="my-2 h-6">{/* Placeholder to keep height consistent */ }</div>
           )}
 
-          <p className="text-sm text-gray-500 mb-2">Tipo: {product.tipo}</p>
           <p className="text-xl font-semibold text-pink-500 mb-0">
-            ${product.precio}
+            {product.isBasePrice ? 'Desde ' : ''}$U {product.precio}
           </p>
         </div>
 

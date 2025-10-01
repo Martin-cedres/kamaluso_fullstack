@@ -4,13 +4,13 @@ import Navbar from '../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProductHref } from '../../lib/utils'
-import { categorias } from '../../lib/categorias'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import SeoMeta from '../../components/SeoMeta'
 import Breadcrumbs from '../../components/Breadcrumbs';
 import connectDB from '../../lib/mongoose';
 import Product from '../../models/Product';
+import Category from '@/models/Category';
 import ProductCard from '../../components/ProductCard'; // Importar ProductCard
 
 // Interfaces
@@ -18,9 +18,10 @@ interface IProduct {
   _id: string;
   nombre: string;
   descripcion?: string;
-  precio?: number;
-  precioFlex?: number;
-  precioDura?: number;
+  basePrice?: number; // Nuevo
+  precio?: number; // Antiguo
+  precioFlex?: number; // Antiguo
+  precioDura?: number; // Antiguo
   categoria?: string;
   destacado?: boolean;
   imageUrl?: string;
@@ -30,6 +31,7 @@ interface IProduct {
   tapa?: string;
   averageRating?: number;
   numReviews?: number;
+  customizationGroups?: any[]; // Nuevo
 }
 
 interface Category {
@@ -117,8 +119,15 @@ export default function CategoryPage({
     initialTotalPages,
   ])
 
-  // Función para obtener el precio de la tarjeta
+  // Función para obtener el precio de la tarjeta (actualizada para compatibilidad)
   const getCardPrice = (product: IProduct) => {
+    if (product.basePrice) {
+      return (
+        <p className="text-pink-500 font-semibold text-lg mb-4">
+          Desde $U {product.basePrice}
+        </p>
+      )
+    }
     if (product.precioDura && product.precioFlex) {
       return (
         <>
@@ -264,8 +273,10 @@ export default function CategoryPage({
                   <ProductCard key={product._id} product={{
                     id: product._id,
                     nombre: product.nombre,
-                    precio: product.precioDura || product.precioFlex || product.precio || 0,
-                    tipo: product.tapa === 'Tapa Dura' ? 'tapa dura' : 'tapa flex',
+                    // Lógica de precio actualizada para compatibilidad
+                    precio: product.basePrice || product.precioDura || product.precioFlex || product.precio || 0,
+                    isBasePrice: !!product.basePrice, // Prop para indicar que es un precio "Desde"
+                    // ... otros campos
                     categoria: product.categoria || '',
                     slug: product.slug || '',
                     imagen: product.imageUrl || '/placeholder.png',
@@ -308,80 +319,88 @@ export default function CategoryPage({
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const paths = categorias.map((cat) => ({
+  await connectDB();
+  const categories = await Category.find({}).select('slug').lean();
+
+  const paths = categories.map((cat) => ({
     params: { categoria: cat.slug },
-  }))
+  }));
 
   return {
     paths,
     fallback: false,
-  }
-}
+  };
+};
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { categoria } = context.params
-  const category = categorias.find((c) => c.slug === categoria) || null
+  const { categoria: categorySlug } = context.params;
 
-  if (!category) {
-    return { notFound: true }
-  }
+  try {
+    await connectDB();
+    const category = await Category.findOne({ slug: categorySlug }).lean();
 
-  await connectDB();
+    if (!category) {
+      return { notFound: true };
+    }
 
-  const page = 1;
-  const limit = 12;
-  const query = { categoria: category.slug };
+    const page = 1;
+    const limit = 12;
+    const query = { categoria: category.slug };
 
-  const aggregationPipeline = [
-    { $match: query },
-    { $sort: { creadoEn: -1 } },
-    { $skip: (page - 1) * limit },
-    { $limit: limit },
-    {
-      $lookup: {
-        from: 'reviews',
-        localField: '_id',
-        foreignField: 'product',
-        as: 'reviews',
+    const aggregationPipeline = [
+      { $match: query },
+      { $sort: { creadoEn: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'product',
+          as: 'reviews',
+        },
       },
-    },
-    {
-      $addFields: {
-        approvedReviews: {
-          $filter: {
-            input: '$reviews',
-            as: 'review',
-            cond: { $eq: ['$$review.isApproved', true] },
+      {
+        $addFields: {
+          approvedReviews: {
+            $filter: {
+              input: '$reviews',
+              as: 'review',
+              cond: { $eq: ['$$review.isApproved', true] },
+            },
           },
         },
       },
-    },
-    {
-      $addFields: {
-        averageRating: { $avg: '$approvedReviews.rating' },
-        numReviews: { $size: '$approvedReviews' },
+      {
+        $addFields: {
+          averageRating: { $avg: '$approvedReviews.rating' },
+          numReviews: { $size: '$approvedReviews' },
+        },
       },
-    },
-    { $project: { reviews: 0, approvedReviews: 0 } },
-  ];
+      { $project: { reviews: 0, approvedReviews: 0 } },
+    ];
 
-  const productsData = await Product.aggregate(aggregationPipeline as any[]);
+    const productsData = await Product.aggregate(aggregationPipeline as any[]);
 
-  const totalProducts = await Product.countDocuments(query);
+    const totalProducts = await Product.countDocuments(query);
 
-  const initialProducts = JSON.parse(JSON.stringify(productsData)).map((p:any) => ({
-    ...p,
-    averageRating: p.averageRating === null ? 0 : p.averageRating,
-    numReviews: p.numReviews || 0,
-  }));
-  const initialTotalPages = Math.ceil(totalProducts / limit);
+    const initialProducts = JSON.parse(JSON.stringify(productsData)).map((p:any) => ({
+      ...p,
+      averageRating: p.averageRating === null ? 0 : p.averageRating,
+      numReviews: p.numReviews || 0,
+    }));
+    const initialTotalPages = Math.ceil(totalProducts / limit);
 
-  return {
-    props: {
-      category,
-      initialProducts,
-      initialTotalPages,
-    },
-    revalidate: 3600, // Revalidate once per hour
+    return {
+      props: {
+        category: JSON.parse(JSON.stringify(category)), // Ensure category is serializable
+        initialProducts,
+        initialTotalPages,
+      },
+      revalidate: 3600, // Revalidate once per hour
+    };
+  } catch (error) {
+    console.error('Error fetching category or products:', error);
+    return { notFound: true };
   }
-}
+};

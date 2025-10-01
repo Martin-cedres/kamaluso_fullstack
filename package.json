@@ -33,6 +33,7 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
+    "react-medium-image-zoom": "^5.4.0",
     "sharp": "^0.34.3",
     "yet-another-react-lightbox": "^3.25.0"
   },

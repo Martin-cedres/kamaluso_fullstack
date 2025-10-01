@@ -2,12 +2,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Head from 'next/head' // Importo Head para añadir el schema
 import Navbar from '../components/Navbar'
-import { getProductHref } from '../lib/utils'
+
 import SeoMeta from '../components/SeoMeta'
-import { categorias } from '../lib/categorias' // Importar categorías estáticas
+
 import connectDB from '../lib/mongoose'
 import Product from '../models/Product'
 import { GetStaticProps } from 'next'
+import Category from '../models/Category' // Importar el modelo Category
 
 // Interfaces
 interface Categoria {
@@ -24,9 +25,10 @@ interface Product {
   alt?: string
   categoria?: string
   slug?: string
-  precio?: number
-  precioFlex?: number
-  precioDura?: number
+  basePrice?: number // Usar basePrice
+  precio?: number // Antiguo
+  precioFlex?: number // Antiguo
+  precioDura?: number // Antiguo
   tapa?: string
 }
 
@@ -37,29 +39,10 @@ interface HomeProps {
 
 export default function Home({ destacados, categories }: HomeProps) {
   const getCardPrice = (product: Product) => {
-    if (product.precioDura && product.precioFlex) {
-      return (
-        <>
-          <p className="text-pink-500 font-semibold text-lg mb-1">
-            Dura: $U {product.precioDura}
-          </p>
-          <p className="text-pink-500 font-semibold text-lg mb-4">
-            Flex: $U {product.precioFlex}
-          </p>
-        </>
-      )
-    }
-    if (product.precioDura) {
+    if (product.basePrice) {
       return (
         <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precioDura}
-        </p>
-      )
-    }
-    if (product.precioFlex) {
-      return (
-        <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precioFlex}
+          $U {product.basePrice}
         </p>
       )
     }
@@ -161,66 +144,28 @@ export default function Home({ destacados, categories }: HomeProps) {
           </div>
         </section>
 
-        {/* Productos Destacados */}
-        <section className="px-6 py-12">
-          <h2 className="text-3xl font-semibold text-center mb-10">
-            Productos Destacados
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {destacados.length === 0 && (
-              <p className="text-center col-span-full text-gray-500">
-                No hay productos destacados
-              </p>
-            )}
-            {destacados.map((product) => (
-              <div
-                key={product._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-lg hover:shadow-pink-500/50 transition transform hover:-translate-y-1 flex flex-col h-full overflow-hidden"
-              >
-                <div className="relative w-full aspect-square">
-                  <Image
-                    src={product.imageUrl || '/placeholder.png'}
-                    alt={product.alt || product.nombre}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-                <div className="p-4 flex flex-col flex-grow text-center">
-                  <h3 className="font-semibold text-lg mb-2 flex-grow">
-                    {product.nombre}
-                  </h3>
-                  <div className="mb-4">{getCardPrice(product)}</div>
-                </div>
-                <Link
-                  href={getProductHref(product)}
-                  className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl"
-                >
-                  Ver más
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Productos Destacados (Temporalmente deshabilitado para depuración) */}
       </main>
     </>
   )
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  await connectDB()
+  await connectDB();
 
   // Fetch featured products
-  const destacadosData = await Product.find({ destacado: true }).limit(4).lean()
-  const destacados = JSON.parse(JSON.stringify(destacadosData))
+  const destacadosData = await Product.find({ destacado: true }).limit(4).lean();
+  const destacados = JSON.parse(JSON.stringify(destacadosData));
 
-  // Categories are static, but we pass them as props for consistency
-  const categoriesData = categorias.map((cat) => ({ ...cat, _id: cat.id }))
+  // Fetch categories
+  const categoriesData = await Category.find({}).lean();
+  const categories = JSON.parse(JSON.stringify(categoriesData));
 
   return {
     props: {
       destacados,
-      categories: categoriesData,
+      categories,
     },
     revalidate: 3600, // Revalidate once per hour
-  }
-}
+  };
+};

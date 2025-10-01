@@ -19,13 +19,11 @@ export function toSlug(s: any): string {
  * @returns El path de la URL para el producto.
  */
 export function getProductHref(p: any): string {
-  // Always use _id for the most robust linking
-  const productId = p._id || ''
-  if (productId) {
-    return `/productos/detail/${encodeURIComponent(productId)}`
+  if (p.categoria && p.slug) {
+    return `/productos/${encodeURIComponent(p.categoria)}/${encodeURIComponent(p.slug)}`;
   }
-  // Fallback if no _id (should not happen if products come from DB)
-  return `/productos/detail/not-found`
+  // Fallback if essential data is missing
+  return `/productos/not-found`;
 }
 
 /**

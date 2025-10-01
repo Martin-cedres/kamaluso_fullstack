@@ -51,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Campos de texto directos
       if (fields.nombre) updateDoc.nombre = String(fields.nombre)
       if (fields.slug) updateDoc.slug = String(fields.slug)
-      if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo) // Añadir clave de grupo
+      if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo)
       if (fields.descripcion) updateDoc.descripcion = String(fields.descripcion)
       if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle)
       if (fields.seoDescription)
@@ -60,20 +60,49 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (fields.notes) updateDoc.notes = String(fields.notes)
       if (fields.status) updateDoc.status = String(fields.status)
       if (fields.categoria) updateDoc.categoria = String(fields.categoria)
-      if (fields.tapa) updateDoc.tapa = String(fields.tapa)
 
-      // Campo de precio (numérico)
-      if (fields.precio) {
-        updateDoc.precio = parseFloat(String(fields.precio)) || 0
+      // Campo de precio base (numérico)
+      if (fields.basePrice) {
+        updateDoc.basePrice = parseFloat(String(fields.basePrice)) || 0
       }
-      // Campos de precio adicionales (numéricos)
-      if (fields.precioFlex) {
-        // Add this block
-        updateDoc.precioFlex = parseFloat(String(fields.precioFlex)) || 0
+      // Campo de precio base (numérico)
+      if (fields.basePrice) {
+        updateDoc.basePrice = parseFloat(String(fields.basePrice)) || 0
       }
-      if (fields.precioDura) {
-        // Add this block
-        updateDoc.precioDura = parseFloat(String(fields.precioDura)) || 0
+
+      // Nuevo: Manejo de customizationGroups
+      if (fields.customizationGroups) {
+        try {
+          updateDoc.customizationGroups = JSON.parse(fields.customizationGroups as string);
+        } catch (e) {
+          console.error("Error parsing customizationGroups on edit", e);
+          return res.status(400).json({ error: 'Formato de grupos de personalización inválido.' });
+        }
+      }
+
+      // Upload images for customization options
+      for (const key in files) {
+        if (key.startsWith('optionImage_')) {
+          const fileOrFiles = files[key];
+          const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+
+          if (file) {
+            const url = await uploadFileToS3(file as formidable.File, 'productos/opciones');
+            const indices = key.split('_')[1]; // e.g., g0o1
+            const groupIndex = parseInt(indices.substring(1, indices.indexOf('o')));
+            const optionIndex = parseInt(indices.substring(indices.indexOf('o') + 1));
+
+            if (!isNaN(groupIndex) && !isNaN(optionIndex)) {
+              if (!updateDoc.customizationGroups) {
+                  const product = await db.collection('products').findOne({ _id: new ObjectId(productId) });
+                  updateDoc.customizationGroups = product?.customizationGroups || [];
+              }
+              if (updateDoc.customizationGroups[groupIndex]?.options[optionIndex]) {
+                updateDoc.customizationGroups[groupIndex].options[optionIndex].image = url;
+              }
+            }
+          }
+        }
       }
 
       // Campo destacado (booleano)

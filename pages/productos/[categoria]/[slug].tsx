@@ -1,10 +1,10 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
 import Head from 'next/head'
-import Navbar from '../../../components/Navbar'
 import Image from 'next/image'
+import Navbar from '../../../components/Navbar'
 import Link from 'next/link'
 import { useCart } from '../../../context/CartContext';
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import connectDB from '../../../lib/mongoose';
 import Product, { IProduct } from '../../../models/Product';
@@ -16,64 +16,159 @@ import ReviewForm from '../../../components/ReviewForm';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import CoverDesignGallery from '../../../components/CoverDesignGallery';
 
 interface ProductDetailProps {
   product: IProduct | null;
   reviews: IReview[];
   reviewCount: number;
   averageRating: string;
-  productVariants: IProduct[];
 }
 
-export default function ProductDetailPage({ product, reviews, reviewCount, averageRating, productVariants }: ProductDetailProps) {
+export default function ProductDetailPage({ product, reviews, reviewCount, averageRating }: ProductDetailProps) {
   const { addToCart } = useCart()
-  const [finish, setFinish] = useState<string | null>(null)
-  const [activeImage, setActiveImage] = useState(
-    product?.images?.[0] || product?.imageUrl || '/placeholder.png',
-  )
   const [open, setOpen] = useState(false);
   const router = useRouter()
 
-  const getDisplayPrice = () => {
-    if (!product) return null
-    if (product.precioDura) return product.precioDura
-    if (product.precioFlex) return product.precioFlex
-    if (product.precio) return product.precio
-    return null
-  }
+  // --- SSR-SAFE STATE INITIALIZATION ---
+  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
+  const [activeImage, setActiveImage] = useState(
+    product?.images?.[0] || product?.imageUrl || '/placeholder.png'
+  );
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const displayPrice = getDisplayPrice()
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => setIsAnimating(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
+
+  const handleImageChange = useCallback((newImage: string) => {
+    if (newImage !== activeImage) {
+      setActiveImage(newImage);
+      setIsAnimating(true);
+    }
+  }, [activeImage]);
+  // This effect now safely runs on the client after selections are made by the user
+  useEffect(() => {
+    if (!product) return;
+
+    let currentPrice = product.basePrice || 0;
+    let newImage = product.images?.[0] || product.imageUrl || '/placeholder.png';
+    let imageChanged = false;
+
+    // Recalculate price based on current selections
+    product.customizationGroups?.forEach(group => {
+      const selectedOptionName = selections[group.name];
+      if (selectedOptionName) {
+        const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
+        if (selectedOption) {
+          currentPrice += selectedOption.priceModifier;
+          if (selectedOption.image) {
+            newImage = selectedOption.image;
+            imageChanged = true;
+          }
+        }
+      }
+    });
+
+    setTotalPrice(currentPrice);
+    if(imageChanged) {
+      handleImageChange(newImage);
+    }
+
+  }, [selections, product, handleImageChange]);
+
+
+  const handleSelectionChange = (groupName: string, optionName: string) => {
+    const trimmedGroupName = groupName.trim();
+    const trimmedOptionName = optionName.trim();
+
+    setSelections(prev => {
+      const newSelections: Record<string, string> = {
+        ...prev,
+        [trimmedGroupName]: trimmedOptionName,
+      };
+
+      // When the main cover type changes, reset all dependent selections
+      if (trimmedGroupName === 'Tipo de Tapa') {
+        delete newSelections['Diseño Tapa Dura'];
+        delete newSelections['Diseño Tapa Flexible'];
+        delete newSelections['Textura'];
+        delete newSelections['Elástico'];
+      }
+
+      return newSelections;
+    });
+
+    const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
+    const option = group?.options.find(o => o.name.trim() === trimmedOptionName);
+    if (option?.image) {
+      handleImageChange(option.image);
+    }
+  };
+
+  const orderedDisplayGroups = useMemo(() => {
+    if (!product?.customizationGroups) return [];
+
+    const originalGroups = [...product.customizationGroups];
+    const displayOrder: any[] = [];
+
+    // 1. Add the main trigger group
+    const tipoTapaGroup = originalGroups.find(g => g.name.trim() === 'Tipo de Tapa');
+    if (tipoTapaGroup) {
+        displayOrder.push(tipoTapaGroup);
+    }
+
+    // 2. Add placeholders for hardcoded groups
+    displayOrder.push({
+        name: 'Textura',
+        isHardcoded: true,
+        options: [{ name: 'Laminado Mate' }, { name: 'Laminado Brillo' }]
+    });
+    displayOrder.push({
+        name: 'Elástico',
+        isHardcoded: true,
+        options: [{ name: 'Sí' }, { name: 'No' }]
+    });
+
+    // 3. Add the groups that are dependent on 'Tipo de Tapa'
+    const disenoDuraGroup = originalGroups.find(g => g.name.trim() === 'Diseño Tapa Dura');
+    if (disenoDuraGroup) {
+        displayOrder.push(disenoDuraGroup);
+    }
+    const disenoFlexGroup = originalGroups.find(g => g.name.trim() === 'Diseño Tapa Flexible');
+    if (disenoFlexGroup) {
+        displayOrder.push(disenoFlexGroup);
+    }
+
+    // 4. Add all other groups
+    const remainingGroups = originalGroups.filter(g => 
+        g.name.trim() !== 'Tipo de Tapa' &&
+        g.name.trim() !== 'Diseño Tapa Dura' &&
+        g.name.trim() !== 'Diseño Tapa Flexible'
+    );
+    displayOrder.push(...remainingGroups);
+
+    return displayOrder;
+}, [product?.customizationGroups]);
+
 
   const handleAddToCart = () => {
     if (product) {
-      if (product.tapa === 'Tapa Dura' && finish === null) {
-        toast.error('Por favor, selecciona una textura para la tapa.')
-        return
-      }
-
-      const priceToUse = displayPrice
-      if (
-        priceToUse === undefined ||
-        priceToUse === null ||
-        isNaN(priceToUse)
-      ) {
-        toast.error(
-          'Este producto no se puede agregar al carrito porque no tiene un precio definido.',
-        )
-        return
-      }
-
       const itemToAdd = {
         _id: String(product._id),
         nombre: product.nombre,
-        precio: priceToUse,
-        imageUrl: product.images?.[0] || product.imageUrl,
-        finish: product.tapa === 'Tapa Dura' ? finish : undefined,
+        precio: totalPrice,
+        imageUrl: activeImage,
+        customizations: selections,
       }
 
       addToCart(itemToAdd)
       toast.success(
-        `${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`,
+        `${product.nombre} ha sido agregado al carrito!`,
       )
     }
   }
@@ -97,7 +192,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
     product.seoDescription ||
     product.descripcion ||
     'Encuentra los mejores artículos de papelería personalizada en Kamaluso.'
-  const pageImage = product.images?.[0] || product.imageUrl || '/logo.webp'
+  const pageImage = product.images?.[0] || product.imageUrl || '/logo.webp'; // Use base image for SEO
   const canonicalUrl = `https://www.papeleriapersonalizada.uy/productos/${product.categoria}/${product.slug}`
 
   const productSchema = {
@@ -108,12 +203,12 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
     description: pageDescription,
     sku: product._id,
     offers: {
-      '@type': 'Offer',
+      '@type': 'AggregateOffer',
       url: canonicalUrl,
       priceCurrency: 'UYU',
-      price: displayPrice,
-      availability: 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/NewCondition',
+      lowPrice: product.basePrice,
+      highPrice: totalPrice, 
+      offerCount: product.customizationGroups?.length || 1,
     },
   }
 
@@ -123,21 +218,16 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
         <link rel="canonical" href={canonicalUrl} />
-
-        {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:image" content={pageImage} />
-
-        {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content={canonicalUrl} />
         <meta property="twitter:title" content={pageTitle} />
         <meta property="twitter:description" content={pageDescription} />
         <meta property="twitter:image" content={pageImage} />
-
         <script type="application/ld+json">
           {JSON.stringify(productSchema)}
         </script>
@@ -164,19 +254,46 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           <div className="flex flex-col lg:flex-row gap-12">
           {/* Imágenes */}
           <div className="flex-1">
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
-            >
-              <Image
-                src={activeImage}
-                alt={product.alt || product.nombre}
-                fill
-                style={{ objectFit: 'cover' }}
-                className="rounded-2xl transition-transform duration-300 group-hover:scale-105"
-              />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
+              >
+                <Image
+                  key={activeImage} // Add key to force re-render
+                  src={activeImage}
+                  alt={product.alt || product.nombre}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+                />
+              </button>
+              {product.images && product.images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => {
+                      const currentIndex = product.images.indexOf(activeImage);
+                      const nextIndex = (currentIndex - 1 + product.images.length) % product.images.length;
+                      handleImageChange(product.images[nextIndex]);
+                    }}
+                    className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const currentIndex = product.images.indexOf(activeImage);
+                      const nextIndex = (currentIndex + 1) % product.images.length;
+                      handleImageChange(product.images[nextIndex]);
+                    }}
+                    className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </>
+              )}
+            </div>
 
             <Lightbox
               open={open}
@@ -189,8 +306,8 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                 {product.images.map((img, i) => (
                   <div
                     key={i}
-                    onClick={() => setActiveImage(img)}
-                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 ${
+                    onClick={() => handleImageChange(img)}
+                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-4 ${
                       activeImage === img
                         ? 'border-pink-500'
                         : 'border-transparent opacity-70 hover:opacity-100'
@@ -221,63 +338,125 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                   </span>
                 </div>
               )}
-              {displayPrice && (
-                <p className="text-pink-500 font-semibold text-2xl mb-6">
-                  $U {displayPrice}
-                </p>
-              )}
+              <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
+                $U {totalPrice}
+              </p>
               <p className="text-gray-600 mb-6">{product.descripcion}</p>
 
-              {/* Product Variants Section */}
-              {productVariants && productVariants.length > 0 && (
-                <section className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Variantes Disponibles</h3>
-                  <div className="flex w-full gap-3 pb-2 overflow-x-auto">
-                    {productVariants.map((variant) => (
-                      <Link key={variant._id} href={`/productos/${variant.categoria}/${variant.slug}`} className="block flex-shrink-0 w-28">
-                        <div className="bg-white rounded-lg border border-gray-200 hover:border-pink-500 hover:shadow-lg transition-all duration-300">
-                          <div className="relative w-full aspect-square">
-                            <Image
-                              src={variant.imageUrl || '/placeholder.png'}
-                              alt={variant.nombre}
-                              fill
-                              className="object-cover rounded-t-lg"
-                            />
-                          </div>
-                          <div className="p-2">
-                            <p className="text-xs font-medium text-gray-700 truncate">{variant.nombre.split('-').pop()}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {/* NEW Customization UI */}
+              <div className="space-y-6">
+                {orderedDisplayGroups.map((group) => {
+                  const groupName = group.name.trim();
+                  const selectedTapa = selections['Tipo de Tapa']?.trim();
 
-              {/* Selector de Acabado Condicional */}
-              {product.tapa === 'Tapa Dura' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Textura de tapas
-                  </label>
-                  <div className="flex rounded-xl shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setFinish('Brillo')}
-                      className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
-                    >
-                      Brillo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFinish('Mate')}
-                      className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
-                    >
-                      Mate
-                    </button>
-                  </div>
-                </div>
-              )}
+                  // --- VISIBILITY LOGIC ---
+                  if (groupName === 'Diseño Tapa Dura' && selectedTapa !== 'Tapa Dura') return null;
+                  if (groupName === 'Diseño Tapa Flexible' && selectedTapa !== 'Tapa Flexible') return null;
+                  if (groupName === 'Textura' && selectedTapa !== 'Tapa Dura') return null;
+                  if (groupName === 'Elástico' && selectedTapa !== 'Tapa Dura') return null;
+
+                  // --- RENDER LOGIC ---
+                  // Renderer for hardcoded groups
+                  if (group.isHardcoded) {
+                    return (
+                      <div key={groupName}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {groupName}
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                          {group.options.map((option: any) => {
+                            const isSelected = selections[groupName] === option.name;
+                            return (
+                              <button
+                                key={option.name}
+                                type="button"
+                                onClick={() => handleSelectionChange(groupName, option.name)}
+                                className={`p-3 text-sm rounded-xl border transition-all duration-200 flex items-center justify-center text-center w-32 h-auto min-h-[60px] ${
+                                  isSelected
+                                    ? 'bg-pink-500 text-white border-pink-500 shadow-lg'
+                                    : 'bg-white text-gray-800 border-gray-300 hover:border-pink-400 hover:shadow-md'
+                                }`}
+                              >
+                                <span className="block font-medium">{option.name}</span>
+                                {isSelected && (
+                                  <div className="absolute top-1 right-1 bg-white rounded-full p-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // Special renderer for CoverDesignGallery
+                  if (groupName === 'Diseño Tapa Dura' || groupName === 'Diseño Tapa Flexible') {
+                    return (
+                      <div key={groupName}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {groupName}
+                        </label>
+                        <CoverDesignGallery
+                          options={group.options}
+                          selectedOption={selections[groupName]}
+                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
+                        />
+                      </div>
+                    )
+                  }
+
+                  // Default renderer for DB groups
+                  return (
+                    <div key={groupName}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {groupName}
+                      </label>
+                      <div className="flex flex-wrap gap-3">
+                        {group.options.map((option: any) => {
+                          const isSelected = selections[groupName] === option.name.trim();
+                          return (
+                            <button
+                              key={option.name}
+                              type="button"
+                              onClick={() => handleSelectionChange(groupName, option.name)}
+                              className={`p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
+                                isSelected
+                                  ? 'bg-pink-500 text-white border-pink-500 shadow-lg'
+                                  : 'bg-white text-gray-800 border-gray-300 hover:border-pink-400 hover:shadow-md'
+                              }`}
+                            >
+                              {option.image && (
+                                <div className="relative w-20 h-20 rounded-md overflow-hidden">
+                                  <Image
+                                    src={option.image}
+                                    alt={option.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              )}
+                              <span className="block font-medium">{option.name}</span>
+                              {option.priceModifier > 0 && <span className="block text-xs font-normal">(+ $U {option.priceModifier})</span>}
+                              {isSelected && (
+                                <div className="absolute top-1 right-1 bg-white rounded-full p-0.5">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
@@ -349,7 +528,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     slug: { $exists: true },
     categoria: { $exists: true },
   })
-    .limit(10)
+    .limit(200) // Increased limit for more paths
     .lean()
 
   const paths = products.map((product) => ({
@@ -378,6 +557,16 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
     const product = JSON.parse(JSON.stringify(productData));
 
+    // Add custom design option to cover design group
+    const coverDesignGroup = product.customizationGroups?.find((g: any) => g.name === 'Diseño de Tapa');
+    if (coverDesignGroup) {
+      coverDesignGroup.options.push({
+        name: 'Diseño Personalizado',
+        priceModifier: 0,
+        image: '/placeholder.png', // You can replace this with a more suitable image
+      });
+    }
+
     // Fetch approved reviews and calculate average rating
     const reviewsData = await Review.find({ product: product._id, isApproved: true }).sort({ createdAt: -1 }).lean();
     const reviews = JSON.parse(JSON.stringify(reviewsData));
@@ -386,25 +575,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
       ? reviews.reduce((acc: number, item: any) => item.rating + acc, 0) / reviewCount
       : 0;
 
-    // Fetch product variants if a group key exists
-    let productVariants = [];
-    if (product.claveDeGrupo) {
-      const variantsData = await Product.find({
-        claveDeGrupo: product.claveDeGrupo,
-        _id: { $ne: product._id } // Exclude the current product
-      }).lean();
-      productVariants = JSON.parse(JSON.stringify(variantsData));
-    }
-
     return {
       props: {
         product,
         reviews,
         reviewCount,
         averageRating: averageRating.toFixed(1),
-        productVariants, // Pass variants to the page
       },
-      revalidate: 3600, // Revalidate once per hour
+      revalidate: 3600, // Revalidate every hour
     }
   } catch (error) {
     console.error('Error fetching product:', error);

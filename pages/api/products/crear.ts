@@ -57,17 +57,44 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       const subCategoriaField = (fields.subCategoria as string) || ''
 
+      let customizationGroups = [];
+      try {
+        const groupsString = fields.customizationGroups as string;
+        if (groupsString) {
+          customizationGroups = JSON.parse(groupsString);
+        }
+      } catch (e) {
+        console.error("Error parsing customizationGroups", e);
+        return res.status(400).json({ error: 'Formato de grupos de personalización inválido.' });
+      }
+
+      // Upload images for customization options
+      for (const key in files) {
+        if (key.startsWith('optionImage_')) {
+          const fileOrFiles = files[key];
+          const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+
+          if (file) {
+            const url = await uploadFileToS3(file as formidable.File, 'productos/opciones');
+            const indices = key.split('_')[1]; // e.g., g0o1
+            const groupIndex = parseInt(indices.substring(1, indices.indexOf('o')));
+            const optionIndex = parseInt(indices.substring(indices.indexOf('o') + 1));
+
+            if (!isNaN(groupIndex) && !isNaN(optionIndex) && customizationGroups[groupIndex]?.options[optionIndex]) {
+              customizationGroups[groupIndex].options[optionIndex].image = url;
+            }
+          }
+        }
+      }
+
       const productoDoc: any = {
         nombre: String(fields.nombre || ''),
         slug: String(fields.slug || ''),
-        claveDeGrupo: String(fields.claveDeGrupo || ''), // Añadir clave de grupo
+        claveDeGrupo: String(fields.claveDeGrupo || ''),
         descripcion: String(fields.descripcion || ''),
-        precio: parseFloat(String(fields.precio || '0')) || 0,
-        precioFlex: parseFloat(String(fields.precioFlex || '0')) || 0,
-        precioDura: parseFloat(String(fields.precioDura || '0')) || 0,
+        basePrice: parseFloat(String(fields.basePrice || '0')) || 0,
         categoria: categoria,
         subCategoria: subCategoriaField ? [subCategoriaField] : [],
-        tapa: String(fields.tapa || ''),
         seoTitle: String(fields.seoTitle || ''),
         seoDescription: String(fields.seoDescription || ''),
         seoKeywords:
@@ -81,6 +108,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           fields.destacado === 'true' || fields.destacado === true || false,
         imageUrl,
         images: imagesUrls,
+        customizationGroups: customizationGroups, // Guardar el array con las URLs de imagen
         creadoEn: new Date(),
       }
 

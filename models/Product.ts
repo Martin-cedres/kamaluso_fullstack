@@ -1,42 +1,55 @@
 import mongoose, { Document, Schema, Model } from 'mongoose'
 
+export interface ICustomizationOption {
+  name: string;
+  priceModifier: number;
+  image?: string;
+}
+
+export interface ICustomizationGroup {
+  name: string;
+  type: 'radio' | 'checkbox' | 'text';
+  options: ICustomizationOption[];
+}
+
 export interface IProduct extends Document {
   _id: string;
   nombre: string;
-  slug: string
-  descripcion: string
-  precio: number
-  precioFlex?: number
-  precioDura?: number
-  categoria: string
-  subCategoria?: string[]
-  tapa?: string
-  seoTitle?: string
-  seoDescription?: string
-  seoKeywords?: string[]
-  alt?: string
-  notes?: string
-  status: string
-  destacado: boolean
-  imageUrl: string
+  slug: string;
+  descripcion: string;
+  basePrice: number;
+  precioFlex?: number; // Campo legado, opcional
+  precioDura?: number; // Campo legado, opcional
+  categoria: string;
+  subCategoria?: string[];
+  tapa?: string; // Campo legado, opcional
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
+  alt?: string;
+  notes?: string;
+  status: string;
+  destacado: boolean;
+  imageUrl: string;
   images?: string[];
   averageRating?: number;
   numReviews?: number;
   claveDeGrupo?: string;
+  customizationGroups?: ICustomizationGroup[];
 }
 
 const productSchema: Schema<IProduct> = new Schema(
   {
     nombre: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    claveDeGrupo: { type: String, trim: true, index: true }, // Nuevo campo
+    claveDeGrupo: { type: String, trim: true, index: true },
     descripcion: { type: String, required: true },
-    precio: { type: Number, required: true },
-    precioFlex: { type: Number, default: 0 },
-    precioDura: { type: Number, default: 0 },
+    basePrice: { type: Number, required: true },
+    precioFlex: { type: Number }, // Campo legado
+    precioDura: { type: Number }, // Campo legado
     categoria: { type: String, required: true },
     subCategoria: [{ type: String }],
-    tapa: { type: String },
+    tapa: { type: String }, // Campo legado
     seoTitle: { type: String },
     seoDescription: { type: String },
     seoKeywords: [{ type: String }],
@@ -46,11 +59,24 @@ const productSchema: Schema<IProduct> = new Schema(
     destacado: { type: Boolean, default: false },
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
+    customizationGroups: [
+      {
+        name: String,
+        type: String,
+        options: [
+          {
+            name: String,
+            priceModifier: Number,
+            image: String,
+          },
+        ],
+      },
+    ],
   },
   {
     timestamps: true, // Handles createdAt and updatedAt
   },
-)
+);
 
 const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>('Product', productSchema)

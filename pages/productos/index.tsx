@@ -13,6 +13,7 @@ interface Product {
   precio?: number;
   precioFlex?: number;
   precioDura?: number;
+  basePrice?: number; // Añadir esta prop
   categoria?: string;
   slug?: string;
   imageUrl?: string;
@@ -91,7 +92,7 @@ export default function ProductsPage() {
               id: product._id,
               nombre: product.nombre,
               precio: product.precioDura || product.precioFlex || product.precio || 0,
-              tipo: product.tapa === 'Tapa Dura' ? 'tapa dura' : 'tapa flex',
+              isBasePrice: !!product.basePrice, // Añadir esta prop
               categoria: product.categoria || '',
               slug: product.slug || '',
               imagen: product.imageUrl || '/placeholder.png',
