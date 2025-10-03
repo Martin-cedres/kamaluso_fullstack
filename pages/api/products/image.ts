@@ -1,72 +1,65 @@
 // pages/api/products/image.ts
-import type { NextApiRequest, NextApiResponse } from 'next'
-import formidable from 'formidable'
-import fs from 'fs'
-import { v4 as uuidv4 } from 'uuid'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import type { NextApiRequest, NextApiResponse } from 'next';
+import formidable from 'formidable';
+import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la función refactorizada
 
 export const config = {
   api: {
     bodyParser: false,
   },
-}
-
-// Inicializar S3
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+};
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' })
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const form = formidable({ multiples: true, uploadDir: '/tmp' })
+  // Usar formidable para parsear el formulario.
+  // La función de S3 se encargará de la ruta temporal y su limpieza.
+  const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files: any) => {
-    if (err) return res.status(500).json({ error: 'Error parseando archivos' })
+    if (err) {
+      console.error('Error parseando archivos:', err);
+      return res.status(500).json({ error: 'Error parseando archivos' });
+    }
 
     try {
-      const uploadedUrls: string[] = []
+      const uploadedUrls: string[] = [];
 
-      // Convertir archivos en array
-      const fileArray = Array.isArray(files.images)
-        ? files.images
-        : files.images
-          ? [files.images]
-          : []
-      if (files.image) fileArray.unshift(files.image) // imagen principal primero
-
-      for (const file of fileArray) {
-        const fileContent = fs.readFileSync(file.filepath)
-        const fileExt = file.originalFilename.split('.').pop()
-        const key = `products/${uuidv4()}.${fileExt}`
-
-        const command = new PutObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME!,
-          Key: key,
-          Body: fileContent,
-          ACL: 'public-read',
-        })
-
-        await s3Client.send(command)
-
-        uploadedUrls.push(
-          `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
-        )
+      // Unificar el manejo de archivos únicos y múltiples en un solo array
+      const fileArray: formidable.File[] = [];
+      if (files.images) {
+        // Si 'images' es un array, lo concatena, si no, lo mete en un array
+        Array.isArray(files.images)
+          ? fileArray.push(...files.images)
+          : fileArray.push(files.images);
+      }
+      // Añadir 'image' (imagen principal) si existe, al principio del array
+      if (files.image) {
+        fileArray.unshift(files.image);
       }
 
-      res.status(200).json({ urls: uploadedUrls })
-    } catch (err) {
-      console.error(err)
-      res.status(500).json({ error: 'Error subiendo archivos a S3' })
+      if (fileArray.length === 0) {
+        return res.status(400).json({ error: 'No se subieron imágenes' });
+      }
+
+      // Iterar y subir cada archivo usando la función centralizada
+      for (const file of fileArray) {
+        // Asegurarse de que el archivo no está vacío y tiene un filepath
+        if (file.size > 0 && file.filepath) {
+          const url = await uploadFileToS3(file, 'products');
+          uploadedUrls.push(url);
+        }
+      }
+
+      res.status(200).json({ urls: uploadedUrls });
+    } catch (uploadError) {
+      console.error('Error subiendo archivos a S3:', uploadError);
+      res.status(500).json({ error: 'Error subiendo archivos a S3' });
     }
-  })
+  });
 }

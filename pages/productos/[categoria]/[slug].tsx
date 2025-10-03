@@ -5,6 +5,7 @@ import Navbar from '../../../components/Navbar'
 import Link from 'next/link'
 import { useCart } from '../../../context/CartContext';
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import connectDB from '../../../lib/mongoose';
 import Product, { IProduct } from '../../../models/Product';
@@ -17,6 +18,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs';
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import CoverDesignGallery from '../../../components/CoverDesignGallery';
+import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
 
 interface ProductDetailProps {
   product: IProduct | null;
@@ -31,7 +33,15 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
   const router = useRouter()
 
   // --- SSR-SAFE STATE INITIALIZATION ---
-  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [selections, setSelections] = useState<Record<string, string>>(() => {
+    const initialSelections: Record<string, string> = {};
+    const tipoTapaGroup = product?.customizationGroups?.find(g => g.name === 'Tipo de Tapa');
+    const tapaDuraOption = tipoTapaGroup?.options.find(o => o.name === 'Tapa Dura');
+    if (tipoTapaGroup && tapaDuraOption) {
+      initialSelections['Tipo de Tapa'] = 'Tapa Dura';
+    }
+    return initialSelections;
+  });
   const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
   const [activeImage, setActiveImage] = useState(
     product?.images?.[0] || product?.imageUrl || '/placeholder.png'
@@ -57,10 +67,9 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
     if (!product) return;
 
     let currentPrice = product.basePrice || 0;
-    let newImage = product.images?.[0] || product.imageUrl || '/placeholder.png';
-    let imageChanged = false;
+    let hasImageSelected = false;
 
-    // Recalculate price based on current selections
+    // Iterate through all selected options to calculate price
     product.customizationGroups?.forEach(group => {
       const selectedOptionName = selections[group.name];
       if (selectedOptionName) {
@@ -68,19 +77,20 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
         if (selectedOption) {
           currentPrice += selectedOption.priceModifier;
           if (selectedOption.image) {
-            newImage = selectedOption.image;
-            imageChanged = true;
+            hasImageSelected = true;
           }
         }
       }
     });
 
     setTotalPrice(currentPrice);
-    if(imageChanged) {
-      handleImageChange(newImage);
+
+    // If no image-bearing option is currently selected, revert to default product image
+    if (!hasImageSelected && activeImage !== (product.images?.[0] || product?.imageUrl || '/placeholder.png')) {
+      handleImageChange(product.images?.[0] || product?.imageUrl || '/placeholder.png');
     }
 
-  }, [selections, product, handleImageChange]);
+  }, [selections, product, activeImage, handleImageChange]);
 
 
   const handleSelectionChange = (groupName: string, optionName: string) => {
@@ -93,68 +103,68 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
         [trimmedGroupName]: trimmedOptionName,
       };
 
-      // When the main cover type changes, reset all dependent selections
-      if (trimmedGroupName === 'Tipo de Tapa') {
-        delete newSelections['Diseño Tapa Dura'];
-        delete newSelections['Diseño Tapa Flexible'];
-        delete newSelections['Textura'];
-        delete newSelections['Elástico'];
+      // Deselect options of dependent groups when the parent changes
+      product?.customizationGroups?.forEach(group => {
+        if (group.dependsOn?.groupName === trimmedGroupName && newSelections[group.name]) {
+          delete newSelections[group.name];
+        }
+      });
+
+      // Explicitly update activeImage if the newly selected option has one
+      const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
+      const option = group?.options.find(o => o.name.trim() === trimmedOptionName);
+      if (option?.image) {
+        handleImageChange(option.image);
       }
 
       return newSelections;
     });
-
-    const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
-    const option = group?.options.find(o => o.name.trim() === trimmedOptionName);
-    if (option?.image) {
-      handleImageChange(option.image);
-    }
   };
 
-  const orderedDisplayGroups = useMemo(() => {
+  const displayGroups = useMemo(() => {
     if (!product?.customizationGroups) return [];
 
-    const originalGroups = [...product.customizationGroups];
-    const displayOrder: any[] = [];
+    const allGroups = [...product.customizationGroups];
+    const orderedGroups = [];
+    const addedGroupNames = new Set<string>();
 
-    // 1. Add the main trigger group
-    const tipoTapaGroup = originalGroups.find(g => g.name.trim() === 'Tipo de Tapa');
-    if (tipoTapaGroup) {
-        displayOrder.push(tipoTapaGroup);
-    }
+    const addGroup = (name: string, filterFn: (g: any) => boolean = (g) => g.name === name) => {
+      const group = allGroups.find(filterFn);
+      if (group && !addedGroupNames.has(group.name)) {
+        orderedGroups.push(group);
+        addedGroupNames.add(group.name);
+      }
+    };
 
-    // 2. Add placeholders for hardcoded groups
-    displayOrder.push({
-        name: 'Textura',
-        isHardcoded: true,
-        options: [{ name: 'Laminado Mate' }, { name: 'Laminado Brillo' }]
+    // 1. Tipo de Tapa
+    addGroup('Tipo de Tapa');
+
+    // 2. Textura de Tapa
+    addGroup('Textura de Tapa');
+
+    // 3. Elástico
+    addGroup('Elástico');
+
+    // 4. Interiores
+    addGroup('Interiores');
+
+    // 5. Diseño de Tapa (Dura/Flexible)
+    allGroups.filter(g => g.name.startsWith('Diseño de Tapa')).forEach(group => {
+      if (!addedGroupNames.has(group.name)) {
+        orderedGroups.push(group);
+        addedGroupNames.add(group.name);
+      }
     });
-    displayOrder.push({
-        name: 'Elástico',
-        isHardcoded: true,
-        options: [{ name: 'Sí' }, { name: 'No' }]
+
+    // 6. Add any other remaining groups that were not explicitly ordered
+    allGroups.forEach(group => {
+      if (!addedGroupNames.has(group.name)) {
+        orderedGroups.push(group);
+      }
     });
 
-    // 3. Add the groups that are dependent on 'Tipo de Tapa'
-    const disenoDuraGroup = originalGroups.find(g => g.name.trim() === 'Diseño Tapa Dura');
-    if (disenoDuraGroup) {
-        displayOrder.push(disenoDuraGroup);
-    }
-    const disenoFlexGroup = originalGroups.find(g => g.name.trim() === 'Diseño Tapa Flexible');
-    if (disenoFlexGroup) {
-        displayOrder.push(disenoFlexGroup);
-    }
-
-    // 4. Add all other groups
-    const remainingGroups = originalGroups.filter(g => 
-        g.name.trim() !== 'Tipo de Tapa' &&
-        g.name.trim() !== 'Diseño Tapa Dura' &&
-        g.name.trim() !== 'Diseño Tapa Flexible'
-    );
-    displayOrder.push(...remainingGroups);
-
-    return displayOrder;
-}, [product?.customizationGroups]);
+    return orderedGroups;
+  }, [product?.customizationGroups]);
 
 
   const handleAddToCart = () => {
@@ -276,61 +286,13 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                   className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
                 />
               </button>
-              {product.images && product.images.length > 1 && (
-                <>
-                  <button
-                    onClick={() => {
-                      const currentIndex = product.images.indexOf(activeImage);
-                      const nextIndex = (currentIndex - 1 + product.images.length) % product.images.length;
-                      handleImageChange(product.images[nextIndex]);
-                    }}
-                    className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                  </button>
-                  <button
-                    onClick={() => {
-                      const currentIndex = product.images.indexOf(activeImage);
-                      const nextIndex = (currentIndex + 1) % product.images.length;
-                      handleImageChange(product.images[nextIndex]);
-                    }}
-                    className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </button>
-                </>
-              )}
             </div>
 
             <Lightbox
               open={open}
               close={() => setOpen(false)}
-              slides={product.images?.map((img) => ({ src: img }))}
+              slides={[{ src: activeImage }]}
             />
-
-            {product.images && product.images.length > 1 && (
-              <div className="flex w-full gap-4 mt-4 overflow-x-auto p-2">
-                {product.images.map((img, i) => (
-                  <div
-                    key={i}
-                    onClick={() => handleImageChange(img)}
-                    className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-4 ${
-                      activeImage === img
-                        ? 'border-pink-500'
-                        : 'border-transparent opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <Image
-                      src={img}
-                      alt={`${product.alt || product.nombre} ${i + 1}`}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      className="rounded-xl"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Información del producto */}
@@ -363,60 +325,23 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                 )}
               </div>
 
-              {/* NEW Customization UI */}
               <div className="space-y-6">
-                {orderedDisplayGroups.map((group) => {
+                {displayGroups.map((group) => {
                   const groupName = group.name.trim();
-                  const selectedTapa = selections['Tipo de Tapa']?.trim();
 
-                  // --- VISIBILITY LOGIC ---
-                  if (groupName === 'Diseño Tapa Dura' && selectedTapa !== 'Tapa Dura') return null;
-                  if (groupName === 'Diseño Tapa Flexible' && selectedTapa !== 'Tapa Flexible') return null;
-                  if (groupName === 'Textura' && selectedTapa !== 'Tapa Dura') return null;
-                  if (groupName === 'Elástico' && selectedTapa !== 'Tapa Dura') return null;
-
-                  // --- RENDER LOGIC ---
-                  // Renderer for hardcoded groups
-                  if (group.isHardcoded) {
-                    return (
-                      <div key={groupName}>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {groupName}
-                        </label>
-                        <div className="flex flex-wrap gap-3">
-                          {group.options.map((option: any) => {
-                            const isSelected = selections[groupName] === option.name;
-                            return (
-                              <button
-                                key={option.name}
-                                type="button"
-                                onClick={() => handleSelectionChange(groupName, option.name)}
-                                className={`p-3 text-sm rounded-xl border transition-all duration-200 flex items-center justify-center text-center w-32 h-auto min-h-[60px] ${
-                                  isSelected
-                                    ? 'bg-pink-500 text-white border-pink-500 shadow-lg'
-                                    : 'bg-white text-gray-800 border-gray-300 hover:border-pink-400 hover:shadow-md'
-                                }`}
-                              >
-                                <span className="block font-medium">{option.name}</span>
-                                {isSelected && (
-                                  <div className="absolute top-1 right-1 bg-white rounded-full p-0.5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )
+                  // --- NEW VISIBILITY LOGIC ---
+                  if (group.dependsOn) {
+                    const parentSelection = selections[group.dependsOn.groupName];
+                    if (parentSelection !== group.dependsOn.optionName) {
+                      return null; // Don't render if dependency not met
+                    }
                   }
 
+                  // --- RENDER LOGIC ---
                   // Special renderer for CoverDesignGallery
                   if (groupName.startsWith('Diseño de Tapa')) {
                     return (
-                      <div key={groupName}>
+                      <div key={groupName} className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           {groupName}
                         </label>
@@ -429,9 +354,25 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                     )
                   }
 
-                  // Default renderer for DB groups
+                  // Special renderer for InteriorDesignGallery
+                  if (groupName === 'Interiores') {
+                    return (
+                      <div key={groupName} className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {groupName}
+                        </label>
+                        <InteriorDesignGallery
+                          options={group.options}
+                          selectedOption={selections[groupName]}
+                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
+                        />
+                      </div>
+                    )
+                  }
+
+                  // Default renderer for all other groups
                   return (
-                    <div key={groupName}>
+                    <div key={groupName} className="mb-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {groupName}
                       </label>
@@ -443,10 +384,10 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                               key={option.name}
                               type="button"
                               onClick={() => handleSelectionChange(groupName, option.name)}
-                              className={`p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
+                              className={`relative p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
                                 isSelected
-                                  ? 'bg-pink-500 text-white border-pink-500 shadow-lg'
-                                  : 'bg-white text-gray-800 border-gray-300 hover:border-pink-400 hover:shadow-md'
+                                  ? 'border-pink-500 ring-2 ring-pink-500 shadow-md bg-pink-50 text-pink-800'
+                                  : 'border-gray-300 bg-white text-gray-800 hover:border-pink-400 hover:shadow-sm'
                               }`}
                             >
                               {option.image && (
@@ -462,8 +403,8 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                               <span className="block font-medium">{option.name}</span>
                               {option.priceModifier > 0 && <span className="block text-xs font-normal">(+ $U {option.priceModifier})</span>}
                               {isSelected && (
-                                <div className="absolute top-1 right-1 bg-white rounded-full p-0.5">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                <div className="absolute top-1 right-1 bg-pink-500 text-white rounded-full p-0.5">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
                                 </div>
@@ -479,16 +420,22 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
 
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <button
-                onClick={handleAddToCart}
-                className="bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
-              >
-                Agregar al carrito
-              </button>
+            <div className="sticky bottom-0 left-0 right-0 z-10 bg-white py-3 px-4 shadow-lg border-t border-gray-200">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <p key={totalPrice} className="text-pink-500 font-bold text-2xl md:text-3xl transition-all duration-300 ease-in-out animate-pulse-once">
+                  $U {totalPrice}
+                </p>
+                <button
+                  onClick={handleAddToCart}
+                  className="inline-flex items-center justify-center gap-2 bg-pink-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg hover:bg-pink-700 transition text-base md:text-lg"
+                >
+                  <ShoppingCartIcon className="h-5 w-5" />
+                  Agregar al carrito
+                </button>
+              </div>
               <Link
                 href={`/productos/${product.categoria}`}
-                className="px-6 py-3 rounded-2xl border border-pink-500 text-pink-500 font-semibold text-center hover:bg-pink-50 transition"
+                className="block text-center bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition text-sm md:text-base"
               >
                 Volver a {product.categoria}
               </Link>

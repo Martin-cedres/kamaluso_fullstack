@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema, Model } from 'mongoose'
 
 export interface ICustomizationOption {
+  _id?: string; // Añadido para identificar unívocamente la opción
   name: string;
   priceModifier: number;
   image?: string;
@@ -10,6 +11,10 @@ export interface ICustomizationGroup {
   name: string;
   type: 'radio' | 'checkbox' | 'text';
   options: ICustomizationOption[];
+  dependsOn?: {
+    groupName: string;
+    optionName: string;
+  };
 }
 
 export interface IProduct extends Document {
@@ -70,6 +75,10 @@ const productSchema: Schema<IProduct> = new Schema(
             image: String,
           },
         ],
+        dependsOn: {
+          groupName: String,
+          optionName: String,
+        },
       },
     ],
   },
