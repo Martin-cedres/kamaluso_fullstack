@@ -19,6 +19,10 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '../../components/AdminLayout' // Importar el layout
 import toast from 'react-hot-toast' // Importar toast
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 // Interfaces para los datos que vienen de la API
 interface SubCategoriaData {
@@ -49,6 +53,7 @@ export default function Admin() {
     status: 'activo',
     notes: '',
     destacado: false,
+    tipoDeProducto: 'Interactivo',
     claveDeGrupo: '',
     customizationGroups: [],
   })
@@ -341,6 +346,7 @@ export default function Admin() {
       status: 'activo',
       notes: '',
       destacado: false,
+      tipoDeProducto: 'Interactivo',
       claveDeGrupo: '',
       customizationGroups: [],
     })
@@ -558,6 +564,39 @@ export default function Admin() {
                 {/* --- Información Básica --- */}
                 <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-700 mb-4">Información Básica</h3>
+                  {/* Tipo de Producto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Producto</label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="tipoDeProducto"
+                          value="Interactivo"
+                          checked={form.tipoDeProducto === 'Interactivo'}
+                          onChange={(e) => setForm((f: any) => ({ ...f, tipoDeProducto: e.target.value }))}
+                          className="h-4 w-4 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="text-sm text-gray-800">Interactivo</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="tipoDeProducto"
+                          value="Estandar"
+                          checked={form.tipoDeProducto === 'Estandar'}
+                          onChange={(e) => setForm((f: any) => ({ ...f, tipoDeProducto: e.target.value }))}
+                          className="h-4 w-4 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="text-sm text-gray-800">Estándar</span>
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {form.tipoDeProducto === 'Interactivo'
+                        ? 'Producto con opciones personalizables (ej: agendas).'
+                        : 'Producto simple con galería de imágenes (ej: taza, remera).'}
+                    </p>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
@@ -569,79 +608,90 @@ export default function Admin() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                      <textarea value={form.descripcion} onChange={(e) => setForm((f: any) => ({ ...f, descripcion: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" rows={5} placeholder="Descripción detallada del producto..."></textarea>
+                      <ReactQuill
+                        theme="snow"
+                        value={form.descripcion}
+                        onChange={(value) => setForm((f: any) => ({ ...f, descripcion: value }))}
+                        className="bg-white"
+                      />
                     </div>
                   </div>
                 </div>
 
-                  <div className="space-y-4">
-                    {form.customizationGroups && form.customizationGroups.map((group: any, groupIndex: number) => (
-                      <div key={groupIndex} className="p-4 border border-gray-300 rounded-lg bg-white">
-                        {/* Group Header */}
-                        <div className="flex items-center justify-between gap-3 mb-3">
-                          <input type="text" value={group.name} onChange={(e) => handleGroupChange(groupIndex, 'name', e.target.value)} placeholder="Nombre del Grupo (ej: Tipo de Tapa)" className="flex-grow rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
-                          <select value={group.type} onChange={(e) => handleGroupChange(groupIndex, 'type', e.target.value)} className="rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
-                            <option value="radio">Selección Única</option>
-                            <option value="checkbox">Múltiples Opciones</option>
-                          </select>
-                          <button type="button" onClick={() => removeCustomizationGroup(groupIndex)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full">
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        </div>
+                {/* --- Grupos de Personalización (Solo para Interactivo) --- */}
+                {form.tipoDeProducto === 'Interactivo' && (
+                  <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-4">Grupos de Personalización</h3>
+                    <div className="space-y-4">
+                      {form.customizationGroups && form.customizationGroups.map((group: any, groupIndex: number) => (
+                        <div key={groupIndex} className="p-4 border border-gray-300 rounded-lg bg-white">
+                          {/* Group Header */}
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <input type="text" value={group.name} onChange={(e) => handleGroupChange(groupIndex, 'name', e.target.value)} placeholder="Nombre del Grupo (ej: Tipo de Tapa)" className="flex-grow rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                            <select value={group.type} onChange={(e) => handleGroupChange(groupIndex, 'type', e.target.value)} className="rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
+                              <option value="radio">Selección Única</option>
+                              <option value="checkbox">Múltiples Opciones</option>
+                            </select>
+                            <button type="button" onClick={() => removeCustomizationGroup(groupIndex)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full">
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
 
-                        {/* Options List */}
-                        <div className="space-y-3 pl-4 border-l-2 border-gray-200">
-                          {group.options.map((option: any, optionIndex: number) => (
-                            <div key={optionIndex} className="flex items-center gap-2">
-                              <input type="text" value={option.name} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'name', e.target.value)} placeholder="Nombre de la Opción" className="flex-grow rounded-md border-gray-300 text-sm" />
-                              <input type="number" value={option.priceModifier} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'priceModifier', e.target.value)} placeholder="Precio" className="w-24 rounded-md border-gray-300 text-sm" />
-                              <div className="w-10 flex-shrink-0">
-                                <label title="Seleccionar imagen" className="cursor-pointer p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full inline-flex items-center justify-center">
-                                  <PhotoIcon className="h-5 w-5" />
-                                  <input type="file" accept="image/*" onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)} className="sr-only"/>
-                                </label>
+                          {/* Options List */}
+                          <div className="space-y-3 pl-4 border-l-2 border-gray-200">
+                            {group.options.map((option: any, optionIndex: number) => (
+                              <div key={optionIndex} className="flex items-center gap-2">
+                                <input type="text" value={option.name} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'name', e.target.value)} placeholder="Nombre de la Opción" className="flex-grow rounded-md border-gray-300 text-sm" />
+                                <input type="number" value={option.priceModifier} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'priceModifier', e.target.value)} placeholder="Precio" className="w-24 rounded-md border-gray-300 text-sm" />
+                                <div className="w-10 flex-shrink-0">
+                                  <label title="Seleccionar imagen" className="cursor-pointer p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full inline-flex items-center justify-center">
+                                    <PhotoIcon className="h-5 w-5" />
+                                    <input type="file" accept="image/*" onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)} className="sr-only"/>
+                                  </label>
+                                </div>
+                                {getOptionImagePreview(groupIndex, optionIndex) && <Image src={getOptionImagePreview(groupIndex, optionIndex)!} alt={`preview`} width={32} height={32} className="object-cover rounded-md" />}
+                                <button type="button" onClick={() => removeCustomizationOption(groupIndex, optionIndex)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full">
+                                  <XMarkIcon className="h-4 w-4" />
+                                </button>
                               </div>
-                              {getOptionImagePreview(groupIndex, optionIndex) && <Image src={getOptionImagePreview(groupIndex, optionIndex)!} alt={`preview`} width={32} height={32} className="object-cover rounded-md" />}
-                              <button type="button" onClick={() => removeCustomizationOption(groupIndex, optionIndex)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full">
-                                <XMarkIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
-                          <button type="button" onClick={() => addCustomizationOption(groupIndex)} className="inline-flex items-center gap-1 text-sm font-medium text-pink-600 hover:text-pink-800">
-                            <PlusIcon className="h-4 w-4" />
-                            Añadir Opción
-                          </button>
-                        </div>
+                            ))}
+                            <button type="button" onClick={() => addCustomizationOption(groupIndex)} className="inline-flex items-center gap-1 text-sm font-medium text-pink-600 hover:text-pink-800">
+                              <PlusIcon className="h-4 w-4" />
+                              Añadir Opción
+                            </button>
+                          </div>
 
-                        {/* Group Footer (Dependencies) */}
-                        <div className="pt-3 mt-3 border-t border-gray-200">
-                           <button type="button" onClick={() => setDependencyState({ groupIndex, visible: true })} className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-700 font-medium">
-                            <LinkIcon className="h-4 w-4" />
-                            Definir dependencia
-                          </button>
-                          {group.dependsOn && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Depende de: <strong>{group.dependsOn.groupName} &rarr; {group.dependsOn.optionName}</strong>
-                            </div>
-                          )}
+                          {/* Group Footer (Dependencies) */}
+                          <div className="pt-3 mt-3 border-t border-gray-200">
+                             <button type="button" onClick={() => setDependencyState({ groupIndex, visible: true })} className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-700 font-medium">
+                              <LinkIcon className="h-4 w-4" />
+                              Definir dependencia
+                            </button>
+                            {group.dependsOn && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Depende de: <strong>{group.dependsOn.groupName} &rarr; {group.dependsOn.optionName}</strong>
+                              </div>
+                            )}
+                          </div>
                         </div>
+                      ))}
+                    </div>
+                    
+                    {/* Add Group Buttons */}
+                    <div className="mt-4 pt-4 border-t border-gray-300">
+                      <h4 className="text-sm font-semibold text-gray-600 mb-2">Añadir Grupos Predefinidos</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => addPredefinedGroup('TipoTapa')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Tipo de Tapa</button>
+                        <button type="button" onClick={() => addPredefinedGroup('Interiores')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Interiores</button>
+                        <button type="button" onClick={() => addPredefinedGroup('Textura')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Textura</button>
+                        <button type="button" onClick={() => addPredefinedGroup('Elastico')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Elástico</button>
+                        <button type="button" onClick={() => addPredefinedGroup('GaleriaDura')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Galería (Dura)</button>
+                        <button type="button" onClick={() => addPredefinedGroup('GaleriaFlex')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Galería (Flex)</button>
+                        <button type="button" onClick={addCustomizationGroup} className="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all">+ Grupo Personalizado</button>
                       </div>
-                    ))}
-                  </div>
-                  
-                  {/* Add Group Buttons */}
-                  <div className="mt-4 pt-4 border-t border-gray-300">
-                    <h4 className="text-sm font-semibold text-gray-600 mb-2">Añadir Grupos Predefinidos</h4>
-                    <div className="flex flex-wrap gap-2">
-                      <button type="button" onClick={() => addPredefinedGroup('TipoTapa')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Tipo de Tapa</button>
-                      <button type="button" onClick={() => addPredefinedGroup('Interiores')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Interiores</button>
-                      <button type="button" onClick={() => addPredefinedGroup('Textura')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Textura</button>
-                      <button type="button" onClick={() => addPredefinedGroup('Elastico')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Elástico</button>
-                      <button type="button" onClick={() => addPredefinedGroup('GaleriaDura')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Galería (Dura)</button>
-                      <button type="button" onClick={() => addPredefinedGroup('GaleriaFlex')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Galería (Flex)</button>
-                      <button type="button" onClick={addCustomizationGroup} className="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all">+ Grupo Personalizado</button>
                     </div>
                   </div>
+                )}
               </div>
 
               {/* Columna Derecha */}
@@ -691,6 +741,11 @@ export default function Admin() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Descripción SEO</label>
                       <textarea value={form.seoDescription} onChange={(e) => setForm((f: any) => ({ ...f, seoDescription: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" rows={3}></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Keywords SEO</label>
+                      <input type="text" value={form.seoKeywords} onChange={(e) => setForm((f: any) => ({ ...f, seoKeywords: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" placeholder="agenda, libretas, personalizado" />
+                      <p className="text-xs text-gray-500 mt-1">Separar por comas.</p>
                     </div>
                   </div>
                 </div>

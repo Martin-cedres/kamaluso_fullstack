@@ -36,8 +36,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         descripcion: String(descripcion),
       };
 
-      const imageFile = files.imagen as formidable.File;
+      const imageFile = (Array.isArray(files.imagen) ? files.imagen[0] : files.imagen) as formidable.File;
+
       if (imageFile) {
+        if (!imageFile.mimetype || !imageFile.mimetype.startsWith('image/')) {
+          return res.status(400).json({ error: 'Tipo de archivo inválido. Solo se permiten imágenes.' });
+        }
         const imageUrl = await uploadFileToS3(imageFile, 'categorias');
         updateData.imagen = imageUrl;
       }

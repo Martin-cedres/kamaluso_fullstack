@@ -35,6 +35,7 @@ export interface IProduct extends Document {
   notes?: string;
   status: string;
   destacado: boolean;
+  tipoDeProducto: 'Interactivo' | 'Estandar';
   imageUrl: string;
   images?: string[];
   averageRating?: number;
@@ -62,6 +63,7 @@ const productSchema: Schema<IProduct> = new Schema(
     notes: { type: String },
     status: { type: String, default: 'activo' },
     destacado: { type: Boolean, default: false },
+    tipoDeProducto: { type: String, enum: ['Interactivo', 'Estandar'], required: true, default: 'Interactivo' },
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
     customizationGroups: [

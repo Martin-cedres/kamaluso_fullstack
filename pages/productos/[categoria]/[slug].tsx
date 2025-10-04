@@ -19,6 +19,8 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import CoverDesignGallery from '../../../components/CoverDesignGallery';
 import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
+import ProductCarousel from '../../../components/ProductCarousel'; // Importar el nuevo carrusel
+import DOMPurify from 'dompurify';
 
 interface ProductDetailProps {
   product: IProduct | null;
@@ -47,7 +49,14 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
     product?.images?.[0] || product?.imageUrl || '/placeholder.png'
   );
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  const [sanitizedDescription, setSanitizedDescription] = useState('');
+
+  useEffect(() => {
+    if (product?.descripcion) {
+      setSanitizedDescription(DOMPurify.sanitize(product.descripcion));
+    }
+  }, [product?.descripcion]);
 
   useEffect(() => {
     if (isAnimating) {
@@ -198,11 +207,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
       </>
     )
 
-  const shortDescription = product?.descripcion
-    ? product.descripcion.length > 200
-      ? product.descripcion.substring(0, 200) + '...'
-      : product.descripcion
-    : '';
+
 
   const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`
   const pageDescription =
@@ -271,34 +276,42 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           <div className="lg:grid lg:grid-cols-2 lg:gap-x-12 lg:items-start">
           {/* Imágenes */}
           <div className="lg:sticky lg:top-28">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
-              >
-                <Image
-                  key={activeImage} // Add key to force re-render
-                  src={activeImage}
-                  alt={product.alt || product.nombre}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+            {product.tipoDeProducto === 'Estandar' ? (
+              <ProductCarousel 
+                images={[product.imageUrl, ...(product.images || [])]}
+                alt={product.alt || product.nombre} 
+              />
+            ) : (
+              <>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
+                  >
+                    <Image
+                      key={activeImage} // Add key to force re-render
+                      src={activeImage}
+                      alt={product.alt || product.nombre}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+                    />
+                  </button>
+                </div>
+                <Lightbox
+                  open={open}
+                  close={() => setOpen(false)}
+                  slides={[{ src: activeImage }]}
                 />
-              </button>
-            </div>
-
-            <Lightbox
-              open={open}
-              close={() => setOpen(false)}
-              slides={[{ src: activeImage }]}
-            />
+              </>
+            )}
           </div>
 
           {/* Información del producto */}
           <div className="mt-10 lg:mt-0">
             <div>
-              <h1 className="text-4xl font-bold mb-2">{product.nombre}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{product.nombre}</h1>
               {reviewCount > 0 && (
                 <div className="flex items-center mb-4">
                   <StarRating rating={parseFloat(averageRating)} />
@@ -311,112 +324,105 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                 $U {totalPrice}
               </p>
               
-              <div className="text-gray-600 space-y-2 mb-6">
-                <p>
-                  {isDescriptionExpanded ? product.descripcion : shortDescription}
-                </p>
-                {product.descripcion.length > 200 && (
-                  <button 
-                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} 
-                    className="text-pink-500 font-semibold hover:underline text-sm"
-                  >
-                    {isDescriptionExpanded ? 'Ver menos' : 'Ver más'}
-                  </button>
-                )}
-              </div>
+              <div
+                className="prose lg:prose-lg max-w-none text-gray-600 mb-6"
+                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+              />
 
-              <div className="space-y-6">
-                {displayGroups.map((group) => {
-                  const groupName = group.name.trim();
+              {product.tipoDeProducto === 'Interactivo' && (
+                <div className="space-y-6">
+                  {displayGroups.map((group) => {
+                    const groupName = group.name.trim();
 
-                  // --- NEW VISIBILITY LOGIC ---
-                  if (group.dependsOn) {
-                    const parentSelection = selections[group.dependsOn.groupName];
-                    if (parentSelection !== group.dependsOn.optionName) {
-                      return null; // Don't render if dependency not met
+                    // --- NEW VISIBILITY LOGIC ---
+                    if (group.dependsOn) {
+                      const parentSelection = selections[group.dependsOn.groupName];
+                      if (parentSelection !== group.dependsOn.optionName) {
+                        return null; // Don't render if dependency not met
+                      }
                     }
-                  }
 
-                  // --- RENDER LOGIC ---
-                  // Special renderer for CoverDesignGallery
-                  if (groupName.startsWith('Diseño de Tapa')) {
+                    // --- RENDER LOGIC ---
+                    // Special renderer for CoverDesignGallery
+                    if (groupName.startsWith('Diseño de Tapa')) {
+                      return (
+                        <div key={groupName} className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {groupName}
+                          </label>
+                          <CoverDesignGallery
+                            options={group.options}
+                            selectedOption={selections[groupName]}
+                            onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
+                          />
+                        </div>
+                      )
+                    }
+
+                    // Special renderer for InteriorDesignGallery
+                    if (groupName === 'Interiores') {
+                      return (
+                        <div key={groupName} className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {groupName}
+                          </label>
+                          <InteriorDesignGallery
+                            options={group.options}
+                            selectedOption={selections[groupName]}
+                            onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
+                          />
+                        </div>
+                      )
+                    }
+
+                    // Default renderer for all other groups
                     return (
                       <div key={groupName} className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           {groupName}
                         </label>
-                        <CoverDesignGallery
-                          options={group.options}
-                          selectedOption={selections[groupName]}
-                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
-                        />
+                        <div className="flex flex-wrap gap-3">
+                          {group.options.map((option: any) => {
+                            const isSelected = selections[groupName] === option.name.trim();
+                            return (
+                              <button
+                                key={option.name}
+                                type="button"
+                                onClick={() => handleSelectionChange(groupName, option.name)}
+                                className={`relative p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
+                                  isSelected
+                                    ? 'border-pink-500 ring-2 ring-pink-500 shadow-md bg-pink-50 text-pink-800'
+                                    : 'border-gray-300 bg-white text-gray-800 hover:border-pink-400 hover:shadow-sm'
+                                }`}
+                              >
+                                {option.image && (
+                                  <div className="relative w-20 h-20 rounded-md overflow-hidden">
+                                    <Image
+                                      src={option.image}
+                                      alt={option.name}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <span className="block font-medium">{option.name}</span>
+                                {option.priceModifier > 0 && <span className="block text-xs font-normal">(+ $U {option.priceModifier})</span>}
+                                {isSelected && (
+                                  <div className="absolute top-1 right-1 bg-pink-500 text-white rounded-full p-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
                     )
-                  }
-
-                  // Special renderer for InteriorDesignGallery
-                  if (groupName === 'Interiores') {
-                    return (
-                      <div key={groupName} className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {groupName}
-                        </label>
-                        <InteriorDesignGallery
-                          options={group.options}
-                          selectedOption={selections[groupName]}
-                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
-                        />
-                      </div>
-                    )
-                  }
-
-                  // Default renderer for all other groups
-                  return (
-                    <div key={groupName} className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {groupName}
-                      </label>
-                      <div className="flex flex-wrap gap-3">
-                        {group.options.map((option: any) => {
-                          const isSelected = selections[groupName] === option.name.trim();
-                          return (
-                            <button
-                              key={option.name}
-                              type="button"
-                              onClick={() => handleSelectionChange(groupName, option.name)}
-                              className={`relative p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
-                                isSelected
-                                  ? 'border-pink-500 ring-2 ring-pink-500 shadow-md bg-pink-50 text-pink-800'
-                                  : 'border-gray-300 bg-white text-gray-800 hover:border-pink-400 hover:shadow-sm'
-                              }`}
-                            >
-                              {option.image && (
-                                <div className="relative w-20 h-20 rounded-md overflow-hidden">
-                                  <Image
-                                    src={option.image}
-                                    alt={option.name}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                              )}
-                              <span className="block font-medium">{option.name}</span>
-                              {option.priceModifier > 0 && <span className="block text-xs font-normal">(+ $U {option.priceModifier})</span>}
-                              {isSelected && (
-                                <div className="absolute top-1 right-1 bg-pink-500 text-white rounded-full p-0.5">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                  })}
+                </div>
+              )}
 
             </div>
 

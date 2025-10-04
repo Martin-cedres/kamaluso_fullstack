@@ -41,7 +41,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Contenido */}
         <div className="flex flex-col flex-grow p-4">
-          <h2 className="text-lg font-bold text-gray-800 mb-1 line-clamp-2">
+          <h2 className="text-base md:text-lg font-bold text-gray-800 mb-1 line-clamp-2">
             {product.nombre}
           </h2>
           

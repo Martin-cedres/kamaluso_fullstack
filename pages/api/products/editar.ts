@@ -60,6 +60,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (fields.notes) updateDoc.notes = String(fields.notes)
       if (fields.status) updateDoc.status = String(fields.status)
       if (fields.categoria) updateDoc.categoria = String(fields.categoria)
+      if (fields.tipoDeProducto) updateDoc.tipoDeProducto = String(fields.tipoDeProducto)
 
       // Campo de precio base (numérico)
       if (fields.basePrice) {
