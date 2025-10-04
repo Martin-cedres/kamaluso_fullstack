@@ -224,13 +224,25 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
     image: pageImage,
     description: pageDescription,
     sku: product._id,
+    brand: {
+      '@type': 'Brand',
+      name: 'Kamaluso',
+    },
+    ...(reviewCount > 0 && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: averageRating,
+        reviewCount: reviewCount,
+      },
+    }),
     offers: {
       '@type': 'AggregateOffer',
       url: canonicalUrl,
       priceCurrency: 'UYU',
       lowPrice: product.basePrice,
-      highPrice: totalPrice, 
+      highPrice: totalPrice,
       offerCount: product.customizationGroups?.length || 1,
+      availability: 'https://schema.org/InStock', // Assuming products are generally in stock
     },
   }
 
@@ -460,7 +472,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
               productId={product._id}
               onReviewSubmit={() => router.replace(router.asPath)} // Re-run getStaticProps
             />
-            <ReviewList reviews={reviews} />
+            <ReviewList reviews={reviews} productName={product.nombre} productUrl={canonicalUrl} />
           </div>
         </section>
 

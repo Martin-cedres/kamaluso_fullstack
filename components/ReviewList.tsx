@@ -5,9 +5,11 @@ import Image from 'next/image';
 
 interface ReviewListProps {
   reviews: IReview[];
+  productName: string;
+  productUrl: string;
 }
 
-const ReviewList = ({ reviews }: ReviewListProps) => {
+const ReviewList = ({ reviews, productName, productUrl }: ReviewListProps) => {
   if (reviews.length === 0) {
     return (
       <div className="text-center py-8">
@@ -21,6 +23,28 @@ const ReviewList = ({ reviews }: ReviewListProps) => {
     <div className="space-y-8">
       {reviews.map((review) => (
         <div key={review._id} className="flex space-x-4 p-4 border-b border-gray-200">
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Review",
+              "itemReviewed": {
+                "@type": "Product",
+                "name": productName,
+                "url": productUrl
+              },
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": review.rating
+              },
+              "author": {
+                "@type": "Person",
+                "name": review.user.name
+              },
+              "datePublished": new Date(review.createdAt).toISOString(),
+              "reviewBody": review.comment,
+              ...(review.imageUrl && { "image": review.imageUrl })
+            })}
+          </script>
           <div className="flex-shrink-0">
             <Image
               src={review.user.image || '/default-avatar.png'} // TODO: Add a default avatar image to the public folder
