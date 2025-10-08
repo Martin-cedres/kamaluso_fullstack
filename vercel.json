@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "papeleriapersonalizada.uy"
+        }
+      ],
+      "destination": "https://www.papeleriapersonalizada.uy/$1",
+      "permanent": true
+    }
+  ]
+}
