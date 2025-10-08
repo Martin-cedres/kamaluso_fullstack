@@ -6,6 +6,7 @@ export interface ICategory extends Document {
   descripcion: string;
   imagen?: string;
   keywords?: string[];
+  parent?: mongoose.Schema.Types.ObjectId;
 }
 
 const categorySchema: Schema<ICategory> = new Schema(
@@ -15,6 +16,7 @@ const categorySchema: Schema<ICategory> = new Schema(
     descripcion: { type: String, required: true },
     imagen: { type: String },
     keywords: [{ type: String }],
+    parent: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
   },
   {
     timestamps: true,

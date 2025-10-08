@@ -23,7 +23,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     try {
-      const { nombre, slug, descripcion } = fields;
+      const { nombre, slug, descripcion, parent } = fields;
 
       if (!nombre || !slug || !descripcion) {
         return res.status(400).json({ error: 'Nombre, slug y descripción son obligatorios.' });
@@ -35,7 +35,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         descripcion: String(descripcion),
       };
 
-      const imageFile = files.imagen as formidable.File;
+      if (parent && String(parent)) {
+        newCategory.parent = String(parent);
+      } else {
+        newCategory.parent = null;
+      }
+
+      // formidable can return an array of files, even for a single upload. Handle this case.
+      const imageFileArray = files.imagen as formidable.File[];
+      const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
+
       if (imageFile) {
         const imageUrl = await uploadFileToS3(imageFile, 'categorias');
         newCategory.imagen = imageUrl;

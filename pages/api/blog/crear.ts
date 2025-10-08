@@ -31,7 +31,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       let coverImageUrl: string | undefined = undefined
-      const coverImageFile = files.coverImage as formidable.File | undefined
+      // formidable can return an array of files, even for a single upload. Handle this case.
+      const coverImageFileArray = files.coverImage as formidable.File[];
+      const coverImageFile = coverImageFileArray && coverImageFileArray.length > 0 ? coverImageFileArray[0] : null;
 
       if (coverImageFile) {
         coverImageUrl = await uploadFileToS3(coverImageFile, 'blog')

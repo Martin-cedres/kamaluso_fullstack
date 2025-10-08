@@ -11,16 +11,19 @@ interface ICategory {
   slug: string;
   descripcion: string;
   imagen?: string;
+  parent?: string;
+  children?: ICategory[];
 }
 
 export default function AdminCategorias() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [form, setForm] = useState({ nombre: '', slug: '', descripcion: '' });
+  const [form, setForm] = useState({ nombre: '', slug: '', descripcion: '', parent: '' });
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<ICategory[]>([]);
+  const [flatCategories, setFlatCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -36,12 +39,26 @@ export default function AdminCategorias() {
     try {
       const res = await fetch('/api/categorias/listar');
       const data = await res.json();
+      // The API returns a nested structure, which we keep for rendering the list
       setCategories(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error('Error fetching categories:', e);
       setCategories([]);
     }
   }, []);
+
+  useEffect(() => {
+    const flatten = (cats: ICategory[]): ICategory[] => {
+      return cats.reduce<ICategory[]>((acc, cat) => {
+        acc.push(cat);
+        if (cat.children) {
+          acc = acc.concat(flatten(cat.children));
+        }
+        return acc;
+      }, []);
+    }
+    setFlatCategories(flatten(categories));
+  }, [categories]);
 
   useEffect(() => {
     fetchCategories();
@@ -65,7 +82,7 @@ export default function AdminCategorias() {
   if (status === 'unauthenticated') return null;
 
   const resetForm = () => {
-    setForm({ nombre: '', slug: '', descripcion: '' });
+    setForm({ nombre: '', slug: '', descripcion: '', parent: '' });
     setImage(null);
     setPreview(null);
     setEditId(null);
@@ -79,7 +96,18 @@ export default function AdminCategorias() {
       const formData = new FormData();
       if (editId) formData.append('id', editId);
 
-      Object.keys(form).forEach((key) => formData.append(key, form[key as keyof typeof form]));
+      // Append all form fields except 'parent'
+      for (const key in form) {
+        if (key !== 'parent') {
+          formData.append(key, form[key as keyof typeof form]);
+        }
+      }
+
+      // Conditionally append 'parent'
+      if (form.parent) {
+        formData.append('parent', form.parent);
+      }
+
       if (image) formData.append('imagen', image);
 
       const url = editId ? '/api/admin/categorias/editar' : '/api/admin/categorias/crear';
@@ -116,12 +144,33 @@ export default function AdminCategorias() {
 
   const handleEditClick = (cat: ICategory) => {
     setEditId(cat._id);
-    setForm({ nombre: cat.nombre, slug: cat.slug, descripcion: cat.descripcion });
+    setForm({ nombre: cat.nombre, slug: cat.slug, descripcion: cat.descripcion, parent: cat.parent || '' });
     setPreview(cat.imagen || null);
     setImage(null);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const CategoryRow = ({ category, level }: { category: ICategory, level: number }) => (
+    <>
+      <div className="grid grid-cols-4 items-center gap-4 odd:bg-white even:bg-gray-50 border-b px-4 py-2">
+        <div className="py-3">
+          {category.imagen && <Image src={category.imagen} alt={category.nombre} width={50} height={50} className="object-cover rounded-md" />}
+        </div>
+        <div className="py-3 font-medium" style={{ paddingLeft: `${level * 2}rem` }}>
+          {category.nombre}
+        </div>
+        <div className="py-3 text-gray-600">{category.slug}</div>
+        <div className="py-3 flex gap-2">
+          <button onClick={() => handleEditClick(category)} className="px-3 py-1 rounded-xl bg-blue-600 text-white">Editar</button>
+          <button onClick={() => handleDelete(category._id)} className="px-3 py-1 rounded-xl bg-red-600 text-white">Eliminar</button>
+        </div>
+      </div>
+      {category.children && category.children.map(child => (
+        <CategoryRow key={child._id} category={child} level={level + 1} />
+      ))}
+    </>
+  );
 
   return (
     <AdminLayout>
@@ -149,6 +198,21 @@ export default function AdminCategorias() {
               <textarea value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} required className="w-full rounded-xl border px-3 py-2" rows={3}></textarea>
             </div>
             <div>
+              <label className="block text-sm font-medium">Categoría Padre</label>
+              <select
+                value={form.parent}
+                onChange={(e) => setForm({ ...form, parent: e.target.value })}
+                className="w-full rounded-xl border px-3 py-2 bg-white"
+              >
+                <option value="">Ninguna (Categoría Principal)</option>
+                {flatCategories.map((cat) => (
+                  <option key={cat._id} value={cat._id} disabled={editId === cat._id}>
+                    {cat.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium">Imagen</label>
               <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} className="w-full" />
               {preview && <Image src={preview} alt="preview" width={100} height={100} className="mt-2 rounded-xl object-cover" />}
@@ -162,32 +226,19 @@ export default function AdminCategorias() {
       )}
 
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-4 py-3 text-left">Imagen</th>
-              <th className="px-4 py-3 text-left">Nombre</th>
-              <th className="px-4 py-3 text-left">Slug</th>
-              <th className="px-4 py-3 text-left">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map((cat) => (
-              <tr key={cat._id} className="odd:bg-white even:bg-gray-50 border-b">
-                <td className="px-4 py-3">
-                  {cat.imagen && <Image src={cat.imagen} alt={cat.nombre} width={50} height={50} className="object-cover rounded-md" />}
-                </td>
-                <td className="px-4 py-3 font-medium">{cat.nombre}</td>
-                <td className="px-4 py-3">{cat.slug}</td>
-                <td className="px-4 py-3 flex gap-2">
-                  <button onClick={() => handleEditClick(cat)} className="px-3 py-1 rounded-xl bg-blue-600 text-white">Editar</button>
-                  <button onClick={() => handleDelete(cat._id)} className="px-3 py-1 rounded-xl bg-red-600 text-white">Eliminar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="grid grid-cols-4 items-center gap-4 bg-gray-100 px-4 py-3 text-left text-sm font-semibold">
+          <div>Imagen</div>
+          <div>Nombre</div>
+          <div>Slug</div>
+          <div>Acciones</div>
+        </div>
+        <div>
+          {categories.map((cat) => (
+            <CategoryRow key={cat._id} category={cat} level={0} />
+          ))}
+        </div>
       </div>
     </AdminLayout>
   );
+
 }

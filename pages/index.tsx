@@ -157,8 +157,8 @@ export const getStaticProps: GetStaticProps = async () => {
   const destacadosData = await Product.find({ destacado: true }).limit(4).lean();
   const destacados = JSON.parse(JSON.stringify(destacadosData));
 
-  // Fetch categories
-  const categoriesData = await Category.find({}).lean();
+  // Fetch categories (only root categories)
+  const categoriesData = await Category.find({ parent: { $in: [null, undefined] } }).lean();
   const categories = JSON.parse(JSON.stringify(categoriesData));
 
   return {

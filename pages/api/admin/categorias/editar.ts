@@ -24,7 +24,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     try {
-      const { id, nombre, slug, descripcion } = fields;
+      const { id, nombre, slug, descripcion, parent } = fields;
 
       if (!id || !ObjectId.isValid(String(id))) {
         return res.status(400).json({ error: 'ID de categoría inválido.' });
@@ -36,10 +36,26 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         descripcion: String(descripcion),
       };
 
-      const imageFile = files.imagen as formidable.File;
+      if (parent && String(parent)) {
+        updateData.parent = String(parent);
+      } else {
+        updateData.parent = null;
+      }
+
+      // formidable can return an array of files, even for a single upload. Handle this case.
+      const imageFileArray = files.imagen as formidable.File[];
+      const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
+
       if (imageFile) {
-        const imageUrl = await uploadFileToS3(imageFile, 'categorias');
-        updateData.imagen = imageUrl;
+        try {
+          const imageUrl = await uploadFileToS3(imageFile, 'categorias');
+          updateData.imagen = imageUrl;
+        } catch (uploadError: any) {
+          console.error('[S3 UPLOAD ERROR]:', uploadError);
+          const fileInfo = files.imagen ? JSON.stringify(files.imagen, null, 2) : 'No file object found in request.';
+          const errorMessage = `${uploadError.message}. Details: ${fileInfo}`;
+          return res.status(500).json({ error: errorMessage });
+        }
       }
 
       const updatedCategory = await Category.findByIdAndUpdate(String(id), updateData, { new: true });

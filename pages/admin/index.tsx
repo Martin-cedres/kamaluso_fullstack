@@ -29,7 +29,7 @@ interface CategoriaData {
   _id: string
   nombre: string
   slug: string
-  subCategorias: SubCategoriaData[]
+  children: SubCategoriaData[]
 }
 
 export default function Admin() {
@@ -470,7 +470,7 @@ export default function Admin() {
   }
 
   const availableSubCategories =
-    allCategories.find((c) => c.slug === selectedCategoria)?.subCategorias || []
+    allCategories.find((c) => c.slug === selectedCategoria)?.children || []
 
   const getDisplayPrice = (product: any) => {
     if (product.basePrice) {

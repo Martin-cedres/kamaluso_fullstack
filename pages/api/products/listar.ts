@@ -62,7 +62,20 @@ export default async function handler(
     // --- CONSTRUIR QUERY ---
     const query: any = {};
 
-    if (categoria) query.categoria = { $regex: new RegExp(`^${categoria}$`, 'i') };
+    if (categoria) {
+      // Find the category and its children to create a list of slugs for the query
+      const categoryDoc = await db.collection('categories').findOne({ slug: categoria });
+      let slugsToQuery = [categoria];
+
+      if (categoryDoc) {
+        const subCategories = await db.collection('categories').find({ parent: categoryDoc._id }).toArray();
+        const subCategorySlugs = subCategories.map(sc => sc.slug);
+        slugsToQuery = [categoria, ...subCategorySlugs];
+      }
+      
+      query.categoria = { $in: slugsToQuery };
+    }
+
     if (subCategoria) query.subCategoria = { $regex: new RegExp(`^${subCategoria}$`, 'i') };
     if (slug) query.slug = { $regex: new RegExp(`^${slug}$`, 'i') };
     if (_id) query._id = new ObjectId(_id);

@@ -9,6 +9,7 @@ import {
   TicketIcon,
   Bars3Icon,
   XMarkIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -17,6 +18,7 @@ interface AdminLayoutProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Categorías', href: '/admin/categorias', icon: TagIcon },
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
   { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
   { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },

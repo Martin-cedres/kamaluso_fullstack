@@ -10,6 +10,7 @@ interface Categoria {
   _id: string
   nombre: string
   slug: string
+  children: Categoria[]
 }
 
 interface CategoryContextType {

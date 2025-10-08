@@ -46,6 +46,7 @@ interface Category {
 
 interface CategoriaPageProps {
   category: Category | null
+  subCategories?: Category[]
   initialProducts: IProduct[]
   initialTotalPages: number
 }
@@ -53,6 +54,7 @@ interface CategoriaPageProps {
 // Componente principal
 export default function CategoryPage({
   category,
+  subCategories,
   initialProducts,
   initialTotalPages,
 }: CategoriaPageProps) {
@@ -227,6 +229,34 @@ export default function CategoryPage({
             {category.descripcion}
           </p>
 
+          {/* Sub-Categories Section */}
+          {subCategories && subCategories.length > 0 && (
+            <section className="mb-12">
+              <h2 className="text-2xl font-semibold text-center mb-8">Explorar Subcategorías</h2>
+              <div className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
+                {subCategories.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    href={`/productos/${cat.slug}`}
+                    className="w-full sm:w-56 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+                  >
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={cat.imagen || '/placeholder.png'}
+                        alt={cat.nombre}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </div>
+                    <div className="p-4 text-center">
+                      <h3 className="text-lg font-semibold">{cat.nombre}</h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Search Bar */}
           <div className="mb-8 max-w-lg mx-auto">
             <div className="relative">
@@ -343,9 +373,24 @@ export const getStaticProps: GetStaticProps = async (context) => {
       return { notFound: true };
     }
 
+    // Find direct sub-categories
+    const subCategoriesData = await Category.find({ parent: category._id }).lean();
+
+    // Create a list of category slugs to query for products (current category + sub-categories)
+    const categoryIdsToQuery = [
+      category._id,
+      ...subCategoriesData.map(sc => sc._id)
+    ];
+
+    // We need slugs for the query, let's get them from the objects we already have
+    const categorySlugsToQuery = [
+      category.slug,
+      ...subCategoriesData.map(sc => sc.slug)
+    ]
+
     const page = 1;
     const limit = 12;
-    const query = { categoria: category.slug };
+    const query = { categoria: { $in: categorySlugsToQuery } };
 
     const aggregationPipeline = [
       { $match: query },
@@ -393,7 +438,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
     return {
       props: {
-        category: JSON.parse(JSON.stringify(category)), // Ensure category is serializable
+        category: JSON.parse(JSON.stringify(category)),
+        subCategories: JSON.parse(JSON.stringify(subCategoriesData)),
         initialProducts,
         initialTotalPages,
       },
