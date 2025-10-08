@@ -311,19 +311,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                 $U {totalPrice}
               </p>
               
-              <div className="text-gray-600 space-y-2 mb-6">
-                <p>
-                  {isDescriptionExpanded ? product.descripcion : shortDescription}
-                </p>
-                {product.descripcion.length > 200 && (
-                  <button 
-                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} 
-                    className="text-pink-500 font-semibold hover:underline text-sm"
-                  >
-                    {isDescriptionExpanded ? 'Ver menos' : 'Ver más'}
-                  </button>
-                )}
-              </div>
+              <div className="prose lg:prose-xl max-w-none text-gray-600 space-y-4 mb-6" dangerouslySetInnerHTML={{ __html: product.descripcion }} />
 
               <div className="space-y-6">
                 {displayGroups.map((group) => {

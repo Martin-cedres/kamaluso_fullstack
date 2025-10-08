@@ -34,12 +34,14 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
     "react-medium-image-zoom": "^5.4.0",
+    "react-quill": "^2.0.0",
     "sharp": "^0.34.3",
     "yet-another-react-lightbox": "^3.25.0"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.3",
     "@tailwindcss/postcss": "^4.1.12",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/aws-sdk": "^0.0.42",
     "@types/lodash": "^4.17.20",
     "@types/node": "24.2.1",

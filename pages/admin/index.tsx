@@ -19,6 +19,10 @@ import {
 } from '@heroicons/react/24/outline'
 import AdminLayout from '../../components/AdminLayout' // Importar el layout
 import toast from 'react-hot-toast' // Importar toast
+import dynamic from 'next/dynamic'
+import 'react-quill/dist/quill.snow.css'
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
 
 // Interfaces para los datos que vienen de la API
 interface SubCategoriaData {
@@ -569,7 +573,22 @@ export default function Admin() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                      <textarea value={form.descripcion} onChange={(e) => setForm((f: any) => ({ ...f, descripcion: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" rows={5} placeholder="Descripción detallada del producto..."></textarea>
+                      <ReactQuill
+                        theme="snow"
+                        value={form.descripcion}
+                        onChange={(value) => setForm((f: any) => ({ ...f, descripcion: value }))}
+                        className="bg-white"
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                            ['link'],
+                            ['clean']
+                          ],
+                        }}
+                        placeholder="Descripción detallada del producto..."
+                      />
                     </div>
                   </div>
                 </div>

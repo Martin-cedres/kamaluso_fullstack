@@ -348,7 +348,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   </p>
                 )}
 
-                <p className="text-gray-600 mb-6">{product.descripcion}</p>
+                <div className="prose lg:prose-xl max-w-none text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: product.descripcion || '' }} />
                 {/* Solo mostrar selectores de textura para productos con Tapa Dura */}
                 {product.tapa === 'Tapa Dura' && (
                   <div className="mb-6">
