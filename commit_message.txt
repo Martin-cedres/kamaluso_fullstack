@@ -1,0 +1,30 @@
+feat: Implementar categorías jerárquicas y mejoras en la gestión de productos
+
+This commit introduces a comprehensive hierarchical category system,
+improving product organization and user navigation.
+
+Key changes include:
+
+- **Category Model & API:**
+  - Added `parent` field to `models/Category.ts` for parent-child relationships.
+  - Updated `pages/api/admin/categorias/crear.ts` and `editar.ts` to manage parent categories.
+  - Modified `pages/api/categorias/listar.ts` to return nested category data.
+  - Created `scripts/crear-categorias-principales.js` to seed root categories ("Tapa Dura", "Tapa Flex").
+
+- **Frontend Integration:**
+  - **Admin Panel (`pages/admin/categorias.tsx`):** Refactored to display categories in a hierarchical table with indentation, and updated the parent selection dropdown.
+  - **Navbar (`components/Navbar.tsx`):** Implemented dynamic, nested dropdown menus for categories and sub-categories.
+  - **Home Page (`pages/index.tsx`):** Configured to display only root categories as cards.
+  - **Category Pages (`pages/productos/[categoria].tsx`):** Enhanced to show sub-category cards and products from the current category and all its descendants.
+  - **Product Admin Form (`pages/admin/index.tsx`):** Corrected the sub-category dropdown to display available sub-categories based on the selected parent.
+
+- **Product API:**
+  - Updated `pages/api/products/listar.ts` to fetch products from a category and all its descendant sub-categories.
+
+- **S3 Image Upload Fix:**
+  - Resolved the "Archivo inválido para S3" error by adjusting file handling in `pages/api/admin/categorias/crear.ts`, `editar.ts`, and `pages/api/blog/crear.ts` to correctly extract file objects from `formidable`'s array output.
+
+- **Admin UI Enhancements:**
+  - Added a "Categorías" link to the admin sidebar in `components/AdminLayout.tsx`.
+
+This ensures a robust and user-friendly category management and display system.
