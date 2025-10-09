@@ -18,115 +18,133 @@ import Review, { IReview } from '../../../models/Review';
 import mongoose from 'mongoose'
 
 // This interface is for the props passed to the component
+import { ICustomizationGroup } from '../../../models/Product';
+
 interface ProductProp {
-  _id: string
-  nombre: string
-  descripcion?: string
-  precio?: number
-  precioDura?: number
-  categoria?: string
-  destacado?: boolean
-  imageUrl?: string
-  images?: string[]
-  alt?: string
-  slug?: string
-  tapa?: string
-  seoTitle?: string
-  seoDescription?: string
-  precioFlex?: number
+  _id: string;
+  nombre: string;
+  descripcion?: string;
+  basePrice: number;
+  categoria?: string;
+  destacado?: boolean;
+  imageUrl?: string;
+  images?: string[];
+  alt?: string;
+  slug?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  customizationGroups?: ICustomizationGroup[];
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
-  if (product.precioDura) return product.precioDura
-  if (product.precioFlex) return product.precioFlex
-  if (product.precio) return product.precio
-  return null
-}
+  return product.basePrice;
+};
 
 interface Props {
-  product: ProductProp | null
-  relatedProducts: ProductProp[]
-  reviews: IReview[]
-  reviewCount: number
-  averageRating: string
+  product: ProductProp | null;
+  relatedProducts: ProductProp[];
+  reviews: IReview[];
+  reviewCount: number;
+  averageRating: string;
 }
 
 export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating }: Props) {
-  const { addToCart } = useCart()
-  const router = useRouter()
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(
-    undefined,
-  )
-  const [finish, setFinish] = useState<string | null>(null)
+  const { addToCart } = useCart();
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
+  const [selectedCustomizations, setSelectedCustomizations] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (product?.images?.[0]) {
-      setSelectedImage(product.images[0])
+      setSelectedImage(product.images[0]);
     } else if (product?.imageUrl) {
-      setSelectedImage(product.imageUrl)
+      setSelectedImage(product.imageUrl);
     }
-  }, [product])
+  }, [product]);
+
+  const handleCustomizationChange = (groupName: string, optionName: string) => {
+    setSelectedCustomizations(prev => ({
+      ...prev,
+      [groupName]: optionName,
+    }));
+  };
+
+  const calculateTotalPrice = () => {
+    if (!product) return null;
+    let totalPrice = product.basePrice;
+    if (product.customizationGroups) {
+      for (const group of product.customizationGroups) {
+        const selectedOptionName = selectedCustomizations[group.name];
+        if (selectedOptionName) {
+          const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
+          if (selectedOption) {
+            totalPrice += selectedOption.priceModifier;
+          }
+        }
+      }
+    }
+    return totalPrice;
+  };
+
+  const displayPrice = calculateTotalPrice();
 
   const handlePrevImage = () => {
-    if (!product?.images || product.images.length < 2) return
-    const currentIndex = product.images.findIndex(
-      (img) => img === selectedImage,
-    )
-    const prevIndex =
-      (currentIndex - 1 + product.images.length) % product.images.length
-    setSelectedImage(product.images[prevIndex])
-  }
+    if (!product?.images || product.images.length < 2) return;
+    const currentIndex = product.images.findIndex((img) => img === selectedImage);
+    const prevIndex = (currentIndex - 1 + product.images.length) % product.images.length;
+    setSelectedImage(product.images[prevIndex]);
+  };
 
   const handleNextImage = () => {
-    if (!product?.images || product.images.length < 2) return
-    const currentIndex = product.images.findIndex(
-      (img) => img === selectedImage,
-    )
-    const nextIndex = (currentIndex + 1) % product.images.length
-    setSelectedImage(product.images[nextIndex])
-  }
-
-  const getDisplayPrice = () => {
-    if (!product) return null
-    if (product.precioDura) return product.precioDura
-    if (product.precioFlex) return product.precioFlex
-    if (product.precio) return product.precio
-    return null
-  }
-
-  const displayPrice = getDisplayPrice()
+    if (!product?.images || product.images.length < 2) return;
+    const currentIndex = product.images.findIndex((img) => img === selectedImage);
+    const nextIndex = (currentIndex + 1) % product.images.length;
+    setSelectedImage(product.images[nextIndex]);
+  };
 
   const handleAddToCart = () => {
     if (product) {
-      if (product.tapa === 'Tapa Dura' && finish === null) {
-        toast.error('Por favor, selecciona una textura para la tapa.')
-        return
+      // --- VALIDATION LOGIC ---
+      const visibleGroups = product.customizationGroups?.filter(group => {
+        if (!group.dependsOn) return true; // Always include groups without dependencies
+        const parentSelection = selectedCustomizations[group.dependsOn.groupName];
+        return parentSelection === group.dependsOn.optionName;
+      }) || [];
+
+      for (const group of visibleGroups) {
+        if (!selectedCustomizations[group.name]) {
+          toast.error(`Por favor, selecciona una opción para "${group.name}".`);
+          return; // Stop if a selection is missing
+        }
       }
 
-      const priceToUse = displayPrice
-      if (
-        priceToUse === undefined ||
-        priceToUse === null ||
-        isNaN(priceToUse)
-      ) {
-        toast.error(
-          'Este producto no se puede agregar al carrito porque no tiene un precio definido.',
-        )
-        return
+      const priceToUse = calculateTotalPrice();
+      if (priceToUse === null) {
+        toast.error('Este producto no se puede agregar al carrito porque no tiene un precio definido.');
+        return;
       }
+
       const itemToAdd = {
         _id: product._id,
         nombre: product.nombre,
         precio: priceToUse,
         imageUrl: product.images?.[0] || product.imageUrl,
-        finish: product.tapa === 'Tapa Dura' ? finish : undefined,
-      }
-      addToCart(itemToAdd)
-      toast.success(
-        `${product.nombre} ${itemToAdd.finish ? `(${itemToAdd.finish})` : ''} ha sido agregado al carrito!`,
-      )
+        customizations: selectedCustomizations,
+      };
+      addToCart(itemToAdd);
+      
+      const customizationText = Object.entries(selectedCustomizations)
+        .map(([group, option]) => `${group}: ${option}`)
+        .join(', ');
+
+      toast.success(`${product.nombre} (${customizationText}) ha sido agregado al carrito!`);
     }
-  }
+  };
 
   if (router.isFallback) {
     return <div>Cargando...</div>
@@ -333,7 +351,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             </div>
             <div className="flex-1 flex flex-col justify-between">
               <div>
-                <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.nombre}</h1>
                 {reviewCount > 0 && (
                   <div className="flex items-center mb-4">
                     <StarRating rating={parseFloat(averageRating)} />
@@ -342,37 +360,39 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     </span>
                   </div>
                 )}
-                {displayPrice && (
+                {isClient ? (
+                  displayPrice && (
+                    <p className="text-pink-500 font-semibold text-2xl mb-6">
+                      $U {displayPrice}
+                    </p>
+                  )
+                ) : (
                   <p className="text-pink-500 font-semibold text-2xl mb-6">
-                    $U {displayPrice}
+                    $U {product?.basePrice || 0}
                   </p>
                 )}
 
                 <div className="prose lg:prose-xl max-w-none text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: product.descripcion || '' }} />
-                {/* Solo mostrar selectores de textura para productos con Tapa Dura */}
-                {product.tapa === 'Tapa Dura' && (
-                  <div className="mb-6">
+
+                {product.customizationGroups && product.customizationGroups.map(group => (
+                  <div key={group.name} className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Textura de tapas
+                      {group.name}
                     </label>
                     <div className="flex rounded-xl shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => setFinish('Brillo')}
-                        className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Brillo' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
-                      >
-                        Brillo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFinish('Mate')}
-                        className={`flex-1 px-4 py-2 text-sm rounded-xl border ${finish === 'Mate' ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
-                      >
-                        Mate
-                      </button>
+                      {group.options.map(option => (
+                        <button
+                          key={option.name}
+                          type="button"
+                          onClick={() => handleCustomizationChange(group.name, option.name)}
+                          className={`flex-1 px-4 py-2 text-sm rounded-xl border ${selectedCustomizations[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
+                        >
+                          {option.name}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                )}
+                ))}
               </div>
               <div className="flex flex-col sm:flex-row gap-4 mt-6">
                 <button

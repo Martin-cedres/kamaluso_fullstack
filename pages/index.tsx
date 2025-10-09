@@ -144,7 +144,39 @@ export default function Home({ destacados, categories }: HomeProps) {
           </div>
         </section>
 
-        {/* Productos Destacados (Temporalmente deshabilitado para depuración) */}
+        {/* Productos Destacados */}
+        {destacados.length > 0 && (
+          <section className="px-6 py-12">
+            <h2 className="text-3xl font-semibold text-center mb-10">
+              Productos Destacados
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+              {destacados.map((product) => (
+                <Link
+                  key={product._id}
+                  href={`/productos/${product.categoria}/${product.slug}`}
+                  className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group"
+                >
+                  <div className="relative w-full aspect-square">
+                    <Image
+                      src={product.imageUrl || '/placeholder.png'}
+                      alt={product.alt || product.nombre}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      className="group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg truncate text-gray-800">
+                      {product.nombre}
+                    </h3>
+                    {getCardPrice(product)}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </>
   )

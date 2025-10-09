@@ -49,6 +49,7 @@ interface CategoriaPageProps {
   subCategories?: Category[]
   initialProducts: IProduct[]
   initialTotalPages: number
+  breadcrumbItems: { name: string; href: string; }[];
 }
 
 // Componente principal
@@ -57,6 +58,7 @@ export default function CategoryPage({
   subCategories,
   initialProducts,
   initialTotalPages,
+  breadcrumbItems,
 }: CategoriaPageProps) {
   const router = useRouter()
   const { categoria: categorySlug } = router.query
@@ -181,13 +183,6 @@ export default function CategoryPage({
   const canonicalUrl = `/productos/${category.slug}`
   const siteUrl = 'https://www.papeleriapersonalizada.uy'
 
-  // --- Mis datos para los Breadcrumbs --- //
-  const breadcrumbItems = [
-    { name: 'Inicio', href: '/' },
-    { name: category.nombre, href: `/productos/${category.slug}` },
-  ]
-
-  // Aquí defino el schema de los breadcrumbs para que Google los muestre en los resultados.
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -373,68 +368,78 @@ export const getStaticProps: GetStaticProps = async (context) => {
       return { notFound: true };
     }
 
-    // Find direct sub-categories
     const subCategoriesData = await Category.find({ parent: category._id }).lean();
 
-    // Create a list of category slugs to query for products (current category + sub-categories)
-    const categoryIdsToQuery = [
-      category._id,
-      ...subCategoriesData.map(sc => sc._id)
-    ];
+    let initialProducts = [];
+    let initialTotalPages = 0;
 
-    // We need slugs for the query, let's get them from the objects we already have
-    const categorySlugsToQuery = [
-      category.slug,
-      ...subCategoriesData.map(sc => sc.slug)
-    ]
+    // --- Construcción de Breadcrumbs ---
+    let breadcrumbItems = [{ name: 'Inicio', href: '/' }];
 
-    const page = 1;
-    const limit = 12;
-    const query = { categoria: { $in: categorySlugsToQuery } };
+    if (category.parent) {
+      const parentCategory = await Category.findById(category.parent).lean();
+      if (parentCategory) {
+        breadcrumbItems.push({ name: parentCategory.nombre, href: `/productos/${parentCategory.slug}` });
+      }
+    }
+    breadcrumbItems.push({ name: category.nombre, href: `/productos/${category.slug}` });
+    // --- Fin Construcción de Breadcrumbs ---
 
-    const aggregationPipeline = [
-      { $match: query },
-      { $sort: { creadoEn: -1 } },
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-      {
-        $lookup: {
-          from: 'reviews',
-          localField: '_id',
-          foreignField: 'product',
-          as: 'reviews',
+    // Si la categoría NO tiene subcategorías, buscamos sus productos.
+    if (subCategoriesData.length === 0) {
+      const categorySlugsToQuery = [category.slug];
+      const page = 1;
+      const limit = 12;
+      const query = {
+        $or: [
+          { categoria: { $in: categorySlugsToQuery } },
+          { subCategoria: { $in: categorySlugsToQuery } },
+        ],
+      };
+
+      const aggregationPipeline = [
+        { $match: query },
+        { $sort: { creadoEn: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: 'reviews',
+            localField: '_id',
+            foreignField: 'product',
+            as: 'reviews',
+          },
         },
-      },
-      {
-        $addFields: {
-          approvedReviews: {
-            $filter: {
-              input: '$reviews',
-              as: 'review',
-              cond: { $eq: ['$$review.isApproved', true] },
+        {
+          $addFields: {
+            approvedReviews: {
+              $filter: {
+                input: '$reviews',
+                as: 'review',
+                cond: { $eq: ['$$review.isApproved', true] },
+              },
             },
           },
         },
-      },
-      {
-        $addFields: {
-          averageRating: { $avg: '$approvedReviews.rating' },
-          numReviews: { $size: '$approvedReviews' },
+        {
+          $addFields: {
+            averageRating: { $avg: '$approvedReviews.rating' },
+            numReviews: { $size: '$approvedReviews' },
+          },
         },
-      },
-      { $project: { reviews: 0, approvedReviews: 0 } },
-    ];
+        { $project: { reviews: 0, approvedReviews: 0 } },
+      ];
 
-    const productsData = await Product.aggregate(aggregationPipeline as any[]);
+      const productsData = await Product.aggregate(aggregationPipeline as any[]);
+      const totalProducts = await Product.countDocuments(query);
 
-    const totalProducts = await Product.countDocuments(query);
-
-    const initialProducts = JSON.parse(JSON.stringify(productsData)).map((p:any) => ({
-      ...p,
-      averageRating: p.averageRating === null ? 0 : p.averageRating,
-      numReviews: p.numReviews || 0,
-    }));
-    const initialTotalPages = Math.ceil(totalProducts / limit);
+      initialProducts = JSON.parse(JSON.stringify(productsData)).map((p:any) => ({
+        ...p,
+        averageRating: p.averageRating === null ? 0 : p.averageRating,
+        numReviews: p.numReviews || 0,
+      }));
+      initialTotalPages = Math.ceil(totalProducts / limit);
+    }
 
     return {
       props: {
@@ -442,6 +447,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         subCategories: JSON.parse(JSON.stringify(subCategoriesData)),
         initialProducts,
         initialTotalPages,
+        breadcrumbItems: JSON.parse(JSON.stringify(breadcrumbItems)),
       },
       revalidate: 3600, // Revalidate once per hour
     };

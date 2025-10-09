@@ -711,6 +711,10 @@ export default function Admin() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Descripción SEO</label>
                       <textarea value={form.seoDescription} onChange={(e) => setForm((f: any) => ({ ...f, seoDescription: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" rows={3}></textarea>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Keywords SEO (separadas por coma)</label>
+                      <input type="text" value={form.seoKeywords} onChange={(e) => setForm((f: any) => ({ ...f, seoKeywords: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
+                    </div>
                   </div>
                 </div>
 
@@ -728,6 +732,10 @@ export default function Admin() {
                         <span className="ml-3 text-sm text-gray-500">{image ? image.name : 'Ningún archivo seleccionado'}</span>
                       </div>
                       {preview && <Image src={preview} alt="preview" width={128} height={128} className="mt-3 object-cover rounded-lg shadow-md" />}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Texto Alternativo (Alt) para Imagen Principal</label>
+                      <input type="text" value={form.alt} onChange={(e) => setForm((f: any) => ({ ...f, alt: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Imágenes Secundarias</label>

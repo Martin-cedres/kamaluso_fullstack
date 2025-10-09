@@ -61,33 +61,60 @@ export default async function handler(
 
     // --- CONSTRUIR QUERY ---
     const query: any = {};
+    const andConditions: any[] = [];
 
     if (categoria) {
-      // Find the category and its children to create a list of slugs for the query
       const categoryDoc = await db.collection('categories').findOne({ slug: categoria });
-      let slugsToQuery = [categoria];
 
       if (categoryDoc) {
-        const subCategories = await db.collection('categories').find({ parent: categoryDoc._id }).toArray();
-        const subCategorySlugs = subCategories.map(sc => sc.slug);
-        slugsToQuery = [categoria, ...subCategorySlugs];
+        const subCategoryCount = await db.collection('categories').countDocuments({ parent: categoryDoc._id });
+
+        if (subCategoryCount > 0) {
+          // Es una categoría padre, no devolver productos.
+          return res.status(200).json({
+            products: [],
+            currentPage: pageNum,
+            totalPages: 0,
+          });
+        }
+
+        // Es una categoría hoja, buscar productos que le pertenezcan.
+        const slugsToQuery = [categoria];
+        andConditions.push({
+          $or: [
+            { categoria: { $in: slugsToQuery } },
+            { subCategoria: { $in: slugsToQuery } }
+          ]
+        });
+
+      } else {
+        // Si no se encuentra la categoría, no devolver productos.
+        return res.status(200).json({
+          products: [],
+          currentPage: pageNum,
+          totalPages: 0,
+        });
       }
-      
-      query.categoria = { $in: slugsToQuery };
     }
 
-    if (subCategoria) query.subCategoria = { $regex: new RegExp(`^${subCategoria}$`, 'i') };
-    if (slug) query.slug = { $regex: new RegExp(`^${slug}$`, 'i') };
-    if (_id) query._id = new ObjectId(_id);
-    if (typeof destacadoFilter !== 'undefined') query.destacado = destacadoFilter;
+    if (subCategoria) andConditions.push({ subCategoria: { $regex: new RegExp(`^${subCategoria}$`, 'i') } });
+    if (slug) andConditions.push({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } });
+    if (_id) andConditions.push({ _id: new ObjectId(_id) });
+    if (typeof destacadoFilter !== 'undefined') andConditions.push({ destacado: destacadoFilter });
 
     if (search) {
       const searchRegex = { $regex: search, $options: 'i' };
-      query.$or = [
-        { nombre: searchRegex },
-        { descripcion: searchRegex },
-        { seoKeywords: searchRegex },
-      ];
+      andConditions.push({
+        $or: [
+          { nombre: searchRegex },
+          { descripcion: searchRegex },
+          { seoKeywords: searchRegex },
+        ]
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     const aggregationPipeline = [

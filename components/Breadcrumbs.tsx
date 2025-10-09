@@ -58,7 +58,7 @@ const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
                   ) : (
                     <Link
                       href={item.href}
-                      className="hover:text-pink-500 transition-colors duration-200"
+                      className="text-blue-600 hover:text-blue-800 hover:underline underline-offset-4 transition-colors duration-200"
                     >
                       {item.name}
                     </Link>

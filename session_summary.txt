@@ -1,64 +1,100 @@
-## Resumen de la Sesión de Trabajo con Gemini (Fecha: 8 de octubre de 2025)
+## Resumen de la Sesión de Trabajo - 8 de Octubre de 2025
 
-Esta sesión se centró en la implementación de un sistema de categorías jerárquicas y la resolución de problemas relacionados con la subida de imágenes a AWS S3.
-
-### 1. Implementación de Categorías Jerárquicas
-
-**Objetivo:** Permitir categorías padre e hijo, con acceso desde el frontend y gestión desde el panel de administración.
-
--   **Modelo de Datos (`models/Category.ts`):** Se añadió el campo `parent` para establecer relaciones jerárquicas.
--   **Panel de Administración de Categorías (`pages/admin/categorias.tsx`):**
-    -   Se actualizó la interfaz `ICategory` para incluir `parent` y `children`.
-    -   Se modificó el estado del formulario para incluir `parent`.
-    -   Se añadió un menú desplegable "Categoría Padre" en el formulario de creación/edición.
-    -   Se refactorizó la tabla de listado de categorías para mostrar la jerarquía visualmente con indentación y botones de edición/eliminación para todas las categorías (padres e hijos).
--   **APIs de Categorías (`pages/api/admin/categorias/crear.ts`, `editar.ts`):** Se modificaron para aceptar y guardar el campo `parent`.
--   **Script de Categorías Principales (`scripts/crear-categorias-principales.js`):** Se creó y ejecutó un script para asegurar la existencia de "Tapa Dura" y "Tapa Flex" como categorías raíz.
--   **API de Listado de Categorías (`pages/api/categorias/listar.ts`):** Se modificó para devolver las categorías en una estructura anidada (jerárquica).
--   **Barra de Navegación (`components/Navbar.tsx`):** Se refactorizó para mostrar menús desplegables dinámicos y anidados para categorías y subcategorías.
--   **Página de Inicio (`pages/index.tsx`):** Se modificó `getStaticProps` para mostrar solo las categorías raíz como tarjetas.
--   **Páginas de Categoría (`pages/productos/[categoria].tsx`):** Se actualizó `getStaticProps` para obtener subcategorías y la consulta de productos para incluir productos de la categoría actual y sus descendientes. Se añadió una sección para mostrar tarjetas de subcategorías.
--   **API de Listado de Productos (`pages/api/products/listar.ts`):** Se modificó para buscar productos de una categoría y todas sus subcategorías descendientes.
-
-### 2. Corrección de Subida de Imágenes a AWS S3
-
-**Objetivo:** Resolver el error "Archivo inválido para S3" al subir imágenes de categorías.
-
--   **Diagnóstico:** Se identificó que el error ocurría porque `formidable` devolvía el archivo como un array `[{...}]` en lugar de un objeto único `{...}`.
--   **Solución:** Se modificaron las APIs de subida de imágenes para extraer correctamente el objeto de archivo del array:
-    -   `pages/api/admin/categorias/editar.ts`
-    -   `pages/api/admin/categorias/crear.ts` (proactivo)
-    -   `pages/api/blog/crear.ts` (proactivo)
--   **Depuración:** Se añadió y luego se revirtió un parche de depuración para obtener mensajes de error más detallados durante el proceso.
-
-### 3. Mejoras en la Interfaz de Administración
-
--   **Enlace en Sidebar (`components/AdminLayout.tsx`):** Se añadió un botón de acceso directo a "Categorías" en el panel lateral del administrador.
--   **Formulario de Productos Admin (`pages/admin/index.tsx`):** Se corrigió la visualización del desplegable de subcategorías al alinear el nombre de la propiedad (`subCategorias` a `children`) con la respuesta de la API.
-
-### 4. Contexto para Futuras Sesiones
-
--   **Estado del Proyecto:** El proyecto ahora cuenta con un sistema de categorías jerárquicas completamente funcional, desde el modelo de datos hasta la interfaz de usuario y las APIs.
--   **Subida de Imágenes:** La subida de imágenes a AWS S3 está funcionando correctamente para todas las secciones (categorías y blog).
--   **Advertencias Pendientes:** Existe una advertencia de rendimiento en `pages/blog/[slug].tsx` (`<img>` en lugar de `<Image />` de Next.js) que no bloquea el build pero podría optimizarse.
--   **Preferencias del Usuario:** El usuario prefiere la comunicación en español.
--   **Servidor de Desarrollo:** Se asume que el servidor de desarrollo se ejecuta en `http://localhost:3000`.
--   **Token de Revalidación:** `REVALIDATE_TOKEN="revalidoeltokenmuyseguro12345"` (utilizado para revalidar rutas estáticas).
-
-Este resumen debería proporcionar un contexto completo para cualquier trabajo futuro en el proyecto.
+**Objetivo Principal:** Resolver problemas de visualización de productos en categorías/subcategorías, optimización SEO y corrección de flujo de datos.
 
 ---
 
-## Resumen de la Sesión de Trabajo con Gemini (Fecha: 8 de octubre de 2025)
+### 1. Integración de Vercel Speed Insights
 
-**Objetivo:** Mejorar el campo de descripción del producto para admitir formato de texto enriquecido (WYSIWYG).
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\_app.tsx`
+*   **Cambio:** Se importó y añadió el componente `<SpeedInsights />` de `@vercel/speed-insights/next` al archivo principal de la aplicación para monitoreo de rendimiento.
+*   **Acción Adicional:** Se instaló la dependencia `@vercel/speed-insights` vía `npm`.
 
--   **Decisión de Diseño:** Se optó por un editor WYSIWYG en lugar de Markdown para una experiencia de usuario más intuitiva.
--   **Librerías Instaladas:**
-    -   `react-quill`: Para el componente de editor de texto enriquecido.
-    -   `@tailwindcss/typography`: Para aplicar estilos por defecto al contenido HTML generado.
--   **Implementación:**
-    -   **Panel de Administración (`pages/admin/index.tsx`):** Se reemplazó el `<textarea>` de la descripción por el componente `ReactQuill`, importado dinámicamente para ser compatible con SSR.
-    -   **Páginas de Producto (`pages/productos/[categoria]/[slug].tsx` y `pages/productos/detail/[id].tsx`):** Se modificaron para renderizar el contenido HTML de la descripción de forma segura usando `dangerouslySetInnerHTML` y se aplicó la clase `prose` de Tailwind para el estilo.
-    -   **Configuración de Tailwind (`tailwind.config.js`):** Se añadió el plugin `@tailwindcss/typography` para habilitar las clases de `prose`.
--   **Resultado:** El formulario de creación/edición de productos ahora cuenta con un editor de texto enriquecido, y las descripciones con formato se muestran correctamente en las páginas de cara al cliente.
+### 2. Implementación de Enlaces Canónicos Dinámicos
+
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\_app.tsx`
+*   **Cambio:** Se importó `useRouter` y se añadió una etiqueta `<link rel="canonical" href={canonicalUrl} />` dentro del `<Head>` de la aplicación. La `canonicalUrl` se construye dinámicamente usando `https://www.papeleriapersonalizada.uy` y la ruta actual (`router.asPath`).
+
+### 3. Configuración de Redirección Permanente 308 (Vercel)
+
+*   **Archivo Creado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\vercel.json`
+*   **Cambio:** Se creó un archivo `vercel.json` en la raíz del proyecto con una regla de redirección 308.
+*   **Detalle:** La regla redirige el tráfico de `papeleriapersonalizada.uy` (sin www) a `https://www.papeleriapersonalizada.uy` (con www), incluyendo una condición `has` para evitar bucles de redirección.
+
+### 4. Corrección de Visualización de Productos en Categorías/Subcategorías
+
+**Problema Inicial:** Productos no aparecían en subcategorías, aparecían en categorías padre (comportamiento no deseado), y el sitemap no los generaba correctamente.
+
+#### 4.1. Corrección del Script de Generación de Sitemap
+
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\scripts\generate-dynamic-urls-sync.js`
+*   **Cambio:** Se actualizó el esquema de `Product` en el script para incluir `subCategoria`. La lógica se modificó para generar URLs para la categoría principal y para cada subcategoría asociada a un producto, utilizando un `Set` para evitar duplicados.
+
+#### 4.2. Lógica de Visualización de Productos en Páginas de Categoría (Frontend)
+
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\[categoria].tsx`
+*   **Cambio:** Se modificó la función `getStaticProps` para implementar la nueva lógica:
+    *   Si la categoría actual tiene subcategorías (es una categoría padre), `initialProducts` se devuelve como un array vacío.
+    *   Si la categoría no tiene subcategorías (es un nodo hoja), se realiza una consulta a la base de datos utilizando `$or` para buscar productos que coincidan con el slug de la categoría tanto en el campo `categoria` como en el array `subCategoria`.
+
+#### 4.3. Lógica de Visualización de Productos en API (Paginación/Búsqueda)
+
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\api\products\listar.ts`
+*   **Cambio:** Se refactorizó la lógica de construcción de la consulta. Ahora, si la `categoria` solicitada tiene subcategorías, la API devuelve un array de productos vacío. Si es una categoría hoja, construye una consulta `$or` para buscar productos en `categoria` o `subCategoria`.
+
+#### 4.4. Lógica de Guardado de Productos (API de Administración)
+
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\api\products\crear.ts`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\api\products\editar.ts`
+*   **Cambio:** Se implementó una lógica robusta para determinar la categoría "hoja" a partir del formulario (priorizando `fields.subCategoria` si está presente). La API ahora busca la categoría padre y guarda el slug del padre en `productoDoc.categoria` y el slug de la categoría hoja en `productoDoc.subCategoria`.
+*   **Correcciones de Errores:**
+    *   Se añadió una función `getFieldValue` para manejar correctamente los campos de `formidable` que pueden llegar como `string` o `string[]`.
+    *   Se corrigieron errores de sintaxis (`try...catch` mal formado, declaración de función `norm` dentro de un bloque).
+    *   Se eliminó una línea de código redundante y problemática que causaba que `subCategoria` se guardara como un array anidado.
+
+### 5. Estado Actual del Producto "laaaaa"
+
+*   Después de múltiples depuraciones y correcciones, el producto "laaaaa" debería ahora tener sus datos de categoría/subcategoría guardados correctamente en la base de datos.
+*   El sitio ha sido reconstruido con todas las correcciones de código.
+
+---
+
+### Tarea Pendiente: Migas de Pan (Breadcrumbs)
+
+*   **Problema:** Las migas de pan en las páginas de subcategorías (ej: "Agendas Tapa Dura") solo muestran "Inicio > Agendas Tapa Dura", omitiendo la categoría padre ("Tapa Dura").
+*   **Progreso:**
+    *   Se modificó `getStaticProps` en `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\[categoria].tsx` para que busque la categoría padre y construya un array `breadcrumbItems` completo, incluyendo la categoría padre si existe.
+    *   Se modificó el retorno de `getStaticProps` para pasar este array `breadcrumbItems` como una prop al componente `CategoryPage`.
+    *   Se actualizó la interfaz `CategoriaPageProps` para incluir `breadcrumbItems`.
+*   **Falta:** Modificar el componente `CategoryPage` para que reciba la prop `breadcrumbItems` y la utilice en el componente `Breadcrumbs`, eliminando la construcción local de las migas de pan.
+
+---
+## Resumen de la Sesión de Trabajo - 9 de Octubre de 2025
+
+**Objetivo Principal:** Corregir la funcionalidad de las migas de pan y añadir validación para las opciones de productos personalizables.
+
+### 1. Corrección y Mejora de las Migas de Pan (Breadcrumbs)
+
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\[categoria].tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\Breadcrumbs.tsx`
+*   **Cambio (lógica):** Se corrigió el componente `CategoryPage` para que utilizara la prop `breadcrumbItems` (que contiene la ruta de navegación completa, incluyendo categorías padre) en lugar de una variable local que solo mostraba la categoría actual.
+*   **Cambio (estilo):** Se modificó el componente `Breadcrumbs` para que los enlaces se muestren en color azul, haciéndolos más intuitivos para el usuario, tal como se solicitó.
+*   **Corrección de Build:** Se solucionaron múltiples errores de compilación en `pages/productos/[categoria].tsx` relacionados con la falta de definición de `breadcrumbSchema` y la incorrecta desestructuración de la prop `breadcrumbItems`.
+
+### 2. Implementación de Opciones de Producto Obligatorias
+
+*   **Problema:** Los usuarios podían añadir productos al carrito sin seleccionar opciones obligatorias (como textura, tipo de elástico, etc.).
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\detail\[id].tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\models\Product.ts` (solo para análisis)
+*   **Cambio:** Se refactorizó por completo la página de detalle del producto para manejar un sistema de personalización dinámico a través de `customizationGroups`.
+    *   Se actualizó la interfaz del producto en el frontend para reflejar el nuevo modelo de datos (`basePrice`, `customizationGroups`).
+    *   Se añadió un estado (`selectedCustomizations`) para gestionar las opciones seleccionadas por el usuario.
+    *   Se implementó una función (`calculateTotalPrice`) que calcula el precio final del producto sumando el `basePrice` y los `priceModifier` de las opciones seleccionadas.
+    *   Se renderizan dinámicamente las opciones de personalización (actualmente tipo `radio`) en la página.
+    *   Se reescribió la función `handleAddToCart` para validar que se haya seleccionado una opción para cada `customizationGroup` antes de añadir el producto al carrito. Si falta una opción, se muestra un mensaje de error específico con `react-hot-toast`.
+*   **Resultado:** Se previene que los productos se añadan al carrito sin las selecciones requeridas, y el precio se actualiza dinámicamente según las opciones elegidas.
+
+---

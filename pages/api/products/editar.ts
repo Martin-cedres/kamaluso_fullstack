@@ -10,11 +10,26 @@ import clientPromise from '../../../lib/mongodb';
 import { withAuth } from '../../../lib/auth';
 import { revalidateProductPaths } from '../../../lib/utils';
 
+function norm(str: string): string {
+  return String(str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-');
+}
+
 export const config = { api: { bodyParser: false } };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'PUT')
     return res.status(405).json({ error: 'Método no permitido' });
+
+  // Helper para obtener el valor de un campo, manejando arrays de formidable
+  const getFieldValue = (field: string | string[] | undefined): string => {
+    if (Array.isArray(field)) {
+      return field[0];
+    }
+    return field || '';
+  };
 
   const form = formidable({ multiples: true, uploadDir: os.tmpdir() }); // Usar el directorio temporal del SO
 
@@ -43,23 +58,53 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     try {
       const client = await clientPromise
-      const db = client.db('kamaluso')
+      const db = client.db('kamaluso');
 
-      // --- Construcción explícita del documento a actualizar ---
-      const updateDoc: any = {}
+      const updateDoc: any = {};
 
-      // Campos de texto directos
-      if (fields.nombre) updateDoc.nombre = String(fields.nombre)
-      if (fields.slug) updateDoc.slug = String(fields.slug)
-      if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo)
-      if (fields.descripcion) updateDoc.descripcion = String(fields.descripcion)
-      if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle)
-      if (fields.seoDescription)
-        updateDoc.seoDescription = String(fields.seoDescription)
-      if (fields.alt) updateDoc.alt = String(fields.alt)
-      if (fields.notes) updateDoc.notes = String(fields.notes)
-      if (fields.status) updateDoc.status = String(fields.status)
-      if (fields.categoria) updateDoc.categoria = String(fields.categoria)
+      // --- Nueva Lógica de Categorías ---
+      let leafCategorySlugFromForm: string;
+      const subCategoriaFromForm = getFieldValue(fields.subCategoria);
+
+      if (subCategoriaFromForm) {
+        leafCategorySlugFromForm = subCategoriaFromForm;
+      } else {
+        leafCategorySlugFromForm = getFieldValue(fields.categoria);
+      }
+
+      if (leafCategorySlugFromForm) {
+        const categorySlug = norm(leafCategorySlugFromForm);
+        const leafCategory = await db.collection('categories').findOne({ slug: categorySlug });
+
+        if (!leafCategory) {
+          return res.status(400).json({ error: `La categoría con slug '${categorySlug}' no fue encontrada.` });
+        }
+
+        if (leafCategory.parent) {
+          const parentCategory = await db.collection('categories').findOne({ _id: leafCategory.parent });
+          if (!parentCategory) {
+            return res.status(500).json({ error: 'No se pudo encontrar la categoría padre.' });
+          }
+          updateDoc.categoria = parentCategory.slug;
+          console.log('DEBUG: leafCategory.slug before push:', typeof leafCategory.slug, leafCategory.slug);
+          updateDoc.subCategoria = [leafCategory.slug];
+        } else {
+          updateDoc.categoria = leafCategory.slug;
+          updateDoc.subCategoria = [];
+        }
+      }
+      // --- Fin Nueva Lógica de Categorías ---
+
+      // Campos de texto directos (excluyendo `categoria` que ya se manejó)
+      if (fields.nombre) updateDoc.nombre = String(fields.nombre);
+      if (fields.slug) updateDoc.slug = String(fields.slug);
+      if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo);
+      if (fields.descripcion) updateDoc.descripcion = String(fields.descripcion);
+      if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle);
+      if (fields.seoDescription) updateDoc.seoDescription = String(fields.seoDescription);
+      if (fields.alt) updateDoc.alt = String(fields.alt);
+      if (fields.notes) updateDoc.notes = String(fields.notes);
+      if (fields.status) updateDoc.status = String(fields.status);
 
       // Campo de precio base (numérico)
       if (fields.basePrice) {
@@ -116,10 +161,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           .split(',')
           .map((s) => s.trim())
       }
-
-      // Campo de subcategoría (array de strings)
-      const subCategoriaField = (fields.subCategoria as string) || ''
-      updateDoc.subCategoria = subCategoriaField ? [subCategoriaField] : []
 
       // Lógica para imágenes (igual que antes)
       const filePrincipal = (files.image || files.imagen) as any

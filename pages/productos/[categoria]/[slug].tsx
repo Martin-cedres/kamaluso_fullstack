@@ -31,6 +31,11 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
   const { addToCart } = useCart()
   const [open, setOpen] = useState(false);
   const router = useRouter()
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // --- SSR-SAFE STATE INITIALIZATION ---
   const [selections, setSelections] = useState<Record<string, string>>(() => {
@@ -169,20 +174,32 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
 
   const handleAddToCart = () => {
     if (product) {
+      // --- VALIDATION LOGIC ---
+      const visibleGroups = product.customizationGroups?.filter(group => {
+        if (!group.dependsOn) return true; // Always include groups without dependencies
+        const parentSelection = selections[group.dependsOn.groupName];
+        return parentSelection === group.dependsOn.optionName;
+      }) || [];
+
+      for (const group of visibleGroups) {
+        if (!selections[group.name]) {
+          toast.error(`Por favor, selecciona una opción para "${group.name}".`);
+          return; // Stop if a selection is missing
+        }
+      }
+
       const itemToAdd = {
         _id: String(product._id),
         nombre: product.nombre,
         precio: totalPrice,
         imageUrl: activeImage,
         customizations: selections,
-      }
+      };
 
-      addToCart(itemToAdd)
-      toast.success(
-        `${product.nombre} ha sido agregado al carrito!`,
-      )
+      addToCart(itemToAdd);
+      toast.success(`${product.nombre} ha sido agregado al carrito!`);
     }
-  }
+  };
 
   if (router.isFallback) {
     return <div>Cargando...</div>
@@ -298,7 +315,7 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
           {/* Información del producto */}
           <div className="mt-10 lg:mt-0">
             <div>
-              <h1 className="text-4xl font-bold mb-2">{product.nombre}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{product.nombre}</h1>
               {reviewCount > 0 && (
                 <div className="flex items-center mb-4">
                   <StarRating rating={parseFloat(averageRating)} />
@@ -307,9 +324,15 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
                   </span>
                 </div>
               )}
-              <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
-                $U {totalPrice}
-              </p>
+              {isClient ? (
+                <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
+                  $U {totalPrice}
+                </p>
+              ) : (
+                <p className="text-pink-500 font-bold text-4xl mb-6">
+                  $U {product?.basePrice || 0}
+                </p>
+              )}
               
               <div className="prose lg:prose-xl max-w-none text-gray-600 space-y-4 mb-6" dangerouslySetInnerHTML={{ __html: product.descripcion }} />
 
@@ -410,9 +433,15 @@ export default function ProductDetailPage({ product, reviews, reviewCount, avera
 
             <div className="sticky bottom-0 left-0 right-0 z-10 bg-white py-3 px-4 shadow-lg border-t border-gray-200">
               <div className="flex items-center justify-between gap-3 mb-3">
-                <p key={totalPrice} className="text-pink-500 font-bold text-2xl md:text-3xl transition-all duration-300 ease-in-out animate-pulse-once">
-                  $U {totalPrice}
-                </p>
+                {isClient ? (
+                  <p key={totalPrice} className="text-pink-500 font-bold text-2xl md:text-3xl transition-all duration-300 ease-in-out animate-pulse-once">
+                    $U {totalPrice}
+                  </p>
+                ) : (
+                  <p className="text-pink-500 font-bold text-2xl md:text-3xl">
+                    $U {product?.basePrice || 0}
+                  </p>
+                )}
                 <button
                   onClick={handleAddToCart}
                   className="inline-flex items-center justify-center gap-2 bg-pink-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg hover:bg-pink-700 transition text-base md:text-lg"
