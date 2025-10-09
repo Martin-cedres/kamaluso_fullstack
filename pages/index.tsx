@@ -152,27 +152,31 @@ export default function Home({ destacados, categories }: HomeProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
               {destacados.map((product) => (
-                <Link
+                <div
                   key={product._id}
-                  href={`/productos/${product.categoria}/${product.slug}`}
-                  className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group"
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col"
                 >
-                  <div className="relative w-full aspect-square">
-                    <Image
-                      src={product.imageUrl || '/placeholder.png'}
-                      alt={product.alt || product.nombre}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      className="group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg truncate text-gray-800">
+                  <Link href={`/productos/${product.categoria}/${product.slug}`}>
+                    <div className="relative w-full aspect-square overflow-hidden group">
+                      <Image
+                        src={product.imageUrl || '/placeholder.png'}
+                        alt={product.alt || product.nombre}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  </Link>
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">
                       {product.nombre}
                     </h3>
                     {getCardPrice(product)}
+                    <Link href={`/productos/${product.categoria}/${product.slug}`} className="mt-4 block w-full bg-pink-500 text-white px-4 py-2 rounded-lg text-center font-semibold hover:bg-pink-600 transition-colors">
+                        Ver producto
+                    </Link>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </section>
