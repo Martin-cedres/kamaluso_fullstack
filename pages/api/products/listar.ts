@@ -41,6 +41,7 @@ export default async function handler(
     const page = getQueryParam(reqQuery.page) || '1';
     const limit = getQueryParam(reqQuery.limit) || '12';
     const destacadoQuery = reqQuery.destacado;
+    const soloDestacadoQuery = reqQuery.soloDestacado; // Nuevo parámetro
 
     const categoria = categoriaParam ? norm(categoriaParam) : '';
     const subCategoria = subCategoriaParam
@@ -59,9 +60,24 @@ export default async function handler(
       destacadoFilter = val === 'true' || val === '1' || val === 'yes';
     }
 
+    // Filtro de soloDestacado
+    let soloDestacadoFilter: boolean | undefined = undefined;
+    if (typeof soloDestacadoQuery !== 'undefined') {
+      const val = String(soloDestacadoQuery).toLowerCase();
+      soloDestacadoFilter = val === 'true' || val === '1' || val === 'yes';
+    }
+
     // --- CONSTRUIR QUERY ---
     const query: any = {};
     const andConditions: any[] = [];
+
+    // Lógica para soloDestacado
+    if (soloDestacadoFilter === true) {
+      andConditions.push({ soloDestacado: true });
+    } else if (soloDestacadoFilter === false || typeof soloDestacadoQuery === 'undefined') {
+      // Por defecto, excluir productos soloDestacado a menos que se pida explícitamente
+      andConditions.push({ soloDestacado: { $ne: true } });
+    }
 
     if (categoria) {
       const categoryDoc = await db.collection('categories').findOne({ slug: categoria });
@@ -166,6 +182,7 @@ export default async function handler(
           notes: 1,
           status: 1,
           destacado: 1,
+          soloDestacado: 1, // Nuevo campo
           imageUrl: 1,
           images: 1,
           createdAt: 1,

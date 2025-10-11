@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
 import StarRating from '../../../components/StarRating';
@@ -16,133 +16,304 @@ import connectDB from '../../../lib/mongoose'
 import Product, { IProduct } from '../../../models/Product'
 import Review, { IReview } from '../../../models/Review';
 import mongoose from 'mongoose'
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import CoverDesignGallery from '../../../components/CoverDesignGallery';
+import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
 
 // This interface is for the props passed to the component
-import { ICustomizationGroup } from '../../../models/Product';
-
 interface ProductProp {
-  _id: string;
-  nombre: string;
-  descripcion?: string;
-  basePrice: number;
-  categoria?: string;
-  destacado?: boolean;
-  imageUrl?: string;
-  images?: string[];
-  alt?: string;
-  slug?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  customizationGroups?: ICustomizationGroup[];
+  _id: string
+  nombre: string
+  descripcion?: string
+  basePrice?: number
+  precio?: number
+  precioDura?: number
+  categoria?: string
+  destacado?: boolean
+  imageUrl?: string
+  images?: string[]
+  alt?: string
+  slug?: string
+  tapa?: string
+  seoTitle?: string
+  seoDescription?: string
+  precioFlex?: number
+  soloDestacado?: boolean // Nuevo campo
+  customizationGroups?: any[]; // Nuevo campo
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
-  return product.basePrice;
-};
+  if (product.precioDura) return product.precioDura
+  if (product.precioFlex) return product.precioFlex
+  if (product.precio) return product.precio
+  return null
+}
 
 interface Props {
-  product: ProductProp | null;
-  relatedProducts: ProductProp[];
-  reviews: IReview[];
-  reviewCount: number;
-  averageRating: string;
+  product: ProductProp | null
+  relatedProducts: ProductProp[]
+  reviews: IReview[]
+  reviewCount: number
+  averageRating: string
 }
 
 export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating }: Props) {
-  const { addToCart } = useCart();
-  const router = useRouter();
+  const { addToCart } = useCart()
+  const router = useRouter()
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(
+    undefined,
+  )
+  const [finish, setFinish] = useState<string | null>(null)
+  const [open, setOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
-  const [selectedCustomizations, setSelectedCustomizations] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // --- SSR-SAFE STATE INITIALIZATION ---
+  const [selections, setSelections] = useState<Record<string, string>>({});
+
+  // New useEffect to set initial selections based on product customization groups
   useEffect(() => {
-    if (product?.images?.[0]) {
-      setSelectedImage(product.images[0]);
-    } else if (product?.imageUrl) {
-      setSelectedImage(product.imageUrl);
+    if (product) {
+      const initialSelections: Record<string, string> = {};
+      const tipoTapaGroup = product.customizationGroups?.find(g => g.name === 'Tipo de Tapa');
+      const tapaDuraOption = tipoTapaGroup?.options.find(o => o.name === 'Tapa Dura');
+      if (tipoTapaGroup && tapaDuraOption) {
+        initialSelections['Tipo de Tapa'] = 'Tapa Dura';
+      }
+      setSelections(initialSelections);
     }
   }, [product]);
 
-  const handleCustomizationChange = (groupName: string, optionName: string) => {
-    setSelectedCustomizations(prev => ({
-      ...prev,
-      [groupName]: optionName,
-    }));
-  };
+  const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
+  const [activeImage, setActiveImage] = useState(
+    product?.imageUrl || '/placeholder.png'
+  );
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-  const calculateTotalPrice = () => {
-    if (!product) return null;
-    let totalPrice = product.basePrice;
-    if (product.customizationGroups) {
-      for (const group of product.customizationGroups) {
-        const selectedOptionName = selectedCustomizations[group.name];
-        if (selectedOptionName) {
-          const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
-          if (selectedOption) {
-            totalPrice += selectedOption.priceModifier;
+  const isSpecialProduct = useMemo(() => {
+    return product?.customizationGroups?.some(group => 
+      group.name.startsWith('Diseño de Tapa') || group.name === 'Interiores'
+    ) || false;
+  }, [product?.customizationGroups]);
+
+  const allProductImages = useMemo(() => {
+    const images = new Set<string>();
+    if (product?.imageUrl) {
+      images.add(product.imageUrl);
+    }
+    if (product?.images && product.images.length > 0) {
+      product.images.forEach(img => images.add(img));
+    }
+    // Ensure main image is first, then other unique images
+    const finalImages = product?.imageUrl ? [product.imageUrl] : [];
+    images.forEach(img => {
+      if (img !== product?.imageUrl) {
+        finalImages.push(img);
+      }
+    });
+    return finalImages;
+  }, [product?.imageUrl, product?.images]);
+
+  // New useEffect to set initial activeImage based on product type
+  useEffect(() => {
+    if (product) {
+      if (isSpecialProduct) {
+        setActiveImage(product.images?.[0] || product.imageUrl || '/placeholder.png');
+      } else {
+        setActiveImage(allProductImages[0] || '/placeholder.png');
+      }
+    }
+  }, [product, isSpecialProduct, allProductImages]);
+
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => setIsAnimating(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
+
+  const handleImageChange = useCallback((newImage: string) => {
+    if (newImage !== activeImage) {
+      setActiveImage(newImage);
+      setIsAnimating(true);
+    }
+  }, [activeImage]);
+
+  const handlePrevImage = useCallback(() => {
+    if (!isSpecialProduct && allProductImages.length > 1) {
+      const currentIndex = allProductImages.indexOf(activeImage);
+      const prevIndex = (currentIndex - 1 + allProductImages.length) % allProductImages.length;
+      handleImageChange(allProductImages[prevIndex]);
+    }
+  }, [activeImage, allProductImages, handleImageChange, isSpecialProduct]);
+
+  const handleNextImage = useCallback(() => {
+    if (!isSpecialProduct && allProductImages.length > 1) {
+      const currentIndex = allProductImages.indexOf(activeImage);
+      const nextIndex = (currentIndex + 1) % allProductImages.length;
+      handleImageChange(allProductImages[nextIndex]);
+    }
+  }, [activeImage, allProductImages, handleImageChange, isSpecialProduct]);
+
+  // This effect now safely runs on the client after selections are made by the user
+  useEffect(() => {
+    if (!product) return;
+
+    let currentPrice = product.basePrice || 0;
+    let hasImageSelected = false;
+
+    // Iterate through all selected options to calculate price
+    product.customizationGroups?.forEach(group => {
+      const selectedOptionName = selections[group.name];
+      if (selectedOptionName) {
+        const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
+        if (selectedOption) {
+          currentPrice += selectedOption.priceModifier;
+          if (selectedOption.image) {
+            hasImageSelected = true;
           }
         }
       }
+    });
+
+    setTotalPrice(currentPrice);
+
+    // If no image-bearing option is currently selected, revert to default product image
+    // This logic only applies to special products where images are driven by customizations
+    if (isSpecialProduct && !hasImageSelected && activeImage !== (product.images?.[0] || product?.imageUrl || '/placeholder.png')) {
+      handleImageChange(product.images?.[0] || product?.imageUrl || '/placeholder.png');
     }
-    return totalPrice;
+
+  }, [selections, product, activeImage, handleImageChange, isSpecialProduct]);
+
+
+  const handleSelectionChange = (groupName: string, optionName: string) => {
+    const trimmedGroupName = groupName.trim();
+    const trimmedOptionName = optionName.trim();
+
+    setSelections(prev => {
+      const newSelections: Record<string, string> = {
+        ...prev,
+        [trimmedGroupName]: trimmedOptionName,
+      };
+
+      // Deselect options of dependent groups when the parent changes
+      product?.customizationGroups?.forEach(group => {
+        if (group.dependsOn?.groupName === trimmedGroupName && newSelections[group.name]) {
+          delete newSelections[group.name];
+        }
+      });
+
+      // Explicitly update activeImage if the newly selected option has one, only for special products
+      if (isSpecialProduct) {
+        const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
+        const option = group?.options.find(o => o.name.trim() === trimmedOptionName);
+        if (option?.image) {
+          handleImageChange(option.image);
+        }
+      }
+
+      return newSelections;
+    });
   };
 
-  const displayPrice = calculateTotalPrice();
+  const displayGroups = useMemo(() => {
+    if (!product?.customizationGroups) return [];
 
-  const handlePrevImage = () => {
-    if (!product?.images || product.images.length < 2) return;
-    const currentIndex = product.images.findIndex((img) => img === selectedImage);
-    const prevIndex = (currentIndex - 1 + product.images.length) % product.images.length;
-    setSelectedImage(product.images[prevIndex]);
-  };
+    const allGroups = [...product.customizationGroups];
+    const orderedGroups = [];
+    const addedGroupNames = new Set<string>();
 
-  const handleNextImage = () => {
-    if (!product?.images || product.images.length < 2) return;
-    const currentIndex = product.images.findIndex((img) => img === selectedImage);
-    const nextIndex = (currentIndex + 1) % product.images.length;
-    setSelectedImage(product.images[nextIndex]);
-  };
+    const addGroup = (name: string, filterFn: (g: any) => boolean = (g) => g.name === name) => {
+      const group = allGroups.find(filterFn);
+      if (group && !addedGroupNames.has(group.name)) {
+        orderedGroups.push(group);
+        addedGroupNames.add(group.name);
+      }
+    };
+
+    // 1. Tipo de Tapa
+    addGroup('Tipo de Tapa');
+
+    // 2. Textura de Tapa
+    addGroup('Textura de Tapa');
+
+    // 3. Elástico
+    addGroup('Elástico');
+
+    // 4. Interiores
+    addGroup('Interiores');
+
+    // 5. Diseño de Tapa (Dura/Flexible)
+    allGroups.filter(g => g.name.startsWith('Diseño de Tapa')).forEach(group => {
+      if (!addedGroupNames.has(group.name)) {
+        orderedGroups.push(group);
+        addedGroupNames.add(group.name);
+      }
+    });
+
+    // 6. Add any other remaining groups that were not explicitly ordered
+    allGroups.forEach(group => {
+      if (!addedGroupNames.has(group.name)) {
+        orderedGroups.push(group);
+        addedGroupNames.add(group.name);
+      }
+    });
+
+    return orderedGroups;
+  }, [product?.customizationGroups]);
+
+  useEffect(() => {
+    if (product?.images?.[0]) {
+      setSelectedImage(product.images[0])
+    } else if (product?.imageUrl) {
+      setSelectedImage(product.imageUrl)
+    }
+  }, [product])
+
+
+
+  const getDisplayPrice = () => {
+    if (!product) return null
+    if (product.precioDura) return product.precioDura
+    if (product.precioFlex) return product.precioFlex
+    if (product.precio) return product.precio
+    return null
+  }
+
+  const displayPrice = getDisplayPrice()
 
   const handleAddToCart = () => {
     if (product) {
       // --- VALIDATION LOGIC ---
       const visibleGroups = product.customizationGroups?.filter(group => {
         if (!group.dependsOn) return true; // Always include groups without dependencies
-        const parentSelection = selectedCustomizations[group.dependsOn.groupName];
+        const parentSelection = selections[group.dependsOn.groupName];
         return parentSelection === group.dependsOn.optionName;
       }) || [];
 
       for (const group of visibleGroups) {
-        if (!selectedCustomizations[group.name]) {
+        if (!selections[group.name]) {
           toast.error(`Por favor, selecciona una opción para "${group.name}".`);
           return; // Stop if a selection is missing
         }
       }
 
-      const priceToUse = calculateTotalPrice();
-      if (priceToUse === null) {
-        toast.error('Este producto no se puede agregar al carrito porque no tiene un precio definido.');
-        return;
-      }
-
       const itemToAdd = {
-        _id: product._id,
+        _id: String(product._id),
         nombre: product.nombre,
-        precio: priceToUse,
-        imageUrl: product.images?.[0] || product.imageUrl,
-        customizations: selectedCustomizations,
+        precio: totalPrice,
+        imageUrl: activeImage,
+        customizations: selections,
       };
-      addToCart(itemToAdd);
-      
-      const customizationText = Object.entries(selectedCustomizations)
-        .map(([group, option]) => `${group}: ${option}`)
-        .join(', ');
 
-      toast.success(`${product.nombre} (${customizationText}) ha sido agregado al carrito!`);
+      addToCart(itemToAdd);
+      toast.success(`${product.nombre} ha sido agregado al carrito!`);
     }
   };
 
@@ -274,17 +445,24 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             <Breadcrumbs items={breadcrumbItems} />
           </div>
           <div className="flex flex-col lg:flex-row gap-12">
-            <div className="flex-1">
-              <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-lg">
-                <Image
-                  src={selectedImage || '/placeholder.png'}
-                  alt={product.alt || product.nombre}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className="rounded-2xl transition-opacity duration-300"
-                  key={selectedImage}
-                />
-                {product.images && product.images.length > 1 && (
+            <div className="flex-1 lg:sticky top-32 self-start">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
+                >
+                  <Image
+                    key={activeImage} // Add key to force re-render
+                    src={activeImage}
+                    alt={product.alt || product.nombre}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+                  />
+                </button>
+
+                {!isSpecialProduct && allProductImages.length > 1 && (
                   <>
                     <button
                       onClick={handlePrevImage}
@@ -329,29 +507,38 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   </>
                 )}
               </div>
-              {product.images && product.images.length > 1 && (
-                <div className="flex w-full gap-4 mt-4 overflow-x-auto p-2">
-                  {product.images.map((img, i) => (
-                    <div
-                      key={i}
-                      className={`relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${selectedImage === img ? 'border-4 border-pink-500' : 'border-2 border-transparent hover:border-pink-300'}`}
-                      onClick={() => setSelectedImage(img)}
+
+              <Lightbox
+                open={open}
+                close={() => setOpen(false)}
+                slides={allProductImages.map(img => ({ src: img }))}
+                index={allProductImages.indexOf(activeImage)}
+              />
+
+              {!isSpecialProduct && allProductImages.length > 1 && (
+                <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
+                  {allProductImages.map((img, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleImageChange(img)}
+                      className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-pink-500' : 'border-gray-300'} flex-shrink-0`}
                     >
                       <Image
                         src={img}
-                        alt={`${product.alt || product.nombre} thumbnail ${i + 1}`}
+                        alt={product.alt || product.nombre}
                         fill
                         style={{ objectFit: 'cover' }}
                         className="rounded-lg"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
             </div>
             <div className="flex-1 flex flex-col justify-between">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.nombre}</h1>
+                <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
                 {reviewCount > 0 && (
                   <div className="flex items-center mb-4">
                     <StarRating rating={parseFloat(averageRating)} />
@@ -360,39 +547,109 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     </span>
                   </div>
                 )}
-                {isClient ? (
-                  displayPrice && (
-                    <p className="text-pink-500 font-semibold text-2xl mb-6">
-                      $U {displayPrice}
-                    </p>
-                  )
-                ) : (
-                  <p className="text-pink-500 font-semibold text-2xl mb-6">
-                    $U {product?.basePrice || 0}
-                  </p>
-                )}
+              {isClient ? (
+                <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
+                  $U {totalPrice}
+                </p>
+              ) : (
+                <p className="text-pink-500 font-bold text-4xl mb-6">
+                  $U {product?.basePrice || 0}
+                </p>
+              )}
+              
+              <div className="text-gray-600 mb-6 prose" dangerouslySetInnerHTML={{ __html: product.descripcion || '' }} />
 
-                <div className="prose lg:prose-xl max-w-none text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: product.descripcion || '' }} />
+              <div className="space-y-6">
+                {displayGroups.map((group) => {
+                  const groupName = group.name.trim();
 
-                {product.customizationGroups && product.customizationGroups.map(group => (
-                  <div key={group.name} className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {group.name}
-                    </label>
-                    <div className="flex rounded-xl shadow-sm">
-                      {group.options.map(option => (
-                        <button
-                          key={option.name}
-                          type="button"
-                          onClick={() => handleCustomizationChange(group.name, option.name)}
-                          className={`flex-1 px-4 py-2 text-sm rounded-xl border ${selectedCustomizations[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300'}`}
-                        >
-                          {option.name}
-                        </button>
-                      ))}
+                  // --- NEW VISIBILITY LOGIC ---
+                  if (group.dependsOn) {
+                    const parentSelection = selections[group.dependsOn.groupName];
+                    if (parentSelection !== group.dependsOn.optionName) {
+                      return null; // Don't render if dependency not met
+                    }
+                  }
+
+                  // --- RENDER LOGIC ---
+                  // Special renderer for CoverDesignGallery
+                  if (groupName.startsWith('Diseño de Tapa')) {
+                    return (
+                      <div key={groupName} className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {groupName}
+                        </label>
+                        <CoverDesignGallery
+                          options={group.options}
+                          selectedOption={selections[groupName]}
+                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
+                        />
+                      </div>
+                    )
+                  }
+
+                  // Special renderer for InteriorDesignGallery
+                  if (groupName === 'Interiores') {
+                    return (
+                      <div key={groupName} className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {groupName}
+                        </label>
+                        <InteriorDesignGallery
+                          options={group.options}
+                          selectedOption={selections[groupName]}
+                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
+                        />
+                      </div>
+                    )
+                  }
+
+                  // Default renderer for all other groups
+                  return (
+                    <div key={groupName} className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {groupName}
+                      </label>
+                      <div className="flex flex-wrap gap-3">
+                        {group.options.map((option: any) => {
+                          const isSelected = selections[groupName] === option.name.trim();
+                          return (
+                            <button
+                              key={option.name}
+                              type="button"
+                              onClick={() => handleSelectionChange(groupName, option.name)}
+                              className={`relative p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
+                                isSelected
+                                  ? 'border-pink-500 ring-2 ring-pink-500 shadow-md bg-pink-50 text-pink-800'
+                                  : 'border-gray-300 bg-white text-gray-800 hover:border-pink-400 hover:shadow-sm'
+                              }`}
+                            >
+                              {option.image && (
+                                <div className="relative w-20 h-20 rounded-md overflow-hidden">
+                                  <Image
+                                    src={option.image}
+                                    alt={option.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              )}
+                              <span className="block font-medium">{option.name}</span>
+                              {option.priceModifier > 0 && <span className="block text-xs font-normal">(+ $U {option.priceModifier})</span>}
+                              {isSelected && (
+                                <div className="absolute top-1 right-1 bg-pink-500 text-white rounded-full p-0.5">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               <div className="flex flex-col sm:flex-row gap-4 mt-6">
                 <button
@@ -410,6 +667,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               </div>
             </div>
           </div>
+        </div>
         </div>
 
                 {/* Reviews Section */}

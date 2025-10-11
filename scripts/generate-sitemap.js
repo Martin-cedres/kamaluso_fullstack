@@ -20,7 +20,7 @@ async function generateSitemap() {
 
   const products = await db
     .collection('products')
-    .find({}, { projection: { categoria: 1, slug: 1 } })
+    .find({}, { projection: { _id: 1 } })
     .toArray()
   const categories = await db
     .collection('categories')
@@ -56,10 +56,10 @@ async function generateSitemap() {
     .join('')}
 
   ${products
-    .map(({ categoria, slug }) => {
+    .map(({ _id }) => {
       return `
   <url>
-    <loc>${BASE_URL}/productos/${categoria}/${slug}</loc>
+    <loc>${BASE_URL}/productos/detail/${_id}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

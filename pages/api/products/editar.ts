@@ -86,12 +86,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             return res.status(500).json({ error: 'No se pudo encontrar la categoría padre.' });
           }
           updateDoc.categoria = parentCategory.slug;
-          console.log('DEBUG: leafCategory.slug before push:', typeof leafCategory.slug, leafCategory.slug);
           updateDoc.subCategoria = [leafCategory.slug];
         } else {
           updateDoc.categoria = leafCategory.slug;
           updateDoc.subCategoria = [];
         }
+      } else {
+        // If no category is provided, explicitly set them to empty
+        updateDoc.categoria = '';
+        updateDoc.subCategoria = [];
       }
       // --- Fin Nueva Lógica de Categorías ---
 
@@ -153,6 +156,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Campo destacado (booleano)
       if (fields.destacado !== undefined) {
         updateDoc.destacado = String(fields.destacado).toLowerCase() === 'true'
+      }
+
+      // Campo soloDestacado (booleano)
+      if (fields.soloDestacado !== undefined) {
+        updateDoc.soloDestacado = String(fields.soloDestacado).toLowerCase() === 'true'
       }
 
       // Campo de keywords (array de strings)
@@ -230,7 +238,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Revalidar las páginas afectadas
       const updatedProduct = await db.collection('products').findOne({ _id: new ObjectId(productId) });
       if (updatedProduct && updatedProduct.slug && updatedProduct.categoria) {
-        await revalidateProductPaths(updatedProduct.categoria, updatedProduct.slug);
+        await revalidateProductPaths(updatedProduct.categoria, updatedProduct.slug, updatedProduct._id.toString());
       }
 
       res

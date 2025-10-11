@@ -25,7 +25,7 @@ export interface IProduct extends Document {
   basePrice: number;
   precioFlex?: number; // Campo legado, opcional
   precioDura?: number; // Campo legado, opcional
-  categoria: string;
+  categoria?: string; // Ahora opcional
   subCategoria?: string[];
   tapa?: string; // Campo legado, opcional
   seoTitle?: string;
@@ -35,6 +35,7 @@ export interface IProduct extends Document {
   notes?: string;
   status: string;
   destacado: boolean;
+  soloDestacado?: boolean; // Nuevo campo
   imageUrl: string;
   images?: string[];
   averageRating?: number;
@@ -52,7 +53,7 @@ const productSchema: Schema<IProduct> = new Schema(
     basePrice: { type: Number, required: true },
     precioFlex: { type: Number }, // Campo legado
     precioDura: { type: Number }, // Campo legado
-    categoria: { type: String, required: true },
+    categoria: { type: String }, // Ahora opcional
     subCategoria: [{ type: String }],
     tapa: { type: String }, // Campo legado
     seoTitle: { type: String },
@@ -62,6 +63,7 @@ const productSchema: Schema<IProduct> = new Schema(
     notes: { type: String },
     status: { type: String, default: 'activo' },
     destacado: { type: Boolean, default: false },
+    soloDestacado: { type: Boolean, default: false }, // Nuevo campo
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
     customizationGroups: [

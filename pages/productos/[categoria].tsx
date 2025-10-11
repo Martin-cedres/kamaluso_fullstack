@@ -32,6 +32,7 @@ interface IProduct {
   averageRating?: number;
   numReviews?: number;
   customizationGroups?: any[]; // Nuevo
+  soloDestacado?: boolean; // Nuevo campo
 }
 
 interface Category {
@@ -296,11 +297,12 @@ export default function CategoryPage({
 
                 {products.map((product) => (
                   <ProductCard key={product._id} product={{
-                    id: product._id,
+                    _id: product._id,
                     nombre: product.nombre,
                     // Lógica de precio actualizada para compatibilidad
                     precio: product.basePrice || product.precioDura || product.precioFlex || product.precio || 0,
-                    isBasePrice: !!product.basePrice, // Prop para indicar que es un precio "Desde"
+                    soloDestacado: product.soloDestacado, // Pasar soloDestacado
+                    alt: product.alt, // Pasar el alt
                     // ... otros campos
                     categoria: product.categoria || '',
                     slug: product.slug || '',
@@ -390,11 +392,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
       const categorySlugsToQuery = [category.slug];
       const page = 1;
       const limit = 12;
-      const query = {
+      const query: any = {
         $or: [
           { categoria: { $in: categorySlugsToQuery } },
           { subCategoria: { $in: categorySlugsToQuery } },
         ],
+        soloDestacado: { $ne: true }, // Excluir productos soloDestacado
       };
 
       const aggregationPipeline = [

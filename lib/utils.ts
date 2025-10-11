@@ -19,8 +19,8 @@ export function toSlug(s: any): string {
  * @returns El path de la URL para el producto.
  */
 export function getProductHref(p: any): string {
-  if (p.categoria && p.slug) {
-    return `/productos/${encodeURIComponent(p.categoria)}/${encodeURIComponent(p.slug)}`;
+  if (p._id) {
+    return `/productos/detail/${p._id}`;
   }
   // Fallback if essential data is missing
   return `/productos/not-found`;
@@ -31,12 +31,12 @@ export function getProductHref(p: any): string {
  * @param categoria La categoría del producto.
  * @param slug El slug del producto.
  */
-export async function revalidateProductPaths(categoria: string, slug: string) {
+export async function revalidateProductPaths(categoria: string, slug: string, id: string) {
   const pathsToRevalidate = [
     '/',
     '/productos',
     `/productos/${categoria}`,
-    `/productos/${categoria}/${slug}`,
+    `/productos/detail/${id}`,
   ];
 
   const secret = process.env.REVALIDATE_TOKEN;

@@ -7,9 +7,9 @@ import {
   StarIcon,
   NewspaperIcon,
   TicketIcon,
+  TagIcon,
   Bars3Icon,
   XMarkIcon,
-  TagIcon,
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {

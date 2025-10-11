@@ -3,8 +3,9 @@ const mongoose = require('mongoose')
 
 const MONGODB_URI = process.env.MONGODB_URI
 
-// Ampliamos el esquema para incluir subCategoria
+// Ampliamos el esquema para incluir _id
 const productSchema = new mongoose.Schema({
+  _id: String,
   slug: String,
   categoria: String,
   subCategoria: [String], // Array de strings para subcategorías
@@ -21,23 +22,13 @@ async function getDynamicUrlsSync() {
     }
     connection = await mongoose.connect(MONGODB_URI)
 
-    // Pedimos también subCategoria y usamos un Set para evitar URLs duplicadas
-    const products = await Product.find({}, 'slug categoria subCategoria').lean()
+    // Pedimos también _id y usamos un Set para evitar URLs duplicadas
+    const products = await Product.find({}, '_id slug categoria subCategoria').lean()
     const urlSet = new Set()
 
     products.forEach((p) => {
-      // URL para la categoría principal
-      if (p.categoria && p.slug) {
-        urlSet.add(`/productos/${p.categoria}/${p.slug}`)
-      }
-
-      // URLs para las subcategorías
-      if (p.subCategoria && p.subCategoria.length > 0) {
-        p.subCategoria.forEach((subCatSlug) => {
-          if (subCatSlug && p.slug) {
-            urlSet.add(`/productos/${subCatSlug}/${p.slug}`)
-          }
-        })
+      if (p._id) {
+        urlSet.add(`/productos/detail/${p._id}`)
       }
     })
 

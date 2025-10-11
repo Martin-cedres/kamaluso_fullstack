@@ -170,17 +170,211 @@
 ### 3. Tareas Pendientes (Basado en el Informe Web)
 
 *   **Accesibilidad - Texto Alternativo (alt) en Imágenes de Producto:**
+
     *   **Acción:** Asegurar que todas las imágenes de producto, especialmente las renderizadas a través del componente `ProductCard.tsx` (que afecta a `pages/productos/[categoria].tsx`), utilicen el atributo `alt` de forma descriptiva.
+
     *   **Estado:** Pendiente de implementar en `ProductCard.tsx`.
 
 *   **Accesibilidad - Mejora de Enlaces en Tarjetas de Producto (Componente `ProductCard.tsx`):**
+
     *   **Acción:** Refactorizar el componente `ProductCard.tsx` para que no envuelva toda la tarjeta en un `<Link>`. En su lugar, la imagen y el título deben ser enlaces, y se debe añadir un botón "Ver detalles" explícito.
+
     *   **Estado:** Pendiente de implementar en `ProductCard.tsx`.
 
 *   **SEO Técnico - Verificación de Estructura de Encabezados:**
+
     *   **Acción:** Revisar las páginas de categorías (`pages/productos/[categoria].tsx`) y de detalle de producto (`pages/productos/[categoria]/[slug].tsx` y `pages/productos/detail/[id].tsx`) para asegurar una estructura de encabezados lógica y jerárquica (un único `<h1>` por página, `<h2>`, `<h3>` para subsecciones).
+
     *   **Estado:** Pendiente de verificación manual.
 
 *   **SEO Técnico - Completar Datos SEO en Panel de Administración:**
+
     *   **Acción:** Rellenar los campos `Keywords SEO` y `Texto Alternativo (Alt)` para los productos en el panel de administración.
+
     *   **Estado:** La funcionalidad para añadir estos campos al formulario ya fue implementada en una sesión anterior; la tarea pendiente es la entrada de datos por parte del usuario.
+
+
+---
+## Resumen de la Sesión de Trabajo - 9 de Octubre de 2025 (Continuación - Implementación de Productos "Solo Destacados" y Correcciones en Admin)
+
+**Objetivo Principal:** Implementar la funcionalidad para productos que solo se muestran en la sección de destacados del home y corregir problemas en el panel de administración.
+
+### 1. Corrección de Campos Faltantes y Lógica de Subcategorías en Panel de Administración de Productos
+
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\admin\index.tsx`
+*   **Cambios:**
+    *   Se añadió el campo de entrada para el "Texto Alternativo (Alt) de Imagen Principal" en el formulario de productos.
+    *   Se corrigió la lógica de visualización de subcategorías en el formulario de productos para que use la propiedad `children` de las categorías, tal como la devuelve la API, resolviendo el problema de que el `select` de subcategorías no aparecía.
+
+### 2. Implementación de Productos "Solo Destacados" (sin categoría)
+
+*   **Modelo `Product` (`models/Product.ts`):**
+    *   El campo `categoria` se hizo opcional (`categoria?: string;`).
+    *   Se añadió un nuevo campo booleano `soloDestacado` (por defecto `false`).
+*   **Panel de Administración de Productos (`pages/admin/index.tsx`):**
+    *   Se añadió un checkbox para `soloDestacado` en el formulario de productos.
+    *   El campo `categoria` se hizo condicionalmente requerido (solo si `soloDestacado` es `false`).
+    *   El campo `subCategoria` se hizo condicionalmente requerido (solo si `soloDestacado` es `false` y hay una categoría seleccionada).
+    *   Se añadió un `useEffect` para gestionar la limpieza de `selectedCategoria` y `selectedSubCategoria` cuando `soloDestacado` se activa/desactiva.
+    *   Se actualizó la función `handleSubmit` para enviar `categoria` y `subCategoria` solo si `soloDestacado` es `false`, y para enviar `soloDestacado`.
+    *   Se actualizó la función `handleEditClick` para limpiar `selectedCategoria` y `selectedSubCategoria` si el producto editado tiene `soloDestacado: true`.
+*   **API de Listado de Productos (`/api/products/listar.ts`):**
+    *   Se añadió un parámetro de consulta `soloDestacadoQuery`.
+    *   La lógica de consulta se modificó para:
+        *   Si `soloDestacadoQuery` es `true`, filtrar por `soloDestacado: true`.
+        *   De lo contrario (listados generales), excluir productos con `soloDestacado: true`.
+    *   Se añadió `soloDestacado` a la proyección de los productos devueltos.
+*   **API de Creación de Productos (`/api/products/crear.ts`):**
+    *   La lógica de `categoria` se ajustó para ser opcional.
+    *   Se añadió el campo `soloDestacado` al `productoDoc`.
+*   **API de Edición de Productos (`/api/products/editar.ts`):**
+    *   La lógica de `categoria` se ajustó para ser opcional.
+    *   Se añadió el campo `soloDestacado` al `updateDoc`.
+*   **Página de Inicio (`pages/index.tsx`):**
+    *   La consulta de productos destacados en `getStaticProps` se modificó para incluir productos que sean `destacado: true` O `soloDestacado: true`, asegurando que ambos tipos de productos destacados aparezcan en el home.
+
+
+
+
+
+
+
+
+      Resumen de cambios de esta sesión:
+
+   * Consolidación de Lógica de Detalle de Producto y Corrección de Carrusel de Imágenes:
+       * `pages/productos/detail/[id].tsx`:
+           * Se actualizó la interfaz ProductProp para incluir customizationGroups.
+           * Se copiaron todos los estados, hooks (useState, useMemo, useEffect, useCallback) y la función   
+              handleSelectionChange relacionados con la lógica de personalización y el carrusel de
+             imágenes desde pages/productos/[categoria]/[slug].tsx.
+           * Se actualizó la función handleAddToCart para usar la lógica de validación de personalización    
+             y totalPrice.
+           * Se copió el JSX de renderizado de los grupos de personalización y la sección de
+             visualización de imágenes (incluyendo Lightbox, flechas de navegación y tira de miniaturas)     
+             desde pages/productos/[categoria]/[slug].tsx.
+       * `pages/productos/[categoria]/[slug].tsx`:
+           * Se eliminaron todos los estados, hooks y funciones relacionados con la lógica de
+             personalización y el carrusel de imágenes que fueron copiados a
+             pages/productos/detail/[id].tsx.
+           * Se simplificó el JSX de la página, eliminando la visualización de imágenes y la
+             renderización de grupos de personalización.
+           * Se modificó getStaticProps para redirigir a /productos/detail/${product._id} si se encuentra    
+             un producto.
+
+  Tareas pendientes:
+   1. Eliminar lógica redundante de `pages/productos/[categoria]/[slug].tsx`: Esta página aún contiene la
+      lógica de personalización y necesita ser limpiada.
+   2. Actualizar componentes `Link`: Asegurarse de que todos los enlaces de detalles de productos apunten
+      a pages/productos/detail/[id].tsx.
+   3. Eliminar `pages/productos/[categoria]/[slug].tsx`: Esta página es ahora redundante.
+
+---
+
+## Resumen de la Sesión de Trabajo - 10 de Octubre de 2025
+
+**Objetivo Principal:** Finalizar la refactorización de las páginas de productos, eliminando la ruta dinámica `[slug]` y consolidando la vista de detalle en `detail/[id]`, y corregir los errores de compilación resultantes.
+
+### 1. Refactorización de Rutas de Productos
+
+*   **Página de Redirección (`pages/productos/[categoria]/[slug].tsx`):**
+    *   Se modificó la función `getStaticProps` para que, en lugar de renderizar la página, devuelva una redirección permanente (308) a la nueva ruta de detalle: `/productos/detail/[id]`.
+    *   Se limpió el componente, eliminando toda la lógica de renderizado y personalización, dejando solo un mensaje de "Redirigiendo...".
+
+*   **Actualización de Enlaces de Productos:**
+    *   Se buscaron todas las instancias de enlaces a productos en el proyecto.
+    *   **`components/ProductCard.tsx`:** Se actualizó el `Link` para que apunte directamente a `/productos/detail/${product._id}`. Se corrigió la interfaz `Product` para usar `_id` en lugar de `id`.
+    *   **`pages/index.tsx`:** Se modificaron los enlaces en la sección "Productos Destacados" para que todos apunten a la nueva ruta de detalle.
+    *   **`pages/productos/[categoria].tsx`:** Se corrigió la props que se pasaban al componente `ProductCard` para usar `_id`.
+    *   **`lib/utils.ts`:** Se actualizó la función `getProductHref` para que genere la nueva URL de detalle. Se actualizó `revalidateProductPaths` para que revalide la nueva ruta.
+    *   **`scripts/generate-dynamic-urls-sync.js` y `scripts/generate-sitemap.js`:** Se actualizaron los scripts para que generen las nuevas URLs de detalle en el sitemap.
+
+*   **Eliminación de Página Redundante:**
+    *   Se eliminó el archivo `pages/productos/[categoria]/[slug].tsx`.
+    *   Se eliminó el directorio `pages/productos/[categoria]`.
+
+### 2. Corrección de Errores de Compilación (`npm run build`)
+
+*   **Error 1: Argumentos faltantes en `revalidateProductPaths`**
+    *   **Archivos Modificados:** `pages/api/products/crear.ts`, `pages/api/products/editar.ts`.
+    *   **Cambio:** Se añadió el `id` del producto como tercer argumento en las llamadas a la función `revalidateProductPaths` para que coincida con la nueva firma de la función.
+
+*   **Error 2: Propiedad `basePrice` faltante en `ProductProp`**
+    *   **Archivo Modificado:** `pages/productos/detail/[id].tsx`.
+    *   **Cambio:** Se añadió la propiedad `basePrice` a la interfaz `ProductProp`.
+
+*   **Error 3: `useMemo` y `useCallback` no importados**
+    *   **Archivo Modificado:** `pages/productos/detail/[id].tsx`.
+    *   **Cambio:** Se importaron `useMemo` y `useCallback` desde `react`.
+
+*   **Error 4: Declaración duplicada de `handlePrevImage`**
+    *   **Archivo Modificado:** `pages/productos/detail/[id].tsx`.
+    *   **Cambio:** Se eliminó la declaración duplicada de la función `handlePrevImage`.
+
+*   **Error 5: `setOpen` no definido**
+    *   **Archivo Modificado:** `pages/productos/detail/[id].tsx`.
+    *   **Cambio:** Se añadió el estado `open` y `setOpen` para controlar el lightbox.
+
+*   **Error 6: Propiedad `id` en lugar de `_id` en `ProductCard`**
+    *   **Archivo Modificado:** `pages/productos/index.tsx`.
+    *   **Cambio:** Se corrigió la prop pasada a `ProductCard` para que use `_id` en lugar de `id`.
+
+### 3. Verificación Final
+
+*   Se ejecutó el comando `npm run build` y se completó con éxito, confirmando que todos los cambios son correctos y no introducen nuevos errores.
+
+---
+## Resumen de la Sesión de Trabajo - 11 de Octubre de 2025
+
+### 1. Verificación y Corrección de Accesibilidad y SEO en Tarjetas de Producto
+
+*   **Problema Inicial:** Se identificaron mejoras pendientes en `ProductCard.tsx` respecto al uso del atributo `alt` y la estructura de enlaces, así como la necesidad de verificar la estructura de encabezados y campos SEO en el panel de administración.
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\ProductCard.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\[categoria].tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\index.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\detail\[id].tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\admin\index.tsx`
+*   **Cambios Realizados:**
+    *   **`ProductCard.tsx`:**
+        *   Se actualizó la interfaz `Product` para incluir `alt?: string`.
+        *   Se modificó el componente `Image` para usar `alt={product.alt || product.nombre}`.
+        *   Se refactorizó la estructura de enlaces: la imagen y el título ahora son enlaces individuales, y el botón "Ver detalles" es un `<Link>` separado, mejorando la accesibilidad.
+    *   **`pages/productos/[categoria].tsx`:** Se actualizó para pasar la prop `alt` al componente `ProductCard`.
+    *   **Estructura de Encabezados:** Se confirmó que la estructura de encabezados (`<h1>`, `<h2>`, `<h3>`) en `pages/productos/[categoria].tsx` y `pages/productos/detail/[id].tsx` es correcta y jerárquica.
+    *   **Campos SEO en Admin:** Se confirmó la presencia de los campos "Título SEO", "Descripción SEO", "Keywords SEO" y "Texto Alternativo (Alt) de Imagen Principal" en `pages/admin/index.tsx`.
+
+### 2. Corrección de Visualización de Descripción de Producto (Rich Text)
+
+*   **Problema:** La descripción de los productos editada con texto enriquecido en el panel de administración se mostraba con etiquetas HTML (`<p>`, etc.) en la página de detalle del producto.
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\detail\[id].tsx`
+*   **Cambio:** Se reemplazó la renderización de `product.descripcion` por `dangerouslySetInnerHTML={{ __html: product.descripcion || '' }}` dentro de un `div` con la clase `prose` (del plugin `@tailwindcss/typography`) para interpretar y mostrar correctamente el HTML.
+
+### 3. Restauración de Funcionalidad Sticky en Detalle de Producto
+
+*   **Problema:** La funcionalidad de "sticky" para el carrusel de imágenes en la página de detalle del producto se había perdido, impidiendo que el carrusel se mantuviera visible al hacer scroll en la descripción.
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\detail\[id].tsx`
+*   **Cambio:** Se añadió la clase `lg:sticky top-32 self-start` al `div` contenedor del carrusel de imágenes para restaurar el comportamiento deseado en pantallas grandes.
+
+### 4. Ajuste de Espaciado en Tarjetas de Producto
+
+*   **Problema:** Se solicitó reducir el espacio vertical entre el título y el precio en las tarjetas de producto.
+*   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\ProductCard.tsx`
+*   **Cambio:** Se eliminaron los márgenes verticales (`mb-1` del `h2`, `my-1` del `div` de rating) y el `padding-top` (`pt-2`) del `p` del precio para lograr el espaciado mínimo posible.
+
+### 5. Implementación de Carrusel de Opiniones Destacadas en el Home
+
+*   **Objetivo:** Mostrar opiniones de productos en un carrusel en la página de inicio para mejorar el SEO y la prueba social.
+*   **Librería Instalada:** `swiper` (`npm install swiper`).
+*   **Archivos Creados/Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\index.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\ReviewCard.tsx` (nuevo)
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\FeaturedReviews.tsx` (nuevo)
+*   **Cambios Realizados:**
+    *   **`pages/index.tsx`:**
+        *   Se modificó `getStaticProps` para obtener las 15 opiniones aprobadas más recientes, incluyendo datos de `user` y `product` mediante `populate`.
+        *   Se actualizó la interfaz `HomeProps` para incluir `reviews: IReviewData[]`.
+        *   Se integró el componente `FeaturedReviews` en el JSX de la página de inicio.
+        *   **Correcciones de Errores:** Se resolvieron múltiples errores de compilación (`Type error: Duplicate identifier`, `Cannot find name`, `Cannot redeclare exported variable 'default'`) causados por la refactorización y la adición de nuevas interfaces e imports, asegurando que el `build` finalice con éxito.
+    *   **`components/ReviewCard.tsx`:** Componente creado para renderizar una única opinión, mostrando calificación, comentario, nombre del usuario y un enlace al producto. Se corrigió un error de `react/no-unescaped-entities` usando `&ldquo;` y `&rdquo;`.
+    *   **`components/FeaturedReviews.tsx`:** Componente creado para encapsular el carrusel de Swiper.js, renderizando `ReviewCard`s y generando el esquema `JSON-LD` para las opiniones.

@@ -2,13 +2,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Head from 'next/head' // Importo Head para añadir el schema
 import Navbar from '../components/Navbar'
+import SeoMeta from '../components/SeoMeta'; // Importar SeoMeta
 
-import SeoMeta from '../components/SeoMeta'
-
-import connectDB from '../lib/mongoose'
-import Product from '../models/Product'
-import { GetStaticProps } from 'next'
-import Category from '../models/Category' // Importar el modelo Category
+import Product from '../models/Product'; // Importar el MODELO Product
+import Review from '../models/Review'; // Importar el modelo Review
+import Category from '../models/Category'; // Importar el MODELO Category
+import connectDB from '../lib/mongoose' // Importar connectDB
+import { GetStaticProps } from 'next' // Importar GetStaticProps
+import FeaturedReviews from '../components/FeaturedReviews'; // Importar FeaturedReviews
+import ProductCard from '../components/ProductCard'; // Importar ProductCard
 
 // Interfaces
 interface Categoria {
@@ -16,6 +18,15 @@ interface Categoria {
   nombre: string
   slug: string
   imagen?: string
+}
+
+interface IReviewData {
+  _id: string;
+  user: { name: string };
+  product: { _id: string; nombre: string; imageUrl?: string };
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 interface Product {
@@ -30,26 +41,30 @@ interface Product {
   precioFlex?: number // Antiguo
   precioDura?: number // Antiguo
   tapa?: string
+  soloDestacado?: boolean // Nuevo campo
+  averageRating?: number; // Para el rating
+  numReviews?: number; // Para el rating
 }
 
 interface HomeProps {
   destacados: Product[]
   categories: Categoria[]
+  reviews: IReviewData[];
 }
 
-export default function Home({ destacados, categories }: HomeProps) {
+export default function Home({ destacados, categories, reviews }: HomeProps) {
   const getCardPrice = (product: Product) => {
     if (product.basePrice) {
       return (
         <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.basePrice}
+          {product.soloDestacado ? 'Desde ' : ''}$U {product.basePrice}
         </p>
       )
     }
     if (product.precio) {
       return (
         <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precio}
+          {product.soloDestacado ? 'Desde ' : ''}$U {product.precio}
         </p>
       )
     }
@@ -152,31 +167,18 @@ export default function Home({ destacados, categories }: HomeProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
               {destacados.map((product) => (
-                <div
-                  key={product._id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col"
-                >
-                  <Link href={`/productos/${product.categoria}/${product.slug}`}>
-                    <div className="relative w-full aspect-square overflow-hidden group">
-                      <Image
-                        src={product.imageUrl || '/placeholder.png'}
-                        alt={product.alt || product.nombre}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                        className="group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  </Link>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">
-                      {product.nombre}
-                    </h3>
-                    {getCardPrice(product)}
-                    <Link href={`/productos/${product.categoria}/${product.slug}`} className="mt-4 block w-full bg-pink-500 text-white px-4 py-2 rounded-lg text-center font-semibold hover:bg-pink-600 transition-colors">
-                        Ver producto
-                    </Link>
-                  </div>
-                </div>
+                <ProductCard key={product._id} product={{
+                  _id: product._id,
+                  nombre: product.nombre,
+                  precio: product.basePrice || product.precio || 0,
+                  imagen: product.imageUrl || '/placeholder.png',
+                  alt: product.alt,
+                  slug: product.slug || '',
+                  categoria: product.categoria || '',
+                  soloDestacado: product.soloDestacado,
+                  averageRating: product.averageRating,
+                  numReviews: product.numReviews,
+                }} />
               ))}
             </div>
           </section>
@@ -189,18 +191,64 @@ export default function Home({ destacados, categories }: HomeProps) {
 export const getStaticProps: GetStaticProps = async () => {
   await connectDB();
 
-  // Fetch featured products
-  const destacadosData = await Product.find({ destacado: true }).limit(4).lean();
-  const destacados = JSON.parse(JSON.stringify(destacadosData));
+  // Aggregation pipeline to fetch featured products with review data
+  const destacadosPipeline = [
+    { $match: { $or: [{ destacado: true }, { soloDestacado: true }] } },
+    { $limit: 4 },
+    {
+      $lookup: {
+        from: 'reviews',
+        localField: '_id',
+        foreignField: 'product',
+        as: 'reviews',
+      },
+    },
+    {
+      $addFields: {
+        approvedReviews: {
+          $filter: {
+            input: '$reviews',
+            as: 'review',
+            cond: { $eq: ['$$review.isApproved', true] },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        averageRating: { $avg: '$approvedReviews.rating' },
+        numReviews: { $size: '$approvedReviews' },
+      },
+    },
+    { $project: { reviews: 0, approvedReviews: 0 } },
+  ];
+
+  const destacadosData = await Product.aggregate(destacadosPipeline);
+  const destacados = JSON.parse(JSON.stringify(destacadosData)).map((p:any) => ({
+    ...p,
+    averageRating: p.averageRating === null ? 0 : p.averageRating,
+    numReviews: p.numReviews || 0,
+  }));
 
   // Fetch categories (only root categories)
   const categoriesData = await Category.find({ parent: { $in: [null, undefined] } }).lean();
   const categories = JSON.parse(JSON.stringify(categoriesData));
 
+  // Fetch recent reviews
+  const reviewsData = await Review.find({ isApproved: true })
+    .sort({ createdAt: -1 })
+    .limit(15)
+    .populate('user', 'name')
+    .populate('product', 'nombre imageUrl _id')
+    .lean();
+  const reviews = JSON.parse(JSON.stringify(reviewsData));
+
+
   return {
     props: {
       destacados,
       categories,
+      reviews,
     },
     revalidate: 3600, // Revalidate once per hour
   };

@@ -54,26 +54,24 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       const categorySlug = norm(leafCategorySlugFromForm);
-      if (!categorySlug) {
-        return res.status(400).json({ error: 'La categoría es un campo obligatorio.' });
-      }
+      let finalCategoriaSlug = '';
+      let finalSubCategoriaSlugs: string[] = [];
 
-      const leafCategory = await db.collection('categories').findOne({ slug: categorySlug });
-      if (!leafCategory) {
-        return res.status(400).json({ error: `La categoría con slug '${categorySlug}' no fue encontrada.` });
-      }
-
-      let finalCategoriaSlug = categorySlug;
-      let finalSubCategoriaSlugs = [];
-
-      if (leafCategory.parent) {
-        const parentCategory = await db.collection('categories').findOne({ _id: leafCategory.parent });
-        if (!parentCategory) {
-          return res.status(500).json({ error: 'No se pudo encontrar la categoría padre.' });
+      if (categorySlug) {
+        const leafCategory = await db.collection('categories').findOne({ slug: categorySlug });
+        if (!leafCategory) {
+          return res.status(400).json({ error: `La categoría con slug '${categorySlug}' no fue encontrada.` });
         }
-        finalCategoriaSlug = parentCategory.slug;
-        console.log('DEBUG: leafCategory.slug before push:', typeof leafCategory.slug, leafCategory.slug);
-        finalSubCategoriaSlugs.push(leafCategory.slug);
+
+        finalCategoriaSlug = categorySlug;
+        if (leafCategory.parent) {
+          const parentCategory = await db.collection('categories').findOne({ _id: leafCategory.parent });
+          if (!parentCategory) {
+            return res.status(500).json({ error: 'No se pudo encontrar la categoría padre.' });
+          }
+          finalCategoriaSlug = parentCategory.slug;
+          finalSubCategoriaSlugs.push(leafCategory.slug);
+        }
       }
       // --- Fin Nueva Lógica de Categorías ---
 
@@ -150,6 +148,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         status: String(fields.status || 'activo'),
         destacado:
           fields.destacado === 'true' || fields.destacado === true || false,
+        soloDestacado:
+          fields.soloDestacado === 'true' || fields.soloDestacado === true || false,
         imageUrl,
         images: imagesUrls,
         customizationGroups: customizationGroups, // Guardar el array con las URLs de imagen
@@ -160,7 +160,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       // Revalidar las páginas afectadas
       if (productoDoc.slug && productoDoc.categoria) {
-        await revalidateProductPaths(productoDoc.categoria, productoDoc.slug);
+        await revalidateProductPaths(productoDoc.categoria, productoDoc.slug, result.insertedId.toString());
       }
 
       res

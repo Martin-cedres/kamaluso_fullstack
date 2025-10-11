@@ -20,6 +20,7 @@ interface Product {
   averageRating?: number;
   numReviews?: number;
   tapa?: string;
+  soloDestacado?: boolean; // Nuevo campo
 }
 
 const ITEMS_PER_PAGE = 16;
@@ -37,6 +38,7 @@ export default function ProductsPage() {
 
     let apiUrl = '/api/products/listar';
     const queryParams = new URLSearchParams();
+    queryParams.append('soloDestacado', 'false'); // Excluir productos solo destacados
 
     if (categoria) {
       queryParams.append('categoria', categoria as string);
@@ -89,10 +91,10 @@ export default function ProductsPage() {
 
           {currentProducts.map((product) => (
             <ProductCard key={product._id} product={{
-              id: product._id,
+              _id: product._id,
               nombre: product.nombre,
               precio: product.precioDura || product.precioFlex || product.precio || 0,
-              isBasePrice: !!product.basePrice, // Añadir esta prop
+              soloDestacado: product.soloDestacado, // Pasar soloDestacado
               categoria: product.categoria || '',
               slug: product.slug || '',
               imagen: product.imageUrl || '/placeholder.png',
