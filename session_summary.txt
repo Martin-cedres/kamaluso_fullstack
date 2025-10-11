@@ -236,10 +236,6 @@
 
 
 
-
-
-
-
       Resumen de cambios de esta sesión:
 
    * Consolidación de Lógica de Detalle de Producto y Corrección de Carrusel de Imágenes:
@@ -378,3 +374,5 @@
         *   **Correcciones de Errores:** Se resolvieron múltiples errores de compilación (`Type error: Duplicate identifier`, `Cannot find name`, `Cannot redeclare exported variable 'default'`) causados por la refactorización y la adición de nuevas interfaces e imports, asegurando que el `build` finalice con éxito.
     *   **`components/ReviewCard.tsx`:** Componente creado para renderizar una única opinión, mostrando calificación, comentario, nombre del usuario y un enlace al producto. Se corrigió un error de `react/no-unescaped-entities` usando `&ldquo;` y `&rdquo;`.
     *   **`components/FeaturedReviews.tsx`:** Componente creado para encapsular el carrusel de Swiper.js, renderizando `ReviewCard`s y generando el esquema `JSON-LD` para las opiniones.
+
+---

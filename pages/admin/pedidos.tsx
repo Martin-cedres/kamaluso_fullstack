@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
+
 import AdminLayout from '../../components/AdminLayout'
 import { debounce } from 'lodash'
 
@@ -138,8 +137,7 @@ const AdminPedidosPage = () => {
   const [statusFilter, setStatusFilter] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: session, status } = useSession()
-  const router = useRouter()
+
 
   const debouncedFetchOrders = useMemo(
     () =>
@@ -165,14 +163,12 @@ const AdminPedidosPage = () => {
   )
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      debouncedFetchOrders(currentPage, statusFilter, searchTerm)
-    }
+    debouncedFetchOrders(currentPage, statusFilter, searchTerm)
     // Cleanup on unmount
     return () => {
       debouncedFetchOrders.cancel()
     }
-  }, [status, currentPage, statusFilter, searchTerm, debouncedFetchOrders])
+  }, [currentPage, statusFilter, searchTerm, debouncedFetchOrders])
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
@@ -207,17 +203,7 @@ const AdminPedidosPage = () => {
     setSearchTerm(e.target.value)
   }
 
-  if (status === 'loading') {
-    return (
-      <AdminLayout>
-        <div className="text-xl font-semibold">Cargando...</div>
-      </AdminLayout>
-    )
-  }
 
-  if (!session) {
-    return null
-  }
 
   const statusOptions = ['pendiente', 'enviado', 'entregado']
 

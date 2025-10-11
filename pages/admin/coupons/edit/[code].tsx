@@ -1,24 +1,20 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+
 import AdminLayout from '../../../../components/AdminLayout'
 import CouponForm from '../form'
 import { ICoupon } from '@/models/Coupon'
 import toast from 'react-hot-toast'
 
 export default function AdminCouponEdit() {
-  const { data: session, status } = useSession()
+
   const router = useRouter()
   const { code } = router.query // Coupon code from URL
   const [coupon, setCoupon] = useState<ICoupon | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/api/auth/signin')
-    }
-  }, [session, status, router])
+
 
   const fetchCoupon = useCallback(async () => {
     try {
@@ -42,10 +38,10 @@ export default function AdminCouponEdit() {
   }, [code])
 
   useEffect(() => {
-    if (status === 'authenticated' && code) {
+    if (code) {
       fetchCoupon()
     }
-  }, [status, code, fetchCoupon])
+  }, [code, fetchCoupon])
 
   const handleSubmit = async (formData: any) => {
     try {
@@ -69,7 +65,7 @@ export default function AdminCouponEdit() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <AdminLayout>
         <p>Cargando...</p>

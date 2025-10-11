@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+
 import Image from 'next/image';
 import AdminLayout from '../../components/AdminLayout';
 import toast from 'react-hot-toast';
@@ -16,8 +15,7 @@ interface ICategory {
 }
 
 export default function AdminCategorias() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+
 
   const [form, setForm] = useState({ nombre: '', slug: '', descripcion: '', parent: '' });
   const [image, setImage] = useState<File | null>(null);
@@ -74,12 +72,7 @@ export default function AdminCategorias() {
     reader.readAsDataURL(image);
   }, [image, editId]);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') router.replace('/api/auth/signin');
-  }, [status, router]);
 
-  if (status === 'loading') return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
-  if (status === 'unauthenticated') return null;
 
   const resetForm = () => {
     setForm({ nombre: '', slug: '', descripcion: '', parent: '' });

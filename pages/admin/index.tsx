@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+
 import { useRouter } from 'next/router'
 import Image from 'next/image'
 import {
@@ -37,7 +37,6 @@ interface CategoriaData {
 }
 
 export default function Admin() {
-  const { data: session, status } = useSession()
   const router = useRouter()
 
   // --- ESTADOS --- //
@@ -311,10 +310,6 @@ export default function Admin() {
   }, [images, editId])
 
   useEffect(() => {
-    if (status === 'unauthenticated') router.replace('/api/auth/signin')
-  }, [status, router])
-
-  useEffect(() => {
     if (form.soloDestacado) {
       setSelectedCategoria('');
       setSelectedSubCategoria('');
@@ -322,14 +317,6 @@ export default function Admin() {
       setSelectedCategoria(allCategories[0].slug);
     }
   }, [form.soloDestacado, allCategories, selectedCategoria]);
-
-  if (status === 'loading')
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl font-semibold">
-        Cargando...
-      </div>
-    )
-  if (status === 'unauthenticated') return null
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return

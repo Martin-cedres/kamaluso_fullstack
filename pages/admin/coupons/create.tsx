@@ -1,25 +1,11 @@
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+
 import AdminLayout from '../../../components/AdminLayout'
 import CouponForm from './form'
 import toast from 'react-hot-toast'
 
 export default function AdminCouponCreate() {
-  const { data: session, status } = useSession()
   const router = useRouter()
-
-  if (status === 'loading') {
-    return (
-      <AdminLayout>
-        <p>Cargando...</p>
-      </AdminLayout>
-    )
-  }
-
-  if (status === 'unauthenticated') {
-    router.push('/api/auth/signin')
-    return null
-  }
 
   const handleSubmit = async (formData: any) => {
     try {

@@ -1,6 +1,7 @@
-import React, { ReactNode, useState } from 'react'
+import React, { ReactNode, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { useSession } from 'next-auth/react'
 import {
   HomeIcon,
   ShoppingCartIcon,
@@ -27,7 +28,30 @@ const navigation = [
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    if (status === 'loading') return // Do nothing while loading
+    if (status === 'unauthenticated') {
+      router.replace('/api/auth/signin')
+    } else if (session?.user?.role !== 'admin') {
+      router.replace('/')
+    }
+  }, [session, status, router])
+
+  if (
+    status === 'loading' ||
+    status === 'unauthenticated' ||
+    session?.user?.role !== 'admin'
+  ) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl font-semibold">
+        Cargando o acceso denegado...
+      </div>
+    )
+  }
+
 
   const SidebarContent = () => (
     <>

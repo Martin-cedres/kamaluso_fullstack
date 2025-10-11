@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+
 import AdminLayout from '../../../../components/AdminLayout'
 import BlogForm from '../../../../components/BlogForm'
 import toast from 'react-hot-toast'
@@ -17,21 +17,17 @@ interface Post {
 }
 
 export default function AdminBlogEdit() {
-  const { data: session, status } = useSession()
+
   const router = useRouter()
   const { slug } = router.query
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/api/auth/signin')
-    }
-  }, [session, status, router])
+
 
   useEffect(() => {
-    if (status === 'authenticated' && slug) {
+    if (slug) {
       const fetchPost = async () => {
         try {
           setLoading(true)
@@ -49,7 +45,7 @@ export default function AdminBlogEdit() {
       }
       fetchPost()
     }
-  }, [status, slug])
+  }, [slug])
 
   const handleSubmit = async (formData: FormData) => {
     try {
@@ -70,7 +66,7 @@ export default function AdminBlogEdit() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <AdminLayout>
         <p>Cargando...</p>

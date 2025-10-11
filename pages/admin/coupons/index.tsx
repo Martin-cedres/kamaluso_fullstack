@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+
 import AdminLayout from '../../../components/AdminLayout'
 import toast from 'react-hot-toast'
 
@@ -19,17 +18,12 @@ interface Coupon {
 }
 
 export default function AdminCouponsIndex() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+
   const [coupons, setCoupons] = useState<Coupon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/api/auth/signin')
-    }
-  }, [session, status, router])
+
 
   const fetchCoupons = async () => {
     try {
@@ -48,10 +42,8 @@ export default function AdminCouponsIndex() {
   }
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      fetchCoupons()
-    }
-  }, [status])
+    fetchCoupons()
+  }, [])
 
   const handleDelete = async (code: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este cupón?')) {
@@ -74,7 +66,7 @@ export default function AdminCouponsIndex() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <AdminLayout>
         <p>Cargando...</p>

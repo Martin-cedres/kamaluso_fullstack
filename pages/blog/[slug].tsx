@@ -1,5 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
 import Head from 'next/head'
+import Image from 'next/image'
 import Navbar from '../../components/Navbar'
 import SeoMeta from '../../components/SeoMeta'
 
@@ -72,10 +73,12 @@ export default function BlogPostPage({ post }: Props) {
           <article>
             {post.coverImage && (
               <div className="relative w-full h-64 mb-8 rounded-lg overflow-hidden shadow-md">
-                <img
+                <Image
                   src={post.coverImage || '/placeholder.png'}
                   alt={post.title}
-                  className="w-full h-full object-cover rounded-lg"
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-lg"
                 />
               </div>
             )}

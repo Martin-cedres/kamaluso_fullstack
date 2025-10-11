@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
+
 import AdminLayout from '../../../components/AdminLayout' // Corrected import path
 import toast from 'react-hot-toast'
 
@@ -16,38 +15,31 @@ interface Post {
 }
 
 export default function AdminBlogIndex() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/api/auth/signin')
-    }
-  }, [session, status, router])
+
 
   useEffect(() => {
-    if (status === 'authenticated') {
-      const fetchPosts = async () => {
-        try {
-          setLoading(true)
-          const res = await fetch('/api/blog/listar')
-          if (!res.ok) {
-            throw new Error(`Error fetching posts: ${res.statusText}`)
-          }
-          const data = await res.json()
-          setPosts(data)
-        } catch (err: any) {
-          setError(err.message)
-        } finally {
-          setLoading(false)
+    const fetchPosts = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch('/api/blog/listar')
+        if (!res.ok) {
+          throw new Error(`Error fetching posts: ${res.statusText}`)
         }
+        const data = await res.json()
+        setPosts(data)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
       }
-      fetchPosts()
     }
-  }, [status])
+    fetchPosts()
+  }, [])
 
   const handleDelete = async (slug: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este artículo?')) {
@@ -70,7 +62,7 @@ export default function AdminBlogIndex() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <AdminLayout>
         <p>Cargando...</p>

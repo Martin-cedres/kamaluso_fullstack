@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+
 import AdminLayout from '../../../components/AdminLayout';
 import StarRating from '../../../components/StarRating';
 import toast from 'react-hot-toast';
@@ -22,7 +22,7 @@ type TReview = {
 };
 
 const AdminReviewsPage = () => {
-  const { data: session } = useSession();
+
   const [reviews, setReviews] = useState<TReview[]>([]);
   const [loading, setLoading] = useState(true);
 
