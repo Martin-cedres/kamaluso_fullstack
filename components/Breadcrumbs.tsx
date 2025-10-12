@@ -52,13 +52,13 @@ const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
                     </svg>
                   )}
                   {isLast ? (
-                    <span className="font-medium text-gray-800 cursor-default inline-block max-w-[150px] align-middle truncate md:max-w-[250px]">
+                    <span className="font-medium text-gray-800 cursor-default inline-block max-w-[80px] align-middle truncate md:max-w-[250px]">
                       {item.name}
                     </span>
                   ) : (
                     <Link
                       href={item.href}
-                      className="text-blue-600 hover:text-blue-800 hover:underline underline-offset-4 transition-colors duration-200"
+                      className="text-blue-600 hover:text-blue-800 hover:underline underline-offset-4 transition-colors duration-200 inline-block max-w-[50px] truncate md:max-w-[150px]"
                     >
                       {item.name}
                     </Link>

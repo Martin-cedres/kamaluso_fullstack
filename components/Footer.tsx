@@ -64,6 +64,14 @@ export default function Footer() {
                   Envíos
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/proceso-de-compra"
+                  className="text-gray-600 hover:text-pink-500 transition-colors"
+                >
+                  Proceso de Compra
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

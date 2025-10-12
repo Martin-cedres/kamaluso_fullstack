@@ -376,3 +376,4 @@
     *   **`components/FeaturedReviews.tsx`:** Componente creado para encapsular el carrusel de Swiper.js, renderizando `ReviewCard`s y generando el esquema `JSON-LD` para las opiniones.
 
 ---
+

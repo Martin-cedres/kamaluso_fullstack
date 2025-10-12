@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import connectDB from '../../../lib/mongoose'
 import Product, { IProduct } from '../../../models/Product'
 import Review, { IReview } from '../../../models/Review';
+import Category from '../../../models/Category'; // Importar el modelo Category
 import mongoose from 'mongoose'
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -44,6 +45,7 @@ interface ProductProp {
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
+  if (product.basePrice) return product.basePrice
   if (product.precioDura) return product.precioDura
   if (product.precioFlex) return product.precioFlex
   if (product.precio) return product.precio
@@ -56,9 +58,11 @@ interface Props {
   reviews: IReview[]
   reviewCount: number
   averageRating: string
+  mainCategory: { nombre: string; slug: string } | null;
+  subCategory: { nombre: string; slug: string } | null;
 }
 
-export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating }: Props) {
+export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating, mainCategory, subCategory }: Props) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [selectedImage, setSelectedImage] = useState<string | undefined>(
@@ -344,21 +348,33 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   // --- Mis datos para los Breadcrumbs --- //
   const breadcrumbItems = [
     { name: 'Inicio', href: '/' },
-    {
-      name:
-        typeof product.categoria === 'string'
-          ? product.categoria.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-          : 'Productos',
-      href:
-        typeof product.categoria === 'string'
-          ? `/productos/${product.categoria}`
-          : '/productos',
-    },
-    {
-      name: product.nombre,
-      href: `/productos/detail/${product._id}`,
-    },
-  ]
+  ];
+
+  if (mainCategory) {
+    breadcrumbItems.push({
+      name: mainCategory.nombre,
+      href: `/productos/${mainCategory.slug}`,
+    });
+  } else if (product.categoria) { // Fallback if mainCategory object not found but slug exists
+    breadcrumbItems.push({
+      name: product.categoria.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+      href: `/productos/${product.categoria}`,
+    });
+  } else {
+    breadcrumbItems.push({ name: 'Productos', href: '/productos' });
+  }
+
+  if (subCategory && mainCategory) { // Only add subcategory if main category is also present
+    breadcrumbItems.push({
+      name: subCategory.nombre,
+      href: `/productos/${mainCategory.slug}/${subCategory.slug}`,
+    });
+  }
+
+  breadcrumbItems.push({
+    name: product.nombre,
+    href: `/productos/detail/${product._id}`,
+  });
 
   // --- Mi Schema para Google --- //
 
@@ -439,13 +455,13 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       </Head>
 
       <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-6 pb-16">
+      <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8 pb-16">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
           <div className="flex flex-col lg:flex-row gap-12">
-            <div className="flex-1 lg:sticky top-32 self-start">
+            <div className="w-full flex-1 lg:sticky top-32 self-start">
               <div className="relative">
                 <button
                   type="button"
@@ -538,7 +554,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             </div>
             <div className="flex-1 flex flex-col justify-between">
               <div>
-                <h1 className="text-4xl font-bold mb-4">{product.nombre}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.nombre}</h1>
                 {reviewCount > 0 && (
                   <div className="flex items-center mb-4">
                     <StarRating rating={parseFloat(averageRating)} />
@@ -760,6 +776,17 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
     const product = JSON.parse(JSON.stringify(productData))
 
+    let mainCategory = null;
+    if (product.categoria) {
+      mainCategory = await Category.findOne({ slug: product.categoria }).lean();
+    }
+
+    let subCategory = null;
+    if (product.subCategoria && product.subCategoria.length > 0) {
+      // Asumiendo que queremos la primera subcategoría para la miga de pan
+      subCategory = await Category.findOne({ slug: product.subCategoria[0] }).lean();
+    }
+
     // Fetch approved reviews
     const reviewsData = await Review.find({ product: product._id, isApproved: true }).sort({ createdAt: -1 }).lean();
     const reviews = JSON.parse(JSON.stringify(reviewsData));
@@ -788,6 +815,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
         reviews,
         reviewCount,
         averageRating: averageRating.toFixed(1),
+        mainCategory: JSON.parse(JSON.stringify(mainCategory)),
+        subCategory: JSON.parse(JSON.stringify(subCategory)),
       },
       revalidate: 3600, // Revalidate once per hour
     }

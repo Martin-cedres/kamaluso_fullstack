@@ -70,7 +70,7 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
           navigation
           pagination={{ clickable: true }}
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          loop={true}
+          loop={reviews.length >= 3}
           breakpoints={{
             640: {
               slidesPerView: 2,

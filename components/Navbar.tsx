@@ -48,7 +48,7 @@ export default function Navbar() {
                   Ver Todo {cat.nombre}
                 </Link>
                 {cat.children.map((child) => (
-                  <Link key={child._id} href={`/productos/${child.slug}`} onClick={closeAllMenus} className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition">
+                  <Link key={child._id} href={`/productos/${cat.slug}/${child.slug}`} onClick={closeAllMenus} className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition">
                     {child.nombre}
                   </Link>
                 ))}

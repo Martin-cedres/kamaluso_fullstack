@@ -122,10 +122,10 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
             height={140}
             className="mb-6"
           />
-          <h1 className="text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Papelería Personalizada en Uruguay
           </h1>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-gray-600 mb-0">
             Agendas, libretas y cuadernos únicos. <br /> ✨ Envíos a todo
             Uruguay ✨
           </p>
@@ -183,6 +183,47 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
             </div>
           </section>
         )}
+
+        {/* Reseñas Destacadas */}
+        <FeaturedReviews reviews={reviews} />
+
+        {/* Sección de Proceso de Compra */}
+        <section className="px-6 py-12 bg-white">
+          <h2 className="text-3xl font-semibold text-center mb-10">
+            Así funciona tu compra personalizada
+          </h2>
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 flex items-center justify-center rounded-full bg-pink-100 text-pink-500 text-3xl font-bold mb-4">
+                1
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Elige y Personaliza</h3>
+              <p className="text-gray-600">Selecciona tu producto y ajusta los detalles a tu gusto.</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 flex items-center justify-center rounded-full bg-pink-100 text-pink-500 text-3xl font-bold mb-4">
+                2
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Paga Seguro</h3>
+              <p className="text-gray-600">Completa tu compra con nuestros métodos de pago seguros.</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 flex items-center justify-center rounded-full bg-pink-100 text-pink-500 text-3xl font-bold mb-4">
+                3
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Recibe en Casa</h3>
+              <p className="text-gray-600">Tu pedido llega a la puerta de tu casa en todo Uruguay.</p>
+            </div>
+          </div>
+          <div className="text-center mt-10">
+            <Link
+              href="/proceso-de-compra"
+              className="inline-block bg-pink-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-pink-600 transition"
+            >
+              Ver Proceso Completo
+            </Link>
+          </div>
+        </section>
       </main>
     </>
   )

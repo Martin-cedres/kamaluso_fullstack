@@ -62,7 +62,8 @@ export default function CategoryPage({
   breadcrumbItems,
 }: CategoriaPageProps) {
   const router = useRouter()
-  const { categoria: categorySlug } = router.query
+  const { slug: slugArray } = router.query;
+  const categorySlug = Array.isArray(slugArray) ? slugArray[slugArray.length - 1] : slugArray;
 
   // Estados
   const [products, setProducts] = useState<IProduct[]>(initialProducts)
@@ -233,7 +234,7 @@ export default function CategoryPage({
                 {subCategories.map((cat) => (
                   <Link
                     key={cat.id}
-                    href={`/productos/${cat.slug}`}
+                    href={`/productos/${category.slug}/${cat.slug}`}
                     className="w-full sm:w-56 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
                   >
                     <div className="relative w-full h-48">
@@ -347,11 +348,27 @@ export default function CategoryPage({
 
 export const getStaticPaths: GetStaticPaths = async () => {
   await connectDB();
-  const categories = await Category.find({}).select('slug').lean();
+  const allCategories = await Category.find({}).lean(); // Fetch all categories
 
-  const paths = categories.map((cat) => ({
-    params: { categoria: cat.slug },
-  }));
+  const categorySlugMap = new Map<string, string>();
+  allCategories.forEach(cat => {
+    categorySlugMap.set(cat._id.toString(), cat.slug);
+  });
+
+  const paths = allCategories.map((cat: any) => {
+    if (cat.parent) {
+      const parentSlug = categorySlugMap.get(cat.parent.toString());
+      if (parentSlug) {
+        return {
+          params: { slug: [parentSlug, cat.slug] },
+        };
+      }
+    }
+    // Fallback for main categories or if parent not found
+    return {
+      params: { slug: [cat.slug] },
+    };
+  });
 
   return {
     paths,
@@ -360,36 +377,67 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { categoria: categorySlug } = context.params;
+  const { slug } = context.params as { slug: string[] };
+
+  let currentCategorySlug: string;
+  let parentCategorySlug: string | null = null;
+
+  if (slug.length === 1) {
+    currentCategorySlug = slug[0];
+  } else if (slug.length === 2) {
+    parentCategorySlug = slug[0];
+    currentCategorySlug = slug[1];
+  } else {
+    console.log('getStaticProps: Returning 404 - Invalid slug length', slug);
+    return { notFound: true };
+  }
 
   try {
     await connectDB();
-    const category = await Category.findOne({ slug: categorySlug }).lean();
 
-    if (!category) {
+    const currentCategory = await Category.findOne({ slug: currentCategorySlug }).lean();
+
+    if (!currentCategory) {
+      console.log('getStaticProps: Returning 404 - currentCategory not found for slug:', currentCategorySlug);
       return { notFound: true };
     }
 
-    const subCategoriesData = await Category.find({ parent: category._id }).lean();
+    let parentCategory = null;
+    if (parentCategorySlug) {
+      parentCategory = await Category.findOne({ slug: parentCategorySlug }).lean();
+      if (!parentCategory) {
+        console.log('getStaticProps: Returning 404 - parentCategory not found for slug:', parentCategorySlug);
+        return { notFound: true };
+      }
+      // Check if the current category's parent matches the parent from the URL
+      if (currentCategory.parent && parentCategory._id.toString() !== currentCategory.parent.toString()) {
+        console.log('getStaticProps: Returning 404 - Parent mismatch. URL parent:', parentCategorySlug, 'Actual parent:', currentCategory.parent.toString());
+        return { notFound: true };
+      }
+    } else if (currentCategory.parent) {
+      // If no parent slug was provided in URL but the current category has a parent in DB
+      console.log('getStaticProps: Returning 404 - URL incomplete. Category has parent but none in URL.', currentCategorySlug);
+      return { notFound: true };
+    }
+
+    const subCategoriesData = await Category.find({ parent: currentCategory._id }).lean();
 
     let initialProducts = [];
     let initialTotalPages = 0;
 
-    // --- Construcción de Breadcrumbs ---
+    // --- Construcción de Breadcrumbs --- //
     let breadcrumbItems = [{ name: 'Inicio', href: '/' }];
 
-    if (category.parent) {
-      const parentCategory = await Category.findById(category.parent).lean();
-      if (parentCategory) {
-        breadcrumbItems.push({ name: parentCategory.nombre, href: `/productos/${parentCategory.slug}` });
-      }
+    if (parentCategory) {
+      breadcrumbItems.push({ name: parentCategory.nombre, href: `/productos/${parentCategory.slug}` });
     }
-    breadcrumbItems.push({ name: category.nombre, href: `/productos/${category.slug}` });
+    breadcrumbItems.push({ name: currentCategory.nombre, href: `/productos/${slug.join('/')}` });
     // --- Fin Construcción de Breadcrumbs ---
 
-    // Si la categoría NO tiene subcategorías, buscamos sus productos.
-    if (subCategoriesData.length === 0) {
-      const categorySlugsToQuery = [category.slug];
+    // Si la categoría actual NO tiene subcategorías, buscamos sus productos.
+    // O si es una subcategoría (es decir, ya es un nodo hoja en la jerarquía de URL)
+    if (subCategoriesData.length === 0 || slug.length === 2) {
+      const categorySlugsToQuery = [currentCategory.slug];
       const page = 1;
       const limit = 12;
       const query: any = {
@@ -446,7 +494,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
     return {
       props: {
-        category: JSON.parse(JSON.stringify(category)),
+        category: JSON.parse(JSON.stringify(currentCategory)),
         subCategories: JSON.parse(JSON.stringify(subCategoriesData)),
         initialProducts,
         initialTotalPages,
