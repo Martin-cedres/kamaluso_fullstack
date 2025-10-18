@@ -7,6 +7,8 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false, // Added this line
   images: {
+    loader: 'custom',
+    loaderFile: './lib/s3-loader.ts',
     remotePatterns: [
       {
         protocol: 'https',

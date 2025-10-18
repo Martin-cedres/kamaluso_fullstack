@@ -65,6 +65,7 @@ export default function RegalosEmpresarialesPage() {
                     src={product.imageUrl}
                     alt={product.name}
                     fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     style={{ objectFit: 'cover' }}
                   />
                 </div>

@@ -41,7 +41,6 @@ interface Product {
   precioFlex?: number // Antiguo
   precioDura?: number // Antiguo
   tapa?: string
-  soloDestacado?: boolean // Nuevo campo
   averageRating?: number; // Para el rating
   numReviews?: number; // Para el rating
 }
@@ -57,14 +56,14 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
     if (product.basePrice) {
       return (
         <p className="text-pink-500 font-semibold text-lg mb-4">
-          {product.soloDestacado ? 'Desde ' : ''}$U {product.basePrice}
+          $U {product.basePrice}
         </p>
       )
     }
     if (product.precio) {
       return (
         <p className="text-pink-500 font-semibold text-lg mb-4">
-          {product.soloDestacado ? 'Desde ' : ''}$U {product.precio}
+          $U {product.precio}
         </p>
       )
     }
@@ -148,6 +147,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                     src={cat.imagen || '/placeholder.png'}
                     alt={cat.nombre}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 256px, 320px"
                     style={{ objectFit: 'cover' }}
                   />
                 </div>
@@ -175,7 +175,6 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                   alt: product.alt,
                   slug: product.slug || '',
                   categoria: product.categoria || '',
-                  soloDestacado: product.soloDestacado,
                   averageRating: product.averageRating,
                   numReviews: product.numReviews,
                 }} />
@@ -234,7 +233,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   // Aggregation pipeline to fetch featured products with review data
   const destacadosPipeline = [
-    { $match: { $or: [{ destacado: true }, { soloDestacado: true }] } },
+    { $match: { destacado: true } },
     { $limit: 4 },
     {
       $lookup: {

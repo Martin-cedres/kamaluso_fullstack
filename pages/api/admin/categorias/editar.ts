@@ -48,7 +48,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       if (imageFile) {
         try {
-          const imageUrl = await uploadFileToS3(imageFile, 'categorias');
+          const imageUrl = await uploadFileToS3(imageFile);
           updateData.imagen = imageUrl;
         } catch (uploadError: any) {
           console.error('[S3 UPLOAD ERROR]:', uploadError);

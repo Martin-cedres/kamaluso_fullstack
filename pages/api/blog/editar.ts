@@ -84,7 +84,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             return resolve()
           }
           try {
-            const coverImageUrl = await uploadFileToS3(coverImageFile, 'blog')
+            const coverImageUrl = await uploadFileToS3(coverImageFile)
             updateDoc.coverImage = coverImageUrl
           } catch (uploadError: any) {
             console.error('S3 UPLOAD ERROR:', uploadError);

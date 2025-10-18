@@ -36,7 +36,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const coverImageFile = coverImageFileArray && coverImageFileArray.length > 0 ? coverImageFileArray[0] : null;
 
       if (coverImageFile) {
-        coverImageUrl = await uploadFileToS3(coverImageFile, 'blog')
+        coverImageUrl = await uploadFileToS3(coverImageFile)
       }
 
       const postDoc = {

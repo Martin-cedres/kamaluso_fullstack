@@ -52,7 +52,6 @@ export default function Admin() {
     status: 'activo',
     notes: '',
     destacado: false,
-    soloDestacado: false, // Nuevo campo
     tipoDeProducto: 'Interactivo',
     claveDeGrupo: '',
     customizationGroups: [],
@@ -247,35 +246,37 @@ export default function Admin() {
     if (!editId) setForm((f: any) => ({ ...f, slug: generateSlug(f.nombre) }))
   }, [form.nombre, editId])
 
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/categorias/listar')
+      const data = await res.json()
+                setAllCategories(Array.isArray(data) ? data : [])
+                  } catch (e) {
+                    console.error('Error fetch categorías:', e)
+                    setAllCategories([])
+                  }
+                }, [])
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch('/api/products/listar')
+      const res = await fetch(`/api/products/listar`)
       const data = await res.json()
       setProductos(Array.isArray(data.products) ? data.products : [])
     } catch (e) {
       console.error('Error fetch productos:', e)
       setProductos([])
     }
-  }, [])
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await fetch('/api/categorias/listar')
-      const data = await res.json()
-      setAllCategories(Array.isArray(data) ? data : [])
-      if (data.length > 0 && !selectedCategoria) {
-        setSelectedCategoria(data[0].slug)
-      }
-    } catch (e) {
-      console.error('Error fetch categorías:', e)
-      setAllCategories([])
-    }
-  }, [selectedCategoria])
+  }, []);
 
   useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [fetchProducts, fetchCategories])
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCategorySlug = e.target.value
@@ -309,14 +310,7 @@ export default function Admin() {
     return () => urls.forEach((u) => URL.revokeObjectURL(u))
   }, [images, editId])
 
-  useEffect(() => {
-    if (form.soloDestacado) {
-      setSelectedCategoria('');
-      setSelectedSubCategoria('');
-    } else if (allCategories.length > 0 && !selectedCategoria) {
-      setSelectedCategoria(allCategories[0].slug);
-    }
-  }, [form.soloDestacado, allCategories, selectedCategoria]);
+
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return
@@ -343,16 +337,11 @@ export default function Admin() {
       status: 'activo',
       notes: '',
       destacado: false,
-      soloDestacado: false, // Nuevo campo
       tipoDeProducto: 'Interactivo',
       claveDeGrupo: '',
       customizationGroups: [],
     })
-    if (allCategories.length > 0) {
-      setSelectedCategoria(allCategories[0].slug)
-    } else {
-      setSelectedCategoria('')
-    }
+    setSelectedCategoria('')
     setSelectedSubCategoria('')
     setImage(null)
     setImages([])
@@ -389,15 +378,9 @@ export default function Admin() {
         }
       });
 
-      if (!form.soloDestacado) {
-        formData.append('categoria', selectedCategoria);
-        if (selectedSubCategoria) {
-          formData.append('subCategoria', selectedSubCategoria)
-        }
-      } else {
-        // If soloDestacado is true, ensure category fields are explicitly empty
-        formData.append('categoria', '');
-        formData.append('subCategoria', '');
+      formData.append('categoria', selectedCategoria);
+      if (selectedSubCategoria) {
+        formData.append('subCategoria', selectedSubCategoria)
       }
 
       if (image) formData.append('image', image)
@@ -458,16 +441,11 @@ export default function Admin() {
           ? p.seoKeywords.join(', ')
           : p.seoKeywords || '',
       })
-      if (p.soloDestacado) {
-        setSelectedCategoria('')
-        setSelectedSubCategoria('')
-      } else {
-        setSelectedCategoria(p.categoria || '')
-        const subCatValue = Array.isArray(p.subCategoria)
-          ? p.subCategoria[0]
-          : p.subCategoria || ''
-        setSelectedSubCategoria(subCatValue || '')
-      }
+      setSelectedCategoria(p.categoria || '')
+      const subCatValue = Array.isArray(p.subCategoria)
+        ? p.subCategoria[0]
+        : p.subCategoria || ''
+      setSelectedSubCategoria(subCatValue || '')
       setPreview(p.imageUrl || null)
       setPreviewsSecundarias(
         Array.isArray(p.images) ? p.images : p.images ? [p.images] : [],
@@ -539,19 +517,22 @@ export default function Admin() {
             Gestioná los productos de Kamaluso.
           </p>
         </div>
-        <button
-          onClick={() => {
-            if (showForm) {
-              resetForm()
-            } else {
-              resetForm()
-              setShowForm(true)
-            }
-          }}
-          className="inline-flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded-lg shadow hover:bg-pink-600 transition"
-        >
-          {showForm ? 'Cerrar Formulario' : 'Agregar Producto'}
-        </button>
+        <div className="flex items-center gap-4">
+
+          <button
+            onClick={() => {
+              if (showForm) {
+                resetForm()
+              } else {
+                resetForm()
+                setShowForm(true)
+              }
+            }}
+            className="inline-flex items-center gap-2 bg-pink-500 text-white px-4 py-2 rounded-lg shadow hover:bg-pink-600 transition"
+          >
+            {showForm ? 'Cerrar Formulario' : 'Agregar Producto'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -714,7 +695,7 @@ export default function Admin() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                      <select value={selectedCategoria} onChange={handleCategoryChange} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" required={!form.soloDestacado}>
+                      <select value={selectedCategoria} onChange={handleCategoryChange} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
                         <option value="" disabled>Selecciona una categoría</option>
                         {allCategories.map((cat) => (
                           <option key={cat._id} value={cat.slug}>{cat.nombre}</option>
@@ -724,7 +705,7 @@ export default function Admin() {
                     {availableSubCategories.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Subcategoría</label>
-                        <select value={selectedSubCategoria} onChange={handleSubCategoryChange} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" required={!form.soloDestacado && !!selectedCategoria}>
+                        <select value={selectedSubCategoria} onChange={handleSubCategoryChange} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
                           <option value="" disabled>Selecciona una subcategoría</option>
                           {availableSubCategories.map((sub) => (
                             <option key={sub.slug} value={sub.slug}>{sub.nombre}</option>
@@ -736,10 +717,7 @@ export default function Admin() {
                       <input type="checkbox" checked={form.destacado} onChange={(e) => setForm((f: any) => ({ ...f, destacado: e.target.checked }))} className="h-4 w-4 rounded text-pink-600 focus:ring-pink-500" />
                       <label className="text-sm text-gray-700">Marcar como Producto Destacado</label>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" checked={form.soloDestacado} onChange={(e) => setForm((f: any) => ({ ...f, soloDestacado: e.target.checked }))} className="h-4 w-4 rounded text-pink-600 focus:ring-pink-500" />
-                      <label className="text-sm text-gray-700">Mostrar solo en Destacados (sin categoría)</label>
-                    </div>
+
                   </div>
                 </div>
 

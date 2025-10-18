@@ -135,7 +135,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
 
           if (file) {
-            const url = await uploadFileToS3(file as formidable.File, 'productos/opciones');
+            const url = await uploadFileToS3(file as formidable.File);
             const indices = key.split('_')[1]; // e.g., g0o1
             const groupIndex = parseInt(indices.substring(1, indices.indexOf('o')));
             const optionIndex = parseInt(indices.substring(indices.indexOf('o') + 1));
@@ -158,11 +158,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         updateDoc.destacado = String(fields.destacado).toLowerCase() === 'true'
       }
 
-      // Campo soloDestacado (booleano)
-      if (fields.soloDestacado !== undefined) {
-        updateDoc.soloDestacado = String(fields.soloDestacado).toLowerCase() === 'true'
-      }
-
       // Campo de keywords (array de strings)
       if (typeof fields.seoKeywords === 'string') {
         updateDoc.seoKeywords = fields.seoKeywords
@@ -176,7 +171,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const fp = Array.isArray(filePrincipal)
           ? filePrincipal[0]
           : filePrincipal;
-        updateDoc.imageUrl = await uploadFileToS3(fp as formidable.File, 'productos');
+        updateDoc.imageUrl = await uploadFileToS3(fp as formidable.File);
       }
 
       const filesArray: formidable.File[] = []
@@ -193,7 +188,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const newImagesUrls: string[] = []
         for (const f of filesArray) {
           if (f && f.filepath) {
-            const url = await uploadFileToS3(f as formidable.File, 'productos');
+            const url = await uploadFileToS3(f as formidable.File);
             newImagesUrls.push(url);
           }
         }

@@ -79,7 +79,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (!filePrincipal)
         return res.status(400).json({ error: 'Falta la imagen principal' });
       const fp = Array.isArray(filePrincipal) ? filePrincipal[0] : filePrincipal;
-      const imageUrl = await uploadFileToS3(fp as formidable.File, 'productos');
+      const imageUrl = await uploadFileToS3(fp as formidable.File);
 
       const filesArray: formidable.File[] = [];
       Object.keys(files).forEach((k) => {
@@ -93,7 +93,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const imagesUrls: string[] = [];
       for (const f of filesArray) {
         if (f && f.filepath) {
-          const url = await uploadFileToS3(f as formidable.File, 'productos');
+          const url = await uploadFileToS3(f as formidable.File);
           imagesUrls.push(url);
         }
       }
@@ -117,7 +117,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
 
           if (file) {
-            const url = await uploadFileToS3(file as formidable.File, 'productos/opciones');
+            const url = await uploadFileToS3(file as formidable.File);
             const indices = key.split('_')[1]; // e.g., g0o1
             const groupIndex = parseInt(indices.substring(1, indices.indexOf('o')));
             const optionIndex = parseInt(indices.substring(indices.indexOf('o') + 1));
@@ -148,8 +148,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         status: String(fields.status || 'activo'),
         destacado:
           fields.destacado === 'true' || fields.destacado === true || false,
-        soloDestacado:
-          fields.soloDestacado === 'true' || fields.soloDestacado === true || false,
         imageUrl,
         images: imagesUrls,
         customizationGroups: customizationGroups, // Guardar el array con las URLs de imagen

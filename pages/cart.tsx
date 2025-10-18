@@ -114,6 +114,7 @@ export default function CartPage() {
                           src={item.imageUrl || '/placeholder.png'}
                           alt={item.nombre}
                           fill
+                          sizes="150px"
                           style={{ objectFit: 'cover' }}
                         />
                       </div>

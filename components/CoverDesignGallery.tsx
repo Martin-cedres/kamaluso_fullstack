@@ -35,6 +35,7 @@ const CoverDesignGallery: React.FC<CoverDesignGalleryProps> = ({
                         src={option.image}
                         alt={option.name}
                         fill
+                        sizes="150px"
                         className="object-cover rounded-md"
                       />
                     )}

@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import formidable from 'formidable';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import sharp from 'sharp';
+import path from 'path';
 
 // Initialize S3 client
 const s3 = new S3Client({
@@ -14,41 +14,43 @@ const s3 = new S3Client({
 });
 
 /**
- * Processes an image file using sharp and uploads it to an S3 bucket.
+ * Uploads a raw file to the 'uploads/' folder in S3 to trigger the Lambda processor.
  * @param file The formidable file object to upload.
- * @param folder The folder within the S3 bucket to upload to (e.g., 'productos', 'reviews').
- * @returns The public URL of the uploaded file.
+ * @returns The base URL pattern for the processed image.
  */
-export const uploadFileToS3 = async (file: formidable.File, folder: string) => {
+export const uploadFileToS3 = async (file: formidable.File) => {
   if (!file || !file.filepath) throw new Error('Archivo inválido para S3');
 
-  // Process image with sharp
-  const processedImageBuffer = await sharp(file.filepath)
-    .resize({ width: 1080, withoutEnlargement: true })
-    .webp({ quality: 80 })
-    .toBuffer();
+  // Read the raw file from the temporary path
+  const fileStream = fs.createReadStream(file.filepath);
+  const originalFilename = file.originalFilename || 'unknown-file';
+  const extension = path.extname(originalFilename);
+  const baseKey = uuidv4(); // Generate a unique ID for the file
 
-  // Generate a unique key for the S3 object
-  const key = `${folder}/${uuidv4()}.webp`;
+  // The key for the raw file in the 'uploads' folder
+  const s3Key = `uploads/${baseKey}${extension}`;
 
-  // Upload the processed image to S3
+  // Upload the raw file to S3, which will trigger our Lambda function
   await s3.send(
     new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key,
-      Body: processedImageBuffer,
-      ContentType: 'image/webp',
-      ACL: 'public-read',
+      Key: s3Key,
+      Body: fileStream,
+      ContentType: file.mimetype || 'application/octet-stream',
     }),
   );
 
-  // Clean up the temporary file
+  // Clean up the temporary file from the server
   try {
     fs.unlinkSync(file.filepath);
   } catch (e) {
     console.error("Error eliminando archivo temporal:", e);
   }
 
-  // Return the public URL
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  // The Lambda will create files like 'processed/UUID-400w.webp'.
+  // We will save a base URL pattern in the database.
+  // The frontend loader will use this pattern to build the full URL for the desired size.
+  const finalUrlBase = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/processed/${baseKey}.webp`;
+
+  return finalUrlBase;
 };

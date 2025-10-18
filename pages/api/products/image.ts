@@ -51,7 +51,7 @@ export default async function handler(
       for (const file of fileArray) {
         // Asegurarse de que el archivo no está vacío y tiene un filepath
         if (file.size > 0 && file.filepath) {
-          const url = await uploadFileToS3(file, 'products');
+          const url = await uploadFileToS3(file);
           uploadedUrls.push(url);
         }
       }

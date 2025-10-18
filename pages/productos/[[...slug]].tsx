@@ -242,6 +242,7 @@ export default function CategoryPage({
                         src={cat.imagen || '/placeholder.png'}
                         alt={cat.nombre}
                         fill
+                        sizes="(max-width: 640px) 100vw, 224px"
                         style={{ objectFit: 'cover' }}
                       />
                     </div>

@@ -1,5 +1,5 @@
 import { useSession, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '../context/CartContext';
@@ -11,6 +11,11 @@ export default function Navbar() {
   const { categories, loading } = useCategories();
   const { cartCount } = useCart();
   const { data: session, status } = useSession();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const closeAllMenus = () => {
     setMenuOpen(false);
@@ -69,7 +74,7 @@ export default function Navbar() {
     <nav className="bg-white shadow-md fixed w-full z-50">
       <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16">
         <Link href="/" className="flex items-center" onClick={closeAllMenus}>
-          <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" />
+          <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" unoptimized />
         </Link>
 
         {/* Desktop Menu */}
@@ -91,7 +96,7 @@ export default function Navbar() {
             Blog
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          {status === 'authenticated' && (
+          {isClient && status === 'authenticated' && (
             <>
               <Link href="/admin" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
                 Admin
@@ -110,23 +115,25 @@ export default function Navbar() {
         </div>
 
         {/* Right side icons */}
-        <div className="flex items-center gap-4">
-          <Link href="/cart" className="hidden md:block relative text-gray-900 hover:text-pink-500 transition" onClick={closeAllMenus}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {cartCount > 0 && <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
-          </Link>
-          <button className="md:hidden text-gray-900" onClick={() => setMenuOpen(!menuOpen)}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m16 6H4" />
-            </svg>
-          </button>
-        </div>
+        {isClient && (
+          <div className="flex items-center gap-4">
+            <Link href="/cart" className="hidden md:block relative text-gray-900 hover:text-pink-500 transition" onClick={closeAllMenus}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {cartCount > 0 && <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
+            </Link>
+            <button className="md:hidden text-gray-900" onClick={() => setMenuOpen(!menuOpen)}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m16 6H4" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Mobile Menu */}
-      {menuOpen && (
+      {isClient && menuOpen && (
         <div className="md:hidden bg-white shadow-md px-6 py-4 space-y-2">
           <Link href="/" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Inicio</Link>
           {renderCategoryLinks(true)}

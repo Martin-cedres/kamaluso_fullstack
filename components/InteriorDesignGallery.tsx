@@ -30,6 +30,7 @@ const InteriorDesignGallery: React.FC<InteriorDesignGalleryProps> = ({
                 src={option.image}
                 alt={option.name}
                 fill
+                sizes="150px"
                 style={{ objectFit: 'cover' }}
               />
             </div>

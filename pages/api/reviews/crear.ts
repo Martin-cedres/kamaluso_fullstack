@@ -66,7 +66,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const imageFile = Array.isArray(imageFiles) ? imageFiles[0] : imageFiles;
 
       if (imageFile && imageFile.size > 0) { // Check if the file exists and is not empty
-        imageUrl = await uploadFileToS3(imageFile, 'reviews');
+        imageUrl = await uploadFileToS3(imageFile);
       }
 
       const newReview = new Review({

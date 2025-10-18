@@ -35,7 +35,6 @@ export interface IProduct extends Document {
   notes?: string;
   status: string;
   destacado: boolean;
-  soloDestacado?: boolean; // Nuevo campo
   imageUrl: string;
   images?: string[];
   averageRating?: number;
@@ -63,7 +62,6 @@ const productSchema: Schema<IProduct> = new Schema(
     notes: { type: String },
     status: { type: String, default: 'activo' },
     destacado: { type: Boolean, default: false },
-    soloDestacado: { type: Boolean, default: false }, // Nuevo campo
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
     customizationGroups: [

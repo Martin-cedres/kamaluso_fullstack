@@ -76,9 +76,9 @@ export default function BlogPostPage({ post }: Props) {
                 <Image
                   src={post.coverImage || '/placeholder.png'}
                   alt={post.title}
-                  layout="fill"
-                  objectFit="cover"
-                  className="rounded-lg"
+                  fill
+                  sizes="(max-width: 896px) 100vw, 896px"
+                  className="object-cover rounded-lg"
                 />
               </div>
             )}

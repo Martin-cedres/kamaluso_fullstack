@@ -1,3 +1,25 @@
+Al iniciar esta sesión, quiero que actúes de la siguiente manera:
+
+1. **Idioma y estilo**:
+   - Siempre responde en **español**, sin cambiar a inglés.
+   - Usa un lenguaje claro, directo y comprensible.
+   - Cuando expliques código, comenta todo en **español**, como si cualquier desarrollador incluso con poca experiencia pueda entenderlo.
+
+2. **Experiencia y enfoque**:
+   - Actúa como un **experto en desarrollo de e-commerce** con Next.js, React,  MongoDB, AWS S3, integración de pagos y buenas prácticas de frontend y backend.
+   - Conoce optimización de imágenes, SEO, performance y buenas prácticas de UI/UX.
+   - Puede generar código listo para usar, con explicaciones paso a paso.
+
+3. **Formato y claridad**:
+   - Cuando generes código, incluye comentarios claros en español sobre cada parte importante.
+   - Explica los cambios, decisiones y posibles efectos antes o después del código.
+   - Divide explicaciones y código en secciones claras y numeradas si es necesario.
+
+4. **Asistencia proactiva**:
+   - Sugiere mejoras, optimizaciones o posibles problemas que puedas prever en el proyecto.
+   - Siempre adapta las soluciones a proyectos de **e-commerce en Next.js**.
+
+
 ## Resumen de la Sesión de Trabajo - 8 de Octubre de 2025
 
 **Objetivo Principal:** Resolver problemas de visualización de productos en categorías/subcategorías, optimización SEO y corrección de flujo de datos.
@@ -163,7 +185,7 @@
         *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\_app.tsx`
     *   **Cambio:** Se eliminó la importación de Google Fonts vía `@import` en `globals.css` y se añadieron los enlaces `<link rel="preconnect">` y `<link rel="stylesheet">` directamente en el componente `<Head>` de `_app.tsx` para una carga más eficiente y no bloqueante.
 
-*   **Accesibilidad - Mejora de Enlaces en Tarjetas de Producto (Página de Inicio):**
+*   **Accesibilidad - Mejora de Enlaces en Tarjetas de Producto (Componente `ProductCard.tsx`):**
     *   **Archivo Modificado:** `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\index.tsx`
     *   **Cambio:** Se refactorizó la estructura de las tarjetas de producto en la sección "Productos Destacados". En lugar de envolver toda la tarjeta en un único `<Link>`, ahora solo la imagen y el título del producto son enlaces. Se añadió un botón explícito "Ver producto" para mejorar la claridad de la llamada a la acción y la accesibilidad.
 
@@ -235,7 +257,6 @@
 
 
 
-
       Resumen de cambios de esta sesión:
 
    * Consolidación de Lógica de Detalle de Producto y Corrección de Carrusel de Imágenes:
@@ -279,7 +300,7 @@
 
 *   **Actualización de Enlaces de Productos:**
     *   Se buscaron todas las instancias de enlaces a productos en el proyecto.
-    *   **`components/ProductCard.tsx`:** Se actualizó el `Link` para que apunte directamente a `/productos/detail/${product._id}`. Se corrigió la interfaz `Product` para usar `_id` en lugar de `id`.
+    *   **`components/ProductCard.tsx`:** Se actualizó el `Link` para que apunte directamente a `/productos/detail/${product._id}`.
     *   **`pages/index.tsx`:** Se modificaron los enlaces en la sección "Productos Destacados" para que todos apunten a la nueva ruta de detalle.
     *   **`pages/productos/[categoria].tsx`:** Se corrigió la props que se pasaban al componente `ProductCard` para usar `_id`.
     *   **`lib/utils.ts`:** Se actualizó la función `getProductHref` para que genere la nueva URL de detalle. Se actualizó `revalidateProductPaths` para que revalide la nueva ruta.
@@ -325,12 +346,13 @@
 ### 1. Verificación y Corrección de Accesibilidad y SEO en Tarjetas de Producto
 
 *   **Problema Inicial:** Se identificaron mejoras pendientes en `ProductCard.tsx` respecto al uso del atributo `alt` y la estructura de enlaces, así como la necesidad de verificar la estructura de encabezados y campos SEO en el panel de administración.
+
 *   **Archivos Modificados:**
     *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\ProductCard.tsx`
     *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\[categoria].tsx`
     *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\index.tsx`
     *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\detail\[id].tsx`
-    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\admin\index.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\admin/index.tsx`
 *   **Cambios Realizados:**
     *   **`ProductCard.tsx`:**
         *   Se actualizó la interfaz `Product` para incluir `alt?: string`.
@@ -377,3 +399,208 @@
 
 ---
 
+---
+## Resumen de la Sesión de Trabajo - 13 de Octubre de 2025
+
+### Tareas Pendientes: Optimización de Imágenes y Ahorro de Cuota en Vercel
+
+*   **Objetivo:** Dejar de consumir la cuota de optimización de imágenes de Vercel sirviendo imágenes pre-redimensionadas desde S3.
+*   **Estado:** Pendiente. El usuario ha decidido posponer la implementación.
+*   **Plan Acordado (Opción A):**
+    1.  **Backend (A cargo del usuario, con mi asistencia en código):**
+        *   Crear una función AWS Lambda que se active al subir una imagen a S3.
+        *   Esta Lambda usará la librería `sharp` para crear múltiples tamaños de la imagen (ej. 400w, 800w, 1200w) y los subirá a S3 con un nombre estandarizado (ej. `nombre-imagen-400w.webp`).
+    2.  **Frontend (A mi cargo):**
+        *   Modificar `next.config.js` para usar un `loader` de imágenes personalizado.
+        *   Crear un "smart loader" en `lib/s3-loader.js` que construya la URL de la imagen con el tamaño más adecuado según lo solicite el componente `next/image`.
+    3.  **Migración (A cargo del usuario, con script proporcionado por mí):**
+        *   Es necesario ejecutar un script de única vez para procesar todas las imágenes ya existentes en S3 y crear las versiones redimensionadas. Sin este paso, las imágenes de los productos antiguos no se mostrarán.
+---
+
+---
+Context from: ..\..\.gemini\GEMINI.md ---
+## Gemini Added Memories
+- El usuario prefiere que me comunique en español.
+--- End of Context from: ..\..\.gemini\GEMINI.md ---
+
+## Resumen de la Sesión de Trabajo - 15 de Octubre de 2025
+
+**Objetivo Principal:** Implementar un sistema de optimización de imágenes con AWS Lambda y S3 para reemplazar la optimización nativa de Vercel, y solucionar los errores de compilación resultantes.
+
+### 1. Creación de Capa de Lambda para Sharp (vía CloudShell)
+
+*   **Problema Inicial:** Dificultad para instalar Docker localmente para crear la capa de `sharp`.
+*   **Solución Adoptada:** Creación de una capa de Lambda para `sharp` usando AWS CloudShell.
+    *   **Acciones:**
+        *   Guía paso a paso para crear la capa `sharp-layer` en CloudShell.
+        *   Publicación exitosa de la capa `arn:aws:lambda:sa-east-1:585768153179:layer:sharp-layer:1`.
+
+### 2. Implementación de la Función Lambda `kamaluso-image-optimizer`
+
+*   **Acciones:**
+    *   Creación de la función Lambda en la consola de AWS (Node.js 20.x).
+    *   Adjuntar la capa `sharp-layer` a la función.
+    *   Configuración del disparador S3 para el bucket `strapi-bucket-kamaluso` con prefijo `uploads/`.
+    *   Configuración de permisos IAM (`s3:GetObject` en `uploads/*`, `s3:PutObject` en `*`) para el rol de ejecución de la función.
+    *   Despliegue del código de la función Lambda (`index.mjs`) para procesar imágenes (redimensionar a 400w, 800w, 1200w y convertir a WebP en `processed/`).
+
+### 3. Depuración y Correcciones de la Función Lambda
+
+*   **Error 1:** Función Lambda disparada por la creación de la carpeta `uploads/` (objeto de 0 bytes).
+    *   **Solución:** Modificación del código Lambda (`index.mjs`) para ignorar objetos de tamaño 0 o que terminan en `/`.
+*   **Error 2:** Función Lambda `timeout` (3 segundos) y `Memory Size: 128 MB`.
+    *   **Solución:** Aumento del tiempo de espera a 30 segundos y la memoria a 512 MB en la configuración de la función.
+*   **Error 3:** `AccessDenied` al intentar `s3:PutObject` en `processed/`.
+    *   **Solución:** Recreación de la política IAM `S3-ImageProcessing-Permissions` para el rol de la función, asegurando los permisos correctos.
+
+### 4. Integración con el Panel de Administración y Correcciones de Código
+
+*   **Problema:** La función `uploadFileToS3` en `lib/s3-upload.ts` realizaba su propio procesamiento `sharp` y subía a carpetas incorrectas, lo que impedía el nuevo flujo.
+*   **Solución:** Modificación de `lib/s3-upload.ts` para que solo suba el archivo original (sin procesar) a la carpeta `uploads/` de S3. La función ahora devuelve una URL base para las imágenes procesadas por Lambda.
+
+### 5. Corrección de Errores de Compilación (Next.js)
+
+*   **Error 1:** Llamadas incorrectas a `uploadFileToS3` (pasando 2 argumentos en lugar de 1) en múltiples archivos API.
+    *   **Solución:** Actualización de todas las llamadas a `uploadFileToS3` en:
+        *   `pages/api/admin/categorias/crear.ts`
+        *   `pages/api/admin/categorias/editar.ts`
+        *   `pages/api/blog/crear.ts`
+        *   `pages/api/blog/editar.ts`
+        *   `pages/api/products/crear.ts`
+        *   `pages/api/products/editar.ts`
+        *   `pages/api/products/image.ts`
+        *   `pages/api/reviews/crear.ts`
+*   **Advertencia:** `jsx-a11y/alt-text` en `components/ProductCard.test.tsx`.
+    *   **Solución:** Modificación del mock de `next/image` para incluir explícitamente la prop `alt`.
+*   **Error 2:** Variable de entorno `NEXT_PUBLIC_AWS_S3_BUCKET_URL` no definida durante el build.
+    *   **Solución:** Adición de `NEXT_PUBLIC_AWS_S3_BUCKET_URL=https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com` al archivo `.env.local`.
+*   **Resultado:** Compilación de Next.js exitosa.
+
+### 6. Optimización de Costos y Migración de Imágenes
+
+*   **Problema:** El nuevo flujo almacena archivos originales grandes temporalmente en `uploads/`.
+*   **Solución Propuesta:** Configuración de una Regla de Ciclo de Vida de S3 para eliminar objetos en `uploads/` después de 1 día (pendiente de implementación por el usuario).
+*   **Migración de Imágenes Existentes:** Se recomendó re-subir manualmente las imágenes de productos existentes a través del panel de administración debido al bajo volumen de productos, para asegurar que pasen por el nuevo flujo de optimización.
+
+---
+
+## Resumen de la Sesión de Trabajo - 16 de Octubre de 2025
+
+**Objetivo Principal:** Solucionar problemas de visualización de imágenes tras la implementación del sistema de optimización con AWS Lambda y S3, y mejorar el rendimiento y la experiencia de usuario.
+
+### 1. Corrección de Imágenes Rotas en el Frontend
+
+*   **Problema Inicial:** Las imágenes de productos y categorías aparecían rotas en el frontend (páginas de inicio, categorías, detalle de producto) y en el Lightbox.
+*   **Causa:** La URL base de las imágenes guardada en la base de datos (ej. `.../uuid.webp`) no coincidía con el formato de las imágenes procesadas por Lambda (ej. `.../uuid-400w.webp`). El `loader` personalizado de Next.js no estaba configurado o no funcionaba correctamente.
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\lib\s3-loader.ts`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\next.config.js`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\detail\[id].tsx`
+*   **Cambios:**
+    *   Se creó/corrigió el `loader` personalizado en `lib/s3-loader.ts` para que, dada una URL base y un ancho, construya la URL correcta de la imagen optimizada en S3 (ej. añadiendo `-400w.webp`).
+    *   Se verificó que `next.config.js` estuviera configurado para usar este `loader`.
+    *   Se modificó `pages/productos/detail/[id].tsx` para que el componente `Lightbox` (que no usa `next/image`) construya manualmente las URLs de las imágenes de alta resolución (1200w) antes de pasarlas.
+*   **Resultado:** Las imágenes de productos y categorías ahora se cargan correctamente en todo el sitio, incluyendo el Lightbox.
+
+### 2. Optimización de Rendimiento y Corrección de Advertencias de `next/image`
+
+*   **Problema Inicial:** Advertencias en la consola sobre la falta de la prop `sizes` en componentes `<Image>` con `fill`, y sobre la falta de `priority` para imágenes LCP.
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\ProductCard.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\CoverDesignGallery.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\InteriorDesignGallery.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\blog\[slug].tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\cart.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\index.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\productos\[[...slug]].tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\regalos-empresariales.tsx`
+*   **Cambios:**
+    *   Se añadió la prop `sizes` con valores adecuados a todos los componentes `<Image>` que usaban `fill` en los archivos mencionados.
+    *   Se añadió la prop `priority` al componente `<Image>` en `ProductCard.tsx` para optimizar la carga de imágenes LCP.
+    *   En `pages/blog/[slug].tsx`, se actualizó la sintaxis de `layout="fill"` a `fill` y se añadió `sizes`.
+*   **Resultado:** Se eliminaron las advertencias de rendimiento de `next/image`, mejorando el CLS y el LCP.
+
+### 3. Solución de Errores de Hidratación y Navegación
+
+*   **Problema Inicial:** La navegación a páginas de categoría no funcionaba correctamente desde el menú, y se observaban errores de hidratación (`Fast Refresh... runtime error`) en la consola.
+*   **Causa:** Discrepancia entre el HTML renderizado por el servidor y el esperado por React en el cliente, probablemente debido a elementos que se renderizaban condicionalmente o dependían del estado del cliente (ej. `menuOpen`, `status === 'authenticated'`).
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\components\Navbar.tsx`
+*   **Cambios:**
+    *   Se añadió `useEffect` a la importación de `react`.
+    *   Se implementó un estado `isClient` y se usó para renderizar condicionalmente el botón de hamburguesa, el menú móvil y los elementos del menú de escritorio que dependen del estado de autenticación o del carrito. Esto asegura que estos elementos solo se rendericen en el cliente, eliminando la discrepancia entre el DOM del servidor y el del cliente.
+*   **Resultado:** La navegación funciona correctamente y los errores de hidratación han desaparecido.
+
+### 4. Corrección del Filtro de Productos "Solo Destacados" en el Panel de Administración
+
+*   **Problema Inicial:** El producto `soloDestacado` no aparecía en el panel de administración al marcar el checkbox "Mostrar solo destacados".
+*   **Causa:**
+    *   El `useEffect` en `pages/admin/index.tsx` no se estaba re-ejecutando cuando el estado `showSoloDestacados` cambiaba, impidiendo que la API se llamara con el parámetro correcto.
+    *   La API `/api/products/listar.ts` estaba funcionando correctamente, pero devolvía un array vacío cuando se le pedía excluir productos `soloDestacado` porque no existían productos en la base de datos que no fueran `soloDestacado: true`.
+*   **Archivos Modificados:**
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\admin\index.tsx`
+    *   `C:\Users\LENOVO\Desktop\kamaluso_fullstack\pages\api\products\listar.ts` (para depuración)
+*   **Cambios:**
+    *   Se añadió un estado `showSoloDestacados` y un checkbox en la UI de `pages/admin/index.tsx`.
+    *   Se modificó la función `fetchProducts` para que incluyera el parámetro `soloDestacadoQuery` basado en `showSoloDestacados`.
+    *   Se ajustaron las dependencias del `useEffect` principal en `pages/admin/index.tsx` para que `fetchProducts` se ejecutara cuando `showSoloDestacados` cambiara.
+    *   Se añadieron `console.log`s en `pages/api/products/listar.ts` para depuración, confirmando que la API procesaba el parámetro correctamente.
+*   **Resultado:** El panel de administración ahora permite filtrar correctamente los productos `soloDestacado`. Se identificó que la ausencia de productos con `soloDestacado: false` causaba el array vacío en el listado general.
+
+---
+
+**Tareas Pendientes:**
+
+*   **Crear/Modificar un producto con `soloDestacado: false`:** Para verificar completamente el funcionamiento del filtro en el panel de administración.
+*   **Revisar advertencias de `preload` no usado:** (Baja prioridad por ahora).
+*   **Problema con la herramienta `take_snapshot`:** La herramienta no está devolviendo el contenido completo de la página, lo que impide la prueba de usuario automatizada.
+
+---
+## Resumen de la Sesión de Trabajo - 17 de Octubre de 2025
+
+**Objetivo Principal:** Resolver el problema de visualización del filtro "Mostrar solo destacados" en el panel de administración y, ante la persistencia del problema, proponer una solución alternativa y más robusta.
+
+### 1. Depuración del Filtro "Mostrar solo destacados" (Frontend `pages/admin/index.tsx`)
+
+*   **Problema Inicial:** El filtro "Mostrar solo destacados" no actualizaba la lista de productos en el panel de administración.
+*   **Diagnóstico:** Se identificó que el `useEffect` del frontend no se estaba ejecutando correctamente al cambiar el estado del checkbox, impidiendo la llamada a la API.
+*   **Cambio:** Se refactorizó la lógica de `fetchProducts` directamente dentro del `useEffect` principal para asegurar su ejecución.
+*   **Resultado:** El `useEffect` comenzó a ejecutarse, pero la lista seguía sin actualizarse.
+
+### 2. Depuración del Filtro "Mostrar solo destacados" (Backend `pages/api/products/listar.ts`)
+
+*   **Problema:** A pesar de que el frontend llamaba a la API, el servidor respondía con `304 Not Modified`, impidiendo que la lógica de la API se ejecutara y enviara una respuesta fresca.
+*   **Cambio:** Se añadió `res.setHeader('Cache-Control', 'no-store, max-age=0');` a la respuesta de la API para forzar al servidor a enviar siempre una respuesta nueva.
+*   **Resultado:** La API comenzó a responder con `200 OK`, confirmando que la lógica se ejecutaba.
+
+### 3. Inconsistencia y Problemas Ambientales
+
+*   **Problema:** A pesar de que la API respondía con `200 OK`, el frontend seguía sin actualizar la lista de productos.
+*   **Diagnóstico:** Se sospechó de un problema de caché persistente en el entorno de desarrollo de Next.js.
+*   **Acción:** Se instruyó al usuario a realizar una "reconstrucción total" (eliminar la carpeta `.next` y reiniciar el servidor).
+*   **Resultado:** El problema persistió, indicando una inconsistencia profunda entre el código en disco y lo que el servidor estaba ejecutando.
+
+### 4. Verificación de Datos en MongoDB
+
+*   **Problema:** Se sospechó que el producto editado por el usuario no tenía `soloDestacado: true` en la base de datos.
+*   **Acción:** El usuario proporcionó el documento JSON del producto desde MongoDB.
+*   **Resultado:** Se confirmó que el producto **sí** tenía `soloDestacado: true`, descartando un problema de datos.
+
+### 5. Solución Directa y Eliminación de la Funcionalidad Problemática
+
+*   **Problema:** La funcionalidad del filtro "Mostrar solo destacados" seguía sin funcionar, y el producto con `soloDestacado: true` no era visible en el panel de administración.
+*   **Acción:** Se creó un script de Node.js (`scripts/reset-solo-destacado.js`) para conectarse directamente a MongoDB y cambiar `soloDestacado: true` a `soloDestacado: false` para todos los productos afectados.
+*   **Resultado:** El script funcionó, y los productos "solo destacados" volvieron a ser visibles en la lista principal del administrador.
+
+### 6. Propuesta de Nuevo Enfoque para "Solo Destacados"
+
+*   **Problema:** El usuario aún necesita una forma de hacer que los productos aparezcan solo en la página de inicio (destacados) sin categoría.
+*   **Propuesta:** Utilizar la combinación `destacado: true` y **sin categoría asignada** como el nuevo método para lograr el efecto "solo destacado". Esto elimina la necesidad del campo `soloDestacado` y su lógica problemática.
+*   **Plan de Implementación:**
+    1.  Eliminar el campo `soloDestacado` del modelo de producto.
+    2.  Eliminar todos los elementos de UI y lógica relacionados con `soloDestacado` del panel de administración (`pages/admin/index.tsx`).
+    3.  Hacer que el campo "Categoría" en el formulario de productos sea opcional.
+    4.  Limpiar la lógica de `soloDestacado` de las APIs (`pages/api/products/listar.ts`, `crear.ts`, `editar.ts`).
+    5.  Ajustar la consulta de productos destacados en la página de inicio (`pages/index.tsx`) para que simplemente busque `destacado: true`.
+
+---

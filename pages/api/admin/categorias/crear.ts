@@ -46,7 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
 
       if (imageFile) {
-        const imageUrl = await uploadFileToS3(imageFile, 'categorias');
+        const imageUrl = await uploadFileToS3(imageFile);
         newCategory.imagen = imageUrl;
       }
 
