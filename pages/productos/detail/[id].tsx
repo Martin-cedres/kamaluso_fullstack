@@ -456,12 +456,16 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
       <Navbar />
       <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="mb-6">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
-          <div className="flex flex-col lg:flex-row gap-12">
-            <div className="w-full flex-1 lg:sticky top-32 self-start">
+
+          {/* Contenedor Principal de la Grilla */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-12">
+            
+            {/* --- Columna Izquierda: Carrusel de Imágenes --- */}
+            <div className="w-full lg:sticky top-32 self-start">
               <div className="relative">
                 <button
                   type="button"
@@ -469,57 +473,24 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
                 >
                   <Image
-                    key={activeImage} // Add key to force re-render
+                    key={activeImage}
                     src={activeImage}
                     alt={product.alt || product.nombre}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     style={{ objectFit: 'cover' }}
                     className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+                    priority // LCP Image
                   />
                 </button>
 
                 {!isSpecialProduct && allProductImages.length > 1 && (
                   <>
-                    <button
-                      onClick={handlePrevImage}
-                      className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
-                      aria-label="Imagen anterior"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
+                    <button onClick={handlePrevImage} className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10" aria-label="Imagen anterior">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                     </button>
-                    <button
-                      onClick={handleNextImage}
-                      className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10"
-                      aria-label="Siguiente imagen"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                    <button onClick={handleNextImage} className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10" aria-label="Siguiente imagen">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
                   </>
                 )}
@@ -528,45 +499,33 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               <Lightbox
                 open={open}
                 close={() => setOpen(false)}
-                slides={allProductImages.map(img => ({
-                  src: img.endsWith('.webp') ? `${img.slice(0, -5)}-1200w.webp` : img
-                }))}
+                slides={allProductImages.map(img => ({ src: img.endsWith('.webp') ? `${img.slice(0, -5)}-1200w.webp` : img }))}
                 index={allProductImages.indexOf(activeImage)}
               />
 
               {!isSpecialProduct && allProductImages.length > 1 && (
-                <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
+                <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
                   {allProductImages.map((img, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handleImageChange(img)}
-                      className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-pink-500' : 'border-gray-300'} flex-shrink-0`}
-                    >
-                      <Image
-                        src={img}
-                        alt={product.alt || product.nombre}
-                        fill
-                        sizes="100px"
-                        style={{ objectFit: 'cover' }}
-                        className="rounded-lg"
-                      />
+                    <button key={index} type="button" onClick={() => handleImageChange(img)} className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-pink-500' : 'border-gray-300'} flex-shrink-0`}>
+                      <Image src={img} alt={product.alt || product.nombre} fill sizes="100px" style={{ objectFit: 'cover' }} className="rounded-lg" />
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            <div className="flex-1 flex flex-col justify-between">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.nombre}</h1>
-                {reviewCount > 0 && (
-                  <div className="flex items-center mb-4">
-                    <StarRating rating={parseFloat(averageRating)} />
-                    <span className="text-gray-600 ml-2">
-                      ({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})
-                    </span>
-                  </div>
-                )}
+
+            {/* --- Columna Derecha: Información y Personalización --- */}
+            <div className="w-full mt-8 lg:mt-0">
+              {reviewCount > 0 && (
+                <div className="flex items-center mb-3">
+                  <StarRating rating={parseFloat(averageRating)} />
+                  <a href="#reviews-section" className="text-gray-600 ml-2 text-sm hover:underline">
+                    ({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})
+                  </a>
+                </div>
+              )}
+              <h1 className="text-2xl md:text-3xl font-bold mb-3">{product.nombre}</h1>
+              
               {isClient ? (
                 <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
                   $U {totalPrice}
@@ -576,61 +535,39 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   $U {product?.basePrice || 0}
                 </p>
               )}
-              
-              <div className="text-gray-600 mb-6 prose" dangerouslySetInnerHTML={{ __html: product.descripcion || '' }} />
 
-              <div className="space-y-6">
+              {/* --- Opciones de Personalización --- */}
+              <div className="space-y-5">
                 {displayGroups.map((group) => {
                   const groupName = group.name.trim();
-
-                  // --- NEW VISIBILITY LOGIC ---
                   if (group.dependsOn) {
                     const parentSelection = selections[group.dependsOn.groupName];
-                    if (parentSelection !== group.dependsOn.optionName) {
-                      return null; // Don't render if dependency not met
-                    }
+                    if (parentSelection !== group.dependsOn.optionName) return null;
                   }
 
-                  // --- RENDER LOGIC ---
-                  // Special renderer for CoverDesignGallery
                   if (groupName.startsWith('Diseño de Tapa')) {
                     return (
-                      <div key={groupName} className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {groupName}
-                        </label>
-                        <CoverDesignGallery
-                          options={group.options}
-                          selectedOption={selections[groupName]}
-                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
-                        />
+                      <div key={groupName}>
+                        <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
+                        <CoverDesignGallery options={group.options} selectedOption={selections[groupName]} onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)} />
                       </div>
-                    )
+                    );
                   }
 
-                  // Special renderer for InteriorDesignGallery
                   if (groupName === 'Interiores') {
                     return (
-                      <div key={groupName} className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {groupName}
-                        </label>
-                        <InteriorDesignGallery
-                          options={group.options}
-                          selectedOption={selections[groupName]}
-                          onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)}
-                        />
+                      <div key={groupName}>
+                        <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
+                        <InteriorDesignGallery options={group.options} selectedOption={selections[groupName]} onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)} />
                       </div>
-                    )
+                    );
                   }
 
-                  // Default renderer for all other groups
+                  // --- Nuevo Renderizador de Botones Modernos ---
                   return (
-                    <div key={groupName} className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {groupName}
-                      </label>
-                      <div className="flex flex-wrap gap-3">
+                    <div key={groupName}>
+                      <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
+                      <div className="flex flex-wrap gap-2">
                         {group.options.map((option: any) => {
                           const isSelected = selections[groupName] === option.name.trim();
                           return (
@@ -638,85 +575,59 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                               key={option.name}
                               type="button"
                               onClick={() => handleSelectionChange(groupName, option.name)}
-                              className={`relative p-3 text-sm rounded-xl border transition-all duration-200 flex flex-col items-center justify-center gap-2 text-center w-32 h-auto min-h-[120px] ${ 
+                              className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors duration-200 ${
                                 isSelected
-                                  ? 'border-pink-500 ring-2 ring-pink-500 shadow-md bg-pink-50 text-pink-800'
-                                  : 'border-gray-300 bg-white text-gray-800 hover:border-pink-400 hover:shadow-sm'
+                                  ? 'bg-gray-900 text-white border-gray-900'
+                                  : 'bg-white text-gray-800 border-gray-300 hover:border-gray-900'
                               }`}
                             >
-                              {option.image && (
-                                <div className="relative w-20 h-20 rounded-md overflow-hidden">
-                                  <Image
-                                    src={option.image}
-                                    alt={option.name}
-                                    fill
-                                    sizes="100px"
-                                    className="object-cover"
-                                  />
-                                </div>
-                              )}
-                              <span className="block font-medium">{option.name}</span>
-                              {option.priceModifier > 0 && <span className="block text-xs font-normal">(+ $U {option.priceModifier})</span>}
-                              {isSelected && (
-                                <div className="absolute top-1 right-1 bg-pink-500 text-white rounded-full p-0.5">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                </div>
-                              )}
+                              {option.name}
+                              {option.priceModifier > 0 && <span className="ml-1 font-normal text-xs"> (+ $U {option.priceModifier})</span>}
                             </button>
-                          )
+                          );
                         })}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                <button
-                  onClick={handleAddToCart}
-                  className="bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
-                >
+
+              {/* --- Botones de Acción --- */}
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button onClick={handleAddToCart} className="w-full sm:w-auto bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition flex-grow">
                   Agregar al carrito
                 </button>
-                <button
-                  onClick={() => router.back()}
-                  className="px-6 py-3 rounded-2xl border border-pink-500 text-pink-500 font-semibold text-center hover:bg-pink-50 transition"
-                >
+                <button onClick={() => router.back()} className="w-full sm:w-auto px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold text-center hover:bg-gray-100 transition">
                   Ir atrás
                 </button>
               </div>
             </div>
+
+            {/* --- Fila Inferior: Descripción del Producto --- */}
+            {product.descripcion && (
+              <div className="lg:col-span-2 mt-12 pt-8 border-t">
+                <h2 className="text-2xl font-bold mb-4">Descripción del Producto</h2>
+                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.descripcion }} />
+              </div>
+            )}
           </div>
         </div>
-        </div>
 
-                {/* Reviews Section */}
-        <section className="mt-16 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-semibold mb-8 text-center">
-            Opiniones de nuestros clientes
-          </h2>
+        {/* --- Secciones Externas: Opiniones y Relacionados --- */}
+        <section id="reviews-section" className="mt-16 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-semibold mb-8 text-center">Opiniones de nuestros clientes</h2>
           <div className="space-y-12">
-            <ReviewForm
-              productId={product._id}
-              onReviewSubmit={() => window.location.reload()}
-            />
+            <ReviewForm productId={product._id} onReviewSubmit={() => window.location.reload()} />
             <ReviewList reviews={reviews} />
           </div>
         </section>
 
         {relatedProducts.length > 0 && (
           <section className="mt-16">
-            <h2 className="text-3xl font-semibold mb-8 text-center">
-              Productos relacionados
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {relatedProducts.map((p) => (
-                <Link
-                  key={p._id}
-                  href={`/productos/detail/${p._id}`}
-                  className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col"
-                >
+                <Link key={p._id} href={`/productos/detail/${p._id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
                   <div className="relative w-full aspect-square">
                     <Image
                       src={p.images?.[0] || p.imageUrl || '/placeholder.png'}
@@ -728,14 +639,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     />
                   </div>
                   <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">
-                      {p.nombre}
-                    </h3>
-                    {getCardDisplayPrice(p) && (
-                      <p className="text-pink-500 font-semibold mt-2">
-                        $U {getCardDisplayPrice(p)}
-                      </p>
-                    )}
+                    <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">{p.nombre}</h3>
+                    {getCardDisplayPrice(p) && <p className="text-pink-500 font-semibold mt-2">$U {getCardDisplayPrice(p)}</p>}
                   </div>
                   <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
                     Ver más
