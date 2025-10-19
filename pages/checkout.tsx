@@ -33,9 +33,9 @@ const paymentOptions = {
   prex: 'Prex',
   abitab: 'Giro ABITAB',
   red_pagos: 'Giro RED PAGOS',
-  pago_en_local: 'Pago en Local (con seña)',
+  pago_en_local: 'Pago en Local',
   pago_efectivo_local: 'Pago en Efectivo en Local',
-  mercado_pago_online: 'Tarjeta de Crédito/Débito (Mercado Pago)',
+  mercado_pago_online: 'Tarjeta de Crédito/Débito (Mercado Pago) (+10%)',
 }
 
 const shippingOptions = {
@@ -56,6 +56,7 @@ export default function CheckoutPage() {
   const [department, setDepartment] = useState(departments[0])
   const [shippingMethod, setShippingMethod] = useState('dac_domicilio')
   const [shippingNotes, setShippingNotes] = useState('')
+  const [orderNotes, setOrderNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('brou');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [surcharge, setSurcharge] = useState(0);
@@ -140,6 +141,7 @@ export default function CheckoutPage() {
           shippingDetails,
           paymentMethod,
           appliedCoupon,
+          notes: orderNotes, // Añadir notas del pedido
           // Store the temp ID to create the real order on the success page
           tempOrderId: tempOrderId,
           // Add cart items and total for order creation on success page
@@ -167,6 +169,7 @@ export default function CheckoutPage() {
       items: cartItems,
       total, // This total is from the client, the server will recalculate
       paymentMethod,
+      notes: orderNotes, // Añadir notas del pedido
       couponCode: appliedCoupon?.code, // Send only the code
     }
 
@@ -222,6 +225,21 @@ export default function CheckoutPage() {
           <h1 className="text-3xl font-semibold text-center mb-10">
             Finalizar Compra
           </h1>
+
+          {/* --- Barra de Progreso --- */}
+          <div className="w-full max-w-2xl mx-auto mb-12">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-pink-500 font-semibold">
+                <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center">1</div>
+                <span className="ml-2">Tus Datos</span>
+              </div>
+              <div className="flex-1 h-px bg-gray-300 mx-4"></div>
+              <div className="flex items-center text-gray-500">
+                <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center">2</div>
+                <span className="ml-2">Envío y Pago</span>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="bg-white p-6 rounded-2xl shadow-md h-fit">
@@ -452,6 +470,23 @@ export default function CheckoutPage() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="orderNotes"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Notas Adicionales para tu Pedido (opcional)
+                    </label>
+                    <textarea
+                      id="orderNotes"
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      rows={3}
+                      placeholder="¿Alguna aclaración sobre tu pedido? Ej: la tapa la quiero sin elástico, el diseño es para un regalo, etc."
+                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
+                    />
                   </div>
                 </div>
                 <button

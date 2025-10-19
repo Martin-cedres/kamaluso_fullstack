@@ -120,13 +120,13 @@ export default function App({ Component, pageProps }: AppProps) {
             className={`${inter.variable} font-sans flex flex-col min-h-screen`}
           >
             <Navbar />
-            <main className="flex-grow">
+            <main className="flex-grow pb-24">
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />
+              {router.pathname !== '/productos/detail/[id]' && <DynamicWhatsAppButton />}
+              <DynamicFooter />
             </main>
-            <DynamicWhatsAppButton />
-            <DynamicFooter />
           </div>
         </CategoryProvider>
       </CartProvider>

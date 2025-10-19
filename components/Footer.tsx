@@ -81,6 +81,17 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} Papelería Personalizada Kamaluso.
             Todos los derechos reservados.
           </p>
+          <p className="text-sm text-gray-500 mt-4">
+            Tienda online desarrollada por <strong>Martín Cedrés</strong>. ¿Quieres la tuya?{' '}
+            <a 
+              href="https://wa.me/59891090705?text=Hola%20Mart%C3%ADn,%20vi%20la%20tienda%20Kamaluso%20y%20estoy%20interesado/a%20en%20un%20sitio%20web."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-green-500 hover:underline"
+            >
+              Contáctame por WhatsApp
+            </a>
+          </p>
         </div>
       </div>
     </footer>

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
 import StarRating from '../../../components/StarRating';
@@ -98,6 +98,21 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   );
   const [isAnimating, setIsAnimating] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showStickyButton, setShowStickyButton] = useState(false);
+  const addToCartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (addToCartRef.current) {
+        const { top } = addToCartRef.current.getBoundingClientRect();
+        // Show sticky button if the top of the original button is off-screen
+        setShowStickyButton(top < window.innerHeight);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isSpecialProduct = useMemo(() => {
     return product?.customizationGroups?.some(group => 
@@ -609,7 +624,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               </div>
 
               {/* --- Botones de Acción --- */}
-              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <div ref={addToCartRef} className="flex flex-col sm:flex-row gap-4 mt-8">
                 <button onClick={handleAddToCart} className="w-full sm:w-auto bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition flex-grow">
                   Agregar al carrito
                 </button>
@@ -667,6 +682,21 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           </section>
         )}
       </main>
+
+      {/* --- Botón de Compra Pegajoso para Móviles --- */}
+      {showStickyButton && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Precio Total</p>
+              <p className="font-bold text-xl text-pink-500">$U {totalPrice}</p>
+            </div>
+            <button onClick={handleAddToCart} className="bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition">
+              Agregar al carrito
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
