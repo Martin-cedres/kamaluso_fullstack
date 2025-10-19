@@ -32,7 +32,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           alt={product.alt || product.nombre}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority
           className="object-cover transform transition-transform duration-500 hover:scale-105"
         />
       </Link>

@@ -3,16 +3,30 @@ const mongoose = require('mongoose')
 
 const MONGODB_URI = process.env.MONGODB_URI
 
-// Ampliamos el esquema para incluir _id
+// --- Esquemas Mínimos para la Generación de URLs ---
 const productSchema = new mongoose.Schema({
-  _id: String,
-  slug: String,
-  categoria: String,
-  subCategoria: [String], // Array de strings para subcategorías
+  _id: mongoose.Schema.Types.ObjectId,
 })
 
+const categorySchema = new mongoose.Schema({
+  _id: mongoose.Schema.Types.ObjectId,
+  slug: String,
+  parent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+  },
+})
+
+const postSchema = new mongoose.Schema({
+  slug: String,
+})
+
+// --- Modelos ---
 const Product =
   mongoose.models.Product || mongoose.model('Product', productSchema)
+const Category =
+  mongoose.models.Category || mongoose.model('Category', categorySchema)
+const Post = mongoose.models.Post || mongoose.model('Post', postSchema)
 
 async function getDynamicUrlsSync() {
   let connection
@@ -22,13 +36,38 @@ async function getDynamicUrlsSync() {
     }
     connection = await mongoose.connect(MONGODB_URI)
 
-    // Pedimos también _id y usamos un Set para evitar URLs duplicadas
-    const products = await Product.find({}, '_id slug categoria subCategoria').lean()
     const urlSet = new Set()
 
+    // 1. URLs de Productos
+    const products = await Product.find({}, '_id').lean()
     products.forEach((p) => {
       if (p._id) {
         urlSet.add(`/productos/detail/${p._id}`)
+      }
+    })
+
+    // 2. URLs de Posts del Blog
+    const posts = await Post.find({}, 'slug').lean()
+    posts.forEach((post) => {
+      if (post.slug) {
+        urlSet.add(`/blog/${post.slug}`)
+      }
+    })
+
+    // 3. URLs de Categorías y Subcategorías
+    const categories = await Category.find({}, 'slug parent').lean()
+    const categoryMap = new Map(categories.map((cat) => [cat._id.toString(), cat.slug]))
+
+    categories.forEach((cat) => {
+      if (cat.parent) {
+        const parentSlug = categoryMap.get(cat.parent.toString())
+        if (parentSlug) {
+          // Es una subcategoría
+          urlSet.add(`/productos/${parentSlug}/${cat.slug}`)
+        }
+      } else {
+        // Es una categoría principal
+        urlSet.add(`/productos/${cat.slug}`)
       }
     })
 

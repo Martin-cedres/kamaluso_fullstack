@@ -79,6 +79,7 @@ export default function BlogPostPage({ post }: Props) {
                   fill
                   sizes="(max-width: 896px) 100vw, 896px"
                   className="object-cover rounded-lg"
+                  priority
                 />
               </div>
             )}

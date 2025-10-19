@@ -164,6 +164,22 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     }
   }, [activeImage, allProductImages, handleImageChange, isSpecialProduct]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        handlePrevImage();
+      } else if (e.key === 'ArrowRight') {
+        handleNextImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handlePrevImage, handleNextImage]);
+
   // This effect now safely runs on the client after selections are made by the user
   useEffect(() => {
     if (!product) return;
