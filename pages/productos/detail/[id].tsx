@@ -510,7 +510,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     style={{ objectFit: 'cover' }}
-                    className={`rounded-2xl transition-opacity duration-500 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+                    className="rounded-2xl"
                     priority // LCP Image
                   />
                 </button>
