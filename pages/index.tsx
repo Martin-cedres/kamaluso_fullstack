@@ -147,7 +147,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                     src={cat.imagen || '/placeholder.png'}
                     alt={cat.nombre}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 256px, 320px"
+                    sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
                     style={{ objectFit: 'cover' }}
                   />
                 </div>

@@ -74,13 +74,13 @@ export default function BlogPostPage({ post }: Props) {
             {post.coverImage && (
               <div className="relative w-full h-64 mb-8 rounded-lg overflow-hidden shadow-md">
                 <Image
-                  src={post.coverImage || '/placeholder.png'}
-                  alt={post.title}
-                  fill
-                  sizes="(max-width: 896px) 100vw, 896px"
-                  className="object-cover rounded-lg"
-                  priority
-                />
+                src={post.coverImage}
+                alt={post.title}
+                fill
+                sizes="(max-width: 800px) 100vw, 768px"
+                className="object-cover"
+                priority
+              />
               </div>
             )}
             <h1 className="text-4xl font-bold mb-4">{post.title}</h1>

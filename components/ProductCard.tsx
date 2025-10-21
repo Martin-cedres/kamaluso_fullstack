@@ -31,7 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           src={product.imagen}
           alt={product.alt || product.nombre}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
           className="object-cover transform transition-transform duration-500 hover:scale-105"
         />
       </Link>
