@@ -508,7 +508,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     src={activeImage}
                     alt={product.alt || product.nombre}
                     fill
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes="(max-width: 767px) 400px, (max-width: 1023px) 800px, 640px"
                     style={{ objectFit: 'cover' }}
                     className="rounded-2xl"
                     priority // LCP Image
@@ -664,7 +664,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       src={p.images?.[0] || p.imageUrl || '/placeholder.png'}
                       alt={p.nombre}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
                       style={{ objectFit: 'cover' }}
                       className="group-hover:scale-105 transition-transform duration-300"
                     />
