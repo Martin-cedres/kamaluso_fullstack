@@ -249,7 +249,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       // Explicitly update activeImage if the newly selected option has one, only for special products
       const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
       if (group?.type !== 'text' && isSpecialProduct) {
-        const option = group?.options.find(o => o.name.trim() === trimmedValue);
+        const option = group?.options.find(o => o.name.trim() === finalValue);
         if (option?.image) {
           handleImageChange(option.image);
         }
