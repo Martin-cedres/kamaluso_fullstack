@@ -6,6 +6,7 @@ import Category from '../../../../models/Category';
 import { uploadFileToS3 } from '../../../../lib/s3-upload';
 import os from 'os';
 import { ObjectId } from 'mongodb';
+import { revalidateCategoryPaths } from '../../../../lib/utils'; // Importar la función de revalidación
 
 export const config = { api: { bodyParser: false } };
 
@@ -63,6 +64,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (!updatedCategory) {
         return res.status(404).json({ error: 'Categoría no encontrada.' });
       }
+
+      // Revalidar las rutas de la categoría
+      await revalidateCategoryPaths(updatedCategory.slug, updatedCategory.parent?.toString());
 
       res.status(200).json({ success: true, message: 'Categoría actualizada con éxito', data: updatedCategory });
     } catch (error: any) {

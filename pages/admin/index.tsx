@@ -67,7 +67,14 @@ export default function Admin() {
 
   const handleGroupChange = (groupIndex: number, field: string, value: string) => {
     const newGroups = [...form.customizationGroups];
-    newGroups[groupIndex][field] = value;
+    if (field === 'type' && value === 'text') {
+      newGroups[groupIndex] = { ...newGroups[groupIndex], type: value, options: [], value: newGroups[groupIndex].value || '' };
+    } else if (field === 'type' && (value === 'radio' || value === 'checkbox')) {
+      newGroups[groupIndex] = { ...newGroups[groupIndex], type: value, options: newGroups[groupIndex].options || [] };
+      delete newGroups[groupIndex].value;
+    } else {
+      newGroups[groupIndex][field] = value;
+    }
     setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
   };
 
@@ -80,7 +87,7 @@ export default function Admin() {
 
   const [dependencyState, setDependencyState] = useState<{ groupIndex: number | null; visible: boolean }>({ groupIndex: null, visible: false });
 
-  const addPredefinedGroup = (groupType: 'Textura' | 'Elastico' | 'GaleriaDura' | 'GaleriaFlex' | 'TipoTapa' | 'Interiores') => {
+  const addPredefinedGroup = (groupType: 'Textura' | 'Elastico' | 'GaleriaDura' | 'GaleriaFlex' | 'TipoTapa' | 'Interiores' | 'Texto') => {
     let newGroup;
 
     if (groupType === 'TipoTapa') {
@@ -102,6 +109,16 @@ export default function Admin() {
         name: 'Interiores',
         type: 'radio',
         options: [{ name: 'Interior 1', priceModifier: 0 }, { name: 'Interior 2', priceModifier: 0 }],
+      };
+    } else if (groupType === 'Texto') {
+      if (form.customizationGroups.some((g: any) => g.name === 'Texto Personalizado')) {
+        toast.error("El grupo 'Texto Personalizado' ya existe.");
+        return;
+      }
+      newGroup = {
+        name: 'Texto Personalizado',
+        type: 'text',
+        value: '', // Valor inicial para el campo de texto
       };
     } else {
       const tipoTapaExists = form.customizationGroups.some((g: any) => g.name === 'Tipo de Tapa');
@@ -264,7 +281,7 @@ export default function Admin() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch(`/api/products/listar`)
+      const res = await fetch(`/api/products/listar?sort=order`)
       const data = await res.json()
       setProductos(Array.isArray(data.products) ? data.products : [])
     } catch (e) {
@@ -311,6 +328,38 @@ export default function Admin() {
   }, [images, editId])
 
 
+
+  const handleProductDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(productos);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setProductos(items);
+
+    // Enviar el nuevo orden al backend
+    try {
+      const newOrder = items.map((p, index) => ({ _id: p._id, order: index }));
+      const res = await fetch('/api/admin/products/reorder', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newOrder }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Error al guardar el nuevo orden.');
+      }
+      toast.success('Orden de productos actualizada!');
+    } catch (error: any) {
+      console.error('Error reordenando productos:', error);
+      toast.error(error.message || 'No se pudo actualizar el orden.');
+      // Opcional: revertir el estado si la API falla
+      // setProductos(oldItems);
+    }
+  };
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return
@@ -621,48 +670,64 @@ export default function Admin() {
                             <select value={group.type} onChange={(e) => handleGroupChange(groupIndex, 'type', e.target.value)} className="rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500">
                               <option value="radio">Selección Única</option>
                               <option value="checkbox">Múltiples Opciones</option>
+                              <option value="text">Campo de Texto</option>
                             </select>
                             <button type="button" onClick={() => removeCustomizationGroup(groupIndex)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full">
                               <TrashIcon className="h-5 w-5" />
                             </button>
                           </div>
 
-                          {/* Options List */}
-                          <div className="space-y-3 pl-4 border-l-2 border-gray-200">
-                            {group.options.map((option: any, optionIndex: number) => (
-                              <div key={optionIndex} className="flex items-center gap-2">
-                                <input type="text" value={option.name} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'name', e.target.value)} placeholder="Nombre de la Opción" className="flex-grow rounded-md border-gray-300 text-sm" />
-                                <input type="number" value={option.priceModifier} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'priceModifier', e.target.value)} placeholder="Precio" className="w-24 rounded-md border-gray-300 text-sm" />
-                                <div className="w-10 flex-shrink-0">
-                                  <label title="Seleccionar imagen" className="cursor-pointer p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full inline-flex items-center justify-center">
-                                    <PhotoIcon className="h-5 w-5" />
-                                    <input type="file" accept="image/*" onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)} className="sr-only"/>
-                                  </label>
-                                </div>
-                                {getOptionImagePreview(groupIndex, optionIndex) && <Image src={getOptionImagePreview(groupIndex, optionIndex)!} alt={`preview`} width={32} height={32} className="object-cover rounded-md" />}
-                                <button type="button" onClick={() => removeCustomizationOption(groupIndex, optionIndex)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full">
-                                  <XMarkIcon className="h-4 w-4" />
+                          {group.type === 'text' ? (
+                            <div className="space-y-3 pl-4 border-l-2 border-gray-200">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Valor por Defecto (Opcional)</label>
+                              <textarea
+                                value={group.value || ''}
+                                onChange={(e) => handleGroupChange(groupIndex, 'value', e.target.value)}
+                                placeholder="Texto por defecto o ejemplo para el cliente"
+                                rows={3}
+                                className="w-full rounded-md border-gray-300 text-sm"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              {/* Options List */}
+                              <div className="space-y-3 pl-4 border-l-2 border-gray-200">
+                                {group.options.map((option: any, optionIndex: number) => (
+                                  <div key={optionIndex} className="flex items-center gap-2">
+                                    <input type="text" value={option.name} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'name', e.target.value)} placeholder="Nombre de la Opción" className="flex-grow rounded-md border-gray-300 text-sm" />
+                                    <input type="number" value={option.priceModifier} onChange={(e) => handleCustomizationChange(groupIndex, optionIndex, 'priceModifier', e.target.value)} placeholder="Precio" className="w-24 rounded-md border-gray-300 text-sm" />
+                                    <div className="w-10 flex-shrink-0">
+                                      <label title="Seleccionar imagen" className="cursor-pointer p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full inline-flex items-center justify-center">
+                                        <PhotoIcon className="h-5 w-5" />
+                                        <input type="file" accept="image/*" onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)} className="sr-only"/>
+                                      </label>
+                                    </div>
+                                    {getOptionImagePreview(groupIndex, optionIndex) && <Image src={getOptionImagePreview(groupIndex, optionIndex)!} alt={`preview`} width={32} height={32} className="object-cover rounded-md" />}
+                                    <button type="button" onClick={() => removeCustomizationOption(groupIndex, optionIndex)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full">
+                                      <XMarkIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                                <button type="button" onClick={() => addCustomizationOption(groupIndex)} className="inline-flex items-center gap-1 text-sm font-medium text-pink-600 hover:text-pink-800">
+                                  <PlusIcon className="h-4 w-4" />
+                                  Añadir Opción
                                 </button>
                               </div>
-                            ))}
-                            <button type="button" onClick={() => addCustomizationOption(groupIndex)} className="inline-flex items-center gap-1 text-sm font-medium text-pink-600 hover:text-pink-800">
-                              <PlusIcon className="h-4 w-4" />
-                              Añadir Opción
-                            </button>
-                          </div>
 
-                          {/* Group Footer (Dependencies) */}
-                          <div className="pt-3 mt-3 border-t border-gray-200">
-                             <button type="button" onClick={() => setDependencyState({ groupIndex, visible: true })} className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-700 font-medium">
-                              <LinkIcon className="h-4 w-4" />
-                              Definir dependencia
-                            </button>
-                            {group.dependsOn && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                Depende de: <strong>{group.dependsOn.groupName} &rarr; {group.dependsOn.optionName}</strong>
+                              {/* Group Footer (Dependencies) */}
+                              <div className="pt-3 mt-3 border-t border-gray-200">
+                                 <button type="button" onClick={() => setDependencyState({ groupIndex, visible: true })} className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-700 font-medium">
+                                  <LinkIcon className="h-4 w-4" />
+                                  Definir dependencia
+                                </button>
+                                {group.dependsOn && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Depende de: <strong>{group.dependsOn.groupName} &rarr; {group.dependsOn.optionName}</strong>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -677,6 +742,7 @@ export default function Admin() {
                         <button type="button" onClick={() => addPredefinedGroup('Elastico')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Elástico</button>
                         <button type="button" onClick={() => addPredefinedGroup('GaleriaDura')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Galería (Dura)</button>
                         <button type="button" onClick={() => addPredefinedGroup('GaleriaFlex')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Galería (Flex)</button>
+                        <button type="button" onClick={() => addPredefinedGroup('Texto')} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-all">+ Texto Personalizado</button>
                         <button type="button" onClick={addCustomizationGroup} className="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all">+ Grupo Personalizado</button>
                       </div>
                     </div>
@@ -808,69 +874,171 @@ export default function Admin() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <div className="px-4 md:px-6 py-4 border-b">
-          <h3 className="text-lg font-semibold">Productos</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-100 text-left text-gray-700">
-              <tr>
-                <th className="px-4 py-3">Imagen</th>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Precio</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Categoría</th>
-                <th className="px-4 py-3">Subcategoría</th>
-                <th className="px-4 py-3">Destacado</th>
-                <th className="px-4 py-3">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productos.map((p) => (
-                <tr
-                  key={String(p._id)}
-                  className="odd:bg-white even:bg-gray-50 border-b"
-                >
-                  <td className="px-4 py-3">
-                    <Image
-                      src={p.imageUrl}
-                      alt={p.alt || p.nombre}
-                      width={64}
-                      height={64}
-                      className="object-cover rounded-xl"
-                    />
-                  </td>
-                  <td className="px-4 py-3">{p.nombre}</td>
-                  <td className="px-4 py-3">{getDisplayPrice(p)}</td>
-                  <td className="px-4 py-3">{p.status}</td>
-                  <td className="px-4 py-3">{p.categoria}</td>
-                  <td className="px-4 py-3">
-                    {Array.isArray(p.subCategoria)
-                      ? p.subCategoria.join(', ')
-                      : p.subCategoria || '-'}
-                  </td>
-                  <td className="px-4 py-3">{p.destacado ? '✅' : '-'}</td>
-                  <td className="px-4 py-3 flex gap-2">
-                    <button
-                      onClick={() => handleEditClick(String(p._id))}
-                      className="px-3 py-1 rounded-xl bg-blue-600 text-white"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(String(p._id))}
-                      className="px-3 py-1 rounded-xl bg-red-600 text-white"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+
+              <div className="px-4 md:px-6 py-4 border-b">
+
+                <h3 className="text-lg font-semibold">Productos</h3>
+
+              </div>
+
+              <DragDropContext onDragEnd={handleProductDragEnd}>
+
+                <table className="min-w-full text-sm">
+
+                  <thead className="bg-gray-100 text-left text-gray-700">
+
+                    <tr>
+
+                      <th className="px-4 py-3"></th> {/* Handle for drag */}
+
+                      <th className="px-4 py-3">Imagen</th>
+
+                      <th className="px-4 py-3">Nombre</th>
+
+                      <th className="px-4 py-3">Precio</th>
+
+                      <th className="px-4 py-3">Estado</th>
+
+                      <th className="px-4 py-3">Categoría</th>
+
+                      <th className="px-4 py-3">Subcategoría</th>
+
+                      <th className="px-4 py-3">Destacado</th>
+
+                      <th className="px-4 py-3">Acciones</th>
+
+                    </tr>
+
+                  </thead>
+
+                  <Droppable droppableId="products-table-body">
+
+                    {(provided) => (
+
+                      <tbody
+
+                        {...provided.droppableProps}
+
+                        ref={provided.innerRef}
+
+                        className="bg-white divide-y divide-gray-200"
+
+                      >
+
+                        {productos.map((p, index) => (
+
+                          <Draggable key={String(p._id)} draggableId={String(p._id)} index={index}>
+
+                            {(provided) => (
+
+                              <tr
+
+                                ref={provided.innerRef}
+
+                                {...provided.draggableProps}
+
+                                {...provided.dragHandleProps}
+
+                                className="odd:bg-white even:bg-gray-50 border-b"
+
+                              >
+
+                                <td className="px-2 py-3 cursor-grab">
+
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
+
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6h16.5" />
+
+                                  </svg>
+
+                                </td>
+
+                                <td className="px-4 py-3">
+
+                                  <Image
+
+                                    src={p.imageUrl}
+
+                                    alt={p.alt || p.nombre}
+
+                                    width={64}
+
+                                    height={64}
+
+                                    className="object-cover rounded-xl"
+
+                                  />
+
+                                </td>
+
+                                <td className="px-4 py-3">{p.nombre}</td>
+
+                                <td className="px-4 py-3">{getDisplayPrice(p)}</td>
+
+                                <td className="px-4 py-3">{p.status}</td>
+
+                                <td className="px-4 py-3">{p.categoria}</td>
+
+                                <td className="px-4 py-3">
+
+                                  {Array.isArray(p.subCategoria)
+
+                                    ? p.subCategoria.join(', ')
+
+                                    : p.subCategoria || '-'}
+
+                                </td>
+
+                                <td className="px-4 py-3">{p.destacado ? '✅' : '-'}</td>
+
+                                <td className="px-4 py-3 flex gap-2">
+
+                                  <button
+
+                                    onClick={() => handleEditClick(String(p._id))}
+
+                                    className="px-3 py-1 rounded-xl bg-blue-600 text-white"
+
+                                  >
+
+                                    Editar
+
+                                  </button>
+
+                                  <button
+
+                                    onClick={() => handleDelete(String(p._id))}
+
+                                    className="px-3 py-1 rounded-xl bg-red-600 text-white"
+
+                                  >
+
+                                    Eliminar
+
+                                  </button>
+
+                                </td>
+
+                              </tr>
+
+                            )}
+
+                          </Draggable>
+
+                        ))}                  {provided.placeholder}
+
+                      </tbody>
+
+                    )}
+
+                  </Droppable>
+
+                </table>
+
+              </DragDropContext>
+
+            </div>
     </AdminLayout>
   )
 }

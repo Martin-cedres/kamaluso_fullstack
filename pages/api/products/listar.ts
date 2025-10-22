@@ -41,6 +41,7 @@ export default async function handler(
     const page = getQueryParam(reqQuery.page) || '1';
     const limit = getQueryParam(reqQuery.limit) || '12';
     const destacadoQuery = reqQuery.destacado;
+    const sortParam = getQueryParam(reqQuery.sort);
 
     const categoria = categoriaParam ? norm(categoriaParam) : '';
     const subCategoria = subCategoriaParam
@@ -121,7 +122,7 @@ export default async function handler(
 
     const aggregationPipeline = [
       { $match: query },
-      { $sort: { createdAt: -1 } },
+      { $sort: sortParam === 'order' ? { order: 1, createdAt: -1 } : { createdAt: -1 } },
       { $skip: skip },
       { $limit: limitNum },
       {
@@ -173,6 +174,7 @@ export default async function handler(
           tapa: 1,
           averageRating: 1,
           numReviews: 1,
+          order: 1, // Incluir el campo order en la proyección
         },
       },
     ];

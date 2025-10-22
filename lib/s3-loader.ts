@@ -28,8 +28,11 @@ export default function s3Loader({ src, width, quality }: ImageLoaderProps): str
   // 'width' es el tamaño que next/image considera necesario.
   const bestFitSize = imageWidths.find(w => w >= width) || imageWidths[imageWidths.length - 1];
 
+  // Eliminar cualquier sufijo de tamaño existente (-400w, -800w, -1200w)
+  let cleanSrc = src.replace(/-\d+w\.webp$/, '.webp');
+
   // Quitamos la extensión .webp para insertar el tamaño
-  const baseUrl = src.slice(0, -5); // Elimina ".webp"
+  const baseUrl = cleanSrc.slice(0, -5); // Elimina ".webp"
 
   // Construimos la nueva URL con el tamaño
   const finalUrl = `${baseUrl}-${bestFitSize}w.webp`;

@@ -41,6 +41,7 @@ export interface IProduct extends Document {
   numReviews?: number;
   claveDeGrupo?: string;
   customizationGroups?: ICustomizationGroup[];
+  order?: number; // Nuevo campo para el orden de visualización
 }
 
 const productSchema: Schema<IProduct> = new Schema(
@@ -64,6 +65,7 @@ const productSchema: Schema<IProduct> = new Schema(
     destacado: { type: Boolean, default: false },
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
+    order: { type: Number, default: 0 }, // Nuevo campo para el orden
     customizationGroups: [
       {
         name: String,

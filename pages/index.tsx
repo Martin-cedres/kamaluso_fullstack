@@ -234,6 +234,7 @@ export const getStaticProps: GetStaticProps = async () => {
   // Aggregation pipeline to fetch featured products with review data
   const destacadosPipeline = [
     { $match: { destacado: true } },
+    { $sort: { order: 1, createdAt: -1 } as any },
     { $limit: 4 },
     {
       $lookup: {

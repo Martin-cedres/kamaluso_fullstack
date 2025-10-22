@@ -5,6 +5,7 @@ import connectDB from '../../../../lib/mongoose';
 import Category from '../../../../models/Category';
 import { uploadFileToS3 } from '../../../../lib/s3-upload';
 import os from 'os';
+import { revalidateCategoryPaths } from '../../../../lib/utils'; // Importar la función de revalidación
 
 export const config = { api: { bodyParser: false } };
 
@@ -52,6 +53,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       const category = new Category(newCategory);
       await category.save();
+
+      // Revalidar las rutas de la categoría
+      await revalidateCategoryPaths(newCategory.slug, newCategory.parent);
 
       res.status(201).json({ success: true, message: 'Categoría creada con éxito', data: category });
     } catch (error: any) {

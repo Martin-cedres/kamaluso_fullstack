@@ -451,7 +451,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
       const aggregationPipeline = [
         { $match: query },
-        { $sort: { creadoEn: -1 } },
+        { $sort: { order: 1, creadoEn: -1 } },
         { $skip: (page - 1) * limit },
         { $limit: limit },
         {

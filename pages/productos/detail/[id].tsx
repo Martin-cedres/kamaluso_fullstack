@@ -204,6 +204,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
     // Iterate through all selected options to calculate price
     product.customizationGroups?.forEach(group => {
+      if (group.type === 'text') return; // Skip text type groups as they don't have options
       const selectedOptionName = selections[group.name];
       if (selectedOptionName) {
         const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
@@ -227,14 +228,15 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   }, [selections, product, activeImage, handleImageChange, isSpecialProduct]);
 
 
-  const handleSelectionChange = (groupName: string, optionName: string) => {
+  const handleSelectionChange = (groupName: string, value: string) => {
     const trimmedGroupName = groupName.trim();
-    const trimmedOptionName = optionName.trim();
+    const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
+    const finalValue = (group?.type === 'text') ? value : value.trim();
 
     setSelections(prev => {
       const newSelections: Record<string, string> = {
         ...prev,
-        [trimmedGroupName]: trimmedOptionName,
+        [trimmedGroupName]: finalValue,
       };
 
       // Deselect options of dependent groups when the parent changes
@@ -245,9 +247,9 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       });
 
       // Explicitly update activeImage if the newly selected option has one, only for special products
-      if (isSpecialProduct) {
-        const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
-        const option = group?.options.find(o => o.name.trim() === trimmedOptionName);
+      const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
+      if (group?.type !== 'text' && isSpecialProduct) {
+        const option = group?.options.find(o => o.name.trim() === trimmedValue);
         if (option?.image) {
           handleImageChange(option.image);
         }
@@ -333,7 +335,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       }) || [];
 
       for (const group of visibleGroups) {
-        if (!selections[group.name]) {
+        // Los grupos de texto son opcionales, no requieren selección
+        if (group.type !== 'text' && !selections[group.name]) {
           toast.error(`Por favor, selecciona una opción para "${group.name}".`);
           return; // Stop if a selection is missing
         }
@@ -594,6 +597,22 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     );
                   }
 
+                  if (group.type === 'text') {
+                    return (
+                      <div key={groupName}>
+                        <label htmlFor={groupName} className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
+                        <textarea
+                          id={groupName}
+                          value={selections[groupName] || ''}
+                          onChange={(e) => handleSelectionChange(groupName, e.target.value)}
+                          placeholder={group.value || 'Escribe tu texto aquí...'}
+                          rows={3}
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
+                        />
+                      </div>
+                    );
+                  }
+
                   // --- Nuevo Renderizador de Botones Modernos ---
                   return (
                     <div key={groupName}>
@@ -703,7 +722,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
 export const getStaticPaths: GetStaticPaths = async () => {
   await connectDB()
-  const products = await Product.find({}).limit(10).lean() // Pre-build 10 pages
+  const products = await Product.find({}).lean()
 
   const paths = products.map((product) => ({
     params: { id: product._id.toString() },
