@@ -8,14 +8,7 @@ import 'swiper/css/pagination';
 import ReviewCard from './ReviewCard';
 import Head from 'next/head';
 
-interface IReview {
-  _id: string;
-  user: { name: string };
-  product: { _id: string; nombre: string; imageUrl?: string };
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
+import { IReview } from '../models/Review';
 
 interface FeaturedReviewsProps {
   reviews: IReview[];

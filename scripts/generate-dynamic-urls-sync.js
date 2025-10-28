@@ -42,7 +42,7 @@ async function getDynamicUrlsSync() {
     const products = await Product.find({}, '_id').lean()
     products.forEach((p) => {
       if (p._id) {
-        urlSet.add(`/productos/detail/${p._id}`)
+        urlSet.add(`/productos/detail/${p.slug}`)
       }
     })
 

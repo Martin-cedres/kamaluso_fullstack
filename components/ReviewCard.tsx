@@ -3,14 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import StarRating from './StarRating';
 
-interface IReview {
-  _id: string;
-  user: { name: string };
-  product: { _id: string; nombre: string; imageUrl?: string };
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
+import { IReview } from '../models/Review';
 
 interface ReviewCardProps {
   review: IReview;
@@ -27,7 +20,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
       </div>
       <div className="mt-4 pt-4 border-t border-gray-100">
         <p className="font-semibold text-gray-800">{review.user.name}</p>
-        <Link href={`/productos/detail/${review.product._id}`} className="text-sm text-pink-500 hover:text-pink-500 hover:underline truncate block">
+        <Link href={`/productos/detail/${review.product.slug}`} className="text-sm text-pink-500 hover:text-pink-500 hover:underline truncate block">
           Opinión sobre: {review.product.nombre}
         </Link>
       </div>

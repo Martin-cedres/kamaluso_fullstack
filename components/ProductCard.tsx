@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const productUrl = `/productos/detail/${product._id}`;
+  const productUrl = `/productos/detail/${product.slug}`;
 
   return (
     <div className="flex flex-col h-full rounded-2xl border border-transparent overflow-hidden shadow-md transition-shadow hover:shadow-lg hover:shadow-pink-500/50 hover:border-2 hover:border-pink-500/50">

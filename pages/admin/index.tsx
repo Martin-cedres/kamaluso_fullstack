@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Image from 'next/image'
 import {
@@ -21,6 +21,7 @@ import AdminLayout from '../../components/AdminLayout' // Importar el layout
 import toast from 'react-hot-toast' // Importar toast
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css';
+import { ICoverDesign } from '../../models/CoverDesign'; // Import ICoverDesign
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
@@ -36,7 +37,185 @@ interface CategoriaData {
   children: CategoriaData[]
 }
 
-export default function Admin() {
+const SelectGroupModal = ({ availableGroups, onClose, onSelectGroup, groupType }: {
+  availableGroups: string[];
+  onClose: () => void;
+  onSelectGroup: (groupName: string, groupType: 'GaleriaDura' | 'GaleriaFlex') => void;
+  groupType: 'GaleriaDura' | 'GaleriaFlex';
+}) => {
+  const [selectedGroup, setSelectedGroup] = useState('');
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+        <h4 className="text-lg font-semibold mb-4">Seleccionar Grupo de Diseños</h4>
+        <p className="text-sm text-gray-600 mb-4">
+          Selecciona el grupo de diseños de tapa que quieres agregar a este producto.
+        </p>
+        <div className="mb-4">
+          <label htmlFor="groupSelect" className="block text-sm font-medium text-gray-700">Grupos Disponibles</label>
+          <select
+            id="groupSelect"
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            className="w-full mt-1 p-2 border rounded-md focus:ring-pink-500 focus:border-pink-500"
+          >
+            <option value="" disabled>Selecciona un grupo</option>
+            {availableGroups.map(group => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">
+            Cancelar
+          </button>
+          <button
+            onClick={() => {
+              if (selectedGroup) {
+                onSelectGroup(selectedGroup, groupType);
+                onClose();
+              } else {
+                toast.error('Por favor, selecciona un grupo.');
+              }
+            }}
+            className="bg-pink-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-pink-700"
+          >
+            Agregar Grupo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const CodeGenerationModal = ({ onClose, onGenerateCodes, groupType }: {
+  onClose: () => void;
+  onGenerateCodes: (count: number, groupType: 'GaleriaDura' | 'GaleriaFlex') => void;
+  groupType: 'GaleriaDura' | 'GaleriaFlex';
+}) => {
+  const [count, setCount] = useState(1);
+
+  const handleGenerate = () => {
+    if (count > 0) {
+      onGenerateCodes(count, groupType);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+        <h4 className="text-lg font-semibold mb-4">Generar Códigos de Diseño de Tapa</h4>
+        <p className="text-sm text-gray-600 mb-4">
+          Introduce la cantidad de códigos correlativos (ej. COD-001, COD-002) que deseas generar para el grupo de tipo &quot;{groupType === 'GaleriaDura' ? 'Tapa Dura' : 'Tapa Flexible'}&quot;.
+        </p>
+        <div className="mb-4">
+          <label htmlFor="codeCount" className="block text-sm font-medium text-gray-700">Cantidad de Códigos</label>
+          <input
+            type="number"
+            id="codeCount"
+            value={count}
+            onChange={(e) => setCount(parseInt(e.target.value) || 0)}
+            min="1"
+            className="w-full mt-1 p-2 border rounded-md focus:ring-pink-500 focus:border-pink-500"
+          />
+        </div>
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">
+            Cancelar
+          </button>
+          <button onClick={handleGenerate} className="bg-pink-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-pink-700">
+            Generar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DependencyModal = ({ allGroups, currentIndex, onClose, onSetDependency, currentDependency }: any) => {
+  const [selectedGroup, setSelectedGroup] = useState(currentDependency?.groupName || '');
+  const [selectedOption, setSelectedOption] = useState(currentDependency?.optionName || '');
+
+  const availableParentGroups = allGroups.filter((_: any, index: number) => index !== currentIndex);
+  const parentOptions = allGroups.find((g: any) => g.name === selectedGroup)?.options || [];
+
+  useEffect(() => {
+    if (currentDependency) {
+      setSelectedGroup(currentDependency.groupName);
+      setSelectedOption(currentDependency.optionName);
+    }
+  }, [currentDependency]);
+
+  const handleSave = () => {
+    if (selectedGroup && selectedOption) {
+      onSetDependency(currentIndex, { groupName: selectedGroup, optionName: selectedOption });
+    }
+  };
+
+  const handleRemove = () => {
+    onSetDependency(currentIndex, null);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+        <h4 className="text-lg font-semibold mb-4">Definir Dependencia</h4>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Grupo Padre</label>
+            <select
+              value={selectedGroup}
+              onChange={(e) => {
+                setSelectedGroup(e.target.value);
+                setSelectedOption(''); // Reset option on group change
+              }}
+              className="w-full mt-1 p-2 border rounded-md"
+            >
+              <option value="">Seleccione un grupo</option>
+              {availableParentGroups.map((g: any, i: number) => (
+                <option key={i} value={g.name}>{g.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Opción del Padre</label>
+            <select
+              value={selectedOption}
+              onChange={(e) => setSelectedOption(e.target.value)}
+              className="w-full mt-1 p-2 border rounded-md"
+              disabled={!selectedGroup}
+            >
+              <option value="">Seleccione una opción</option>
+              {parentOptions.map((opt: any, i: number) => (
+                <option key={i} value={opt.name}>{opt.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-between">
+          <div>
+            <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-700">
+              Guardar Dependencia
+            </button>
+            {currentDependency && (
+              <button onClick={handleRemove} className="ml-2 text-red-500 hover:text-red-700">
+                Eliminar Dependencia
+              </button>
+            )}
+          </div>
+          <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminIndex = () => {
   const router = useRouter()
 
   // --- ESTADOS --- //
@@ -86,8 +265,38 @@ export default function Admin() {
   };
 
   const [dependencyState, setDependencyState] = useState<{ groupIndex: number | null; visible: boolean }>({ groupIndex: null, visible: false });
+  const [showCodeGenerationModal, setShowCodeGenerationModal] = useState(false);
+  const [codeGenerationGroupType, setCodeGenerationGroupType] = useState<'GaleriaDura' | 'GaleriaFlex' | null>(null);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [currentGalleryType, setCurrentGalleryType] = useState<'GaleriaDura' | 'GaleriaFlex' | null>(null);
+
+  const handleAddCoverDesignGroup = (groupName: string, groupType: 'GaleriaDura' | 'GaleriaFlex') => {
+    const designsForGroup = availableCoverDesigns.filter(d => d.groups?.includes(groupName));
+    const newGroupName = `Diseño de Tapa (${groupName})`;
+
+    if (form.customizationGroups.some((g: any) => g.name === newGroupName)) {
+      toast.error(`El grupo '${newGroupName}' ya existe.`);
+      return;
+    }
+
+    const newGroup = {
+      name: newGroupName,
+      type: 'radio',
+      options: designsForGroup.map(design => ({ name: design.code, priceModifier: design.priceModifier || 0, image: design.imageUrl })),
+      dependsOn: { groupName: 'Tipo de Tapa', optionName: groupType === 'GaleriaDura' ? 'Tapa Dura' : 'Tapa Flexible' },
+    };
+
+    setForm((f: any) => ({ ...f, customizationGroups: [...f.customizationGroups, newGroup] }));
+    toast.success(`Grupo '${newGroupName}' agregado con éxito.`);
+  };
 
   const addPredefinedGroup = (groupType: 'Textura' | 'Elastico' | 'GaleriaDura' | 'GaleriaFlex' | 'TipoTapa' | 'Interiores' | 'Texto') => {
+    if (groupType === 'GaleriaDura' || groupType === 'GaleriaFlex') {
+      setCurrentGalleryType(groupType);
+      setIsGroupModalOpen(true);
+      return;
+    }
+    
     let newGroup;
 
     if (groupType === 'TipoTapa') {
@@ -148,30 +357,6 @@ export default function Admin() {
           type: 'radio',
           options: [{ name: 'Sí', priceModifier: 0 }, { name: 'No', priceModifier: 0 }],
           dependsOn: { groupName: 'Tipo de Tapa', optionName: 'Tapa Dura' },
-        };
-      } else if (groupType === 'GaleriaDura') {
-        const groupName = 'Diseño de Tapa (Tapa Dura)';
-        if (form.customizationGroups.some((g: any) => g.name === groupName)) {
-          toast.error(`El grupo '${groupName}' ya existe.`);
-          return;
-        }
-        newGroup = {
-          name: groupName,
-          type: 'radio',
-          options: [],
-          dependsOn: { groupName: 'Tipo de Tapa', optionName: 'Tapa Dura' },
-        };
-      } else if (groupType === 'GaleriaFlex') {
-        const groupName = 'Diseño de Tapa (Tapa Flexible)';
-        if (form.customizationGroups.some((g: any) => g.name === groupName)) {
-          toast.error(`El grupo '${groupName}' ya existe.`);
-          return;
-        }
-        newGroup = {
-          name: groupName,
-          type: 'radio',
-          options: [],
-          dependsOn: { groupName: 'Tipo de Tapa', optionName: 'Tapa Flexible' },
         };
       }
     }
@@ -247,9 +432,29 @@ export default function Admin() {
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [showForm, setShowForm] = useState(false)
-  const [editId, setEditId] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(null);
+  const [availableCoverDesigns, setAvailableCoverDesigns] = useState<ICoverDesign[]>([]); // New state for cover designs
 
   // --- LÓGICA --- //
+
+  const fetchAvailableCoverDesigns = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/cover-designs/list');
+      const data = await res.json();
+      if (res.ok) {
+        setAvailableCoverDesigns(data);
+      } else {
+        toast.error(data.error || 'Error al cargar diseños de tapa disponibles.');
+      }
+    } catch (error) {
+      console.error('Error fetching available cover designs:', error);
+      toast.error('Error al cargar diseños de tapa disponibles.');
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAvailableCoverDesigns();
+  }, [fetchAvailableCoverDesigns]);
 
   const generateSlug = (text: string) =>
     text
@@ -268,12 +473,12 @@ export default function Admin() {
     try {
       const res = await fetch('/api/categorias/listar')
       const data = await res.json()
-                setAllCategories(Array.isArray(data) ? data : [])
-                  } catch (e) {
-                    console.error('Error fetch categorías:', e)
-                    setAllCategories([])
-                  }
-                }, [])
+      setAllCategories(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error('Error fetch categorías:', e)
+      setAllCategories([])
+    }
+  }, [])
 
   useEffect(() => {
     fetchCategories();
@@ -542,11 +747,40 @@ export default function Admin() {
       delete newGroups[groupIndex].dependsOn;
     }
     setForm((f: any) => ({ ...f, customizationGroups: newGroups }));
-    setDependencyState({ groupIndex: null, visible: false });
   };
+
+  const handleGenerateCodes = (count: number, groupType: 'GaleriaDura' | 'GaleriaFlex') => {
+    const groupName = groupType === 'GaleriaDura' ? 'Diseño de Tapa (Tapa Dura)' : 'Diseño de Tapa (Tapa Flexible)';
+    const dependsOn = groupType === 'GaleriaDura' ? { groupName: 'Tipo de Tapa', optionName: 'Tapa Dura' } : { groupName: 'Tipo de Tapa', optionName: 'Tapa Flexible' };
+
+    const newOptions = Array.from({ length: count }, (_, i) => ({
+      name: `COD-${(i + 1).toString().padStart(3, '0')}`,
+      priceModifier: 0,
+    }));
+
+    const newGroup = {
+      name: groupName,
+      type: 'radio',
+      options: newOptions,
+      dependsOn: dependsOn,
+    };
+
+    setForm((f: any) => ({ ...f, customizationGroups: [...f.customizationGroups, newGroup] }));
+    toast.success(`Grupo '${groupName}' con ${count} códigos generado con éxito.`);
+  };
+
+  const availableDesignGroups = Array.from(new Set(availableCoverDesigns.flatMap(d => d.groups || [])));
 
   return (
     <AdminLayout>
+      {isGroupModalOpen && currentGalleryType && (
+        <SelectGroupModal
+          availableGroups={availableDesignGroups}
+          onClose={() => setIsGroupModalOpen(false)}
+          onSelectGroup={handleAddCoverDesignGroup}
+          groupType={currentGalleryType}
+        />
+      )}
       {dependencyState.visible && (
         <DependencyModal
           allGroups={form.customizationGroups}
@@ -554,6 +788,14 @@ export default function Admin() {
           onClose={() => setDependencyState({ groupIndex: null, visible: false })}
           onSetDependency={handleSetDependency}
           currentDependency={form.customizationGroups[dependencyState.groupIndex!]?.dependsOn}
+        />
+      )}
+
+      {showCodeGenerationModal && codeGenerationGroupType && (
+        <CodeGenerationModal
+          onClose={() => setShowCodeGenerationModal(false)}
+          onGenerateCodes={handleGenerateCodes}
+          groupType={codeGenerationGroupType}
         />
       )}
 
@@ -567,7 +809,9 @@ export default function Admin() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-
+          <Link href="/admin/cover-designs" className="inline-flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">
+            Gestionar Diseños
+          </Link>
           <button
             onClick={() => {
               if (showForm) {
@@ -1026,7 +1270,8 @@ export default function Admin() {
 
                           </Draggable>
 
-                        ))}                  {provided.placeholder}
+                        ))}
+                        {provided.placeholder}
 
                       </tbody>
 
@@ -1043,82 +1288,4 @@ export default function Admin() {
   )
 }
 
-const DependencyModal = ({ allGroups, currentIndex, onClose, onSetDependency, currentDependency }: any) => {
-  const [selectedGroup, setSelectedGroup] = useState(currentDependency?.groupName || '');
-  const [selectedOption, setSelectedOption] = useState(currentDependency?.optionName || '');
-
-  const availableParentGroups = allGroups.filter((_: any, index: number) => index !== currentIndex);
-  const parentOptions = allGroups.find((g: any) => g.name === selectedGroup)?.options || [];
-
-  useEffect(() => {
-    if (currentDependency) {
-      setSelectedGroup(currentDependency.groupName);
-      setSelectedOption(currentDependency.optionName);
-    }
-  }, [currentDependency]);
-
-  const handleSave = () => {
-    if (selectedGroup && selectedOption) {
-      onSetDependency(currentIndex, { groupName: selectedGroup, optionName: selectedOption });
-    }
-  };
-
-  const handleRemove = () => {
-    onSetDependency(currentIndex, null);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-        <h4 className="text-lg font-semibold mb-4">Definir Dependencia</h4>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Grupo Padre</label>
-            <select
-              value={selectedGroup}
-              onChange={(e) => {
-                setSelectedGroup(e.target.value);
-                setSelectedOption(''); // Reset option on group change
-              }}
-              className="w-full mt-1 p-2 border rounded-md"
-            >
-              <option value="">Seleccione un grupo</option>
-              {availableParentGroups.map((g: any, i: number) => (
-                <option key={i} value={g.name}>{g.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Opción del Padre</label>
-            <select
-              value={selectedOption}
-              onChange={(e) => setSelectedOption(e.target.value)}
-              className="w-full mt-1 p-2 border rounded-md"
-              disabled={!selectedGroup}
-            >
-              <option value="">Seleccione una opción</option>
-              {parentOptions.map((opt: any, i: number) => (
-                <option key={i} value={opt.name}>{opt.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="mt-6 flex justify-between">
-          <div>
-            <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-700">
-              Guardar Dependencia
-            </button>
-            {currentDependency && (
-              <button onClick={handleRemove} className="ml-2 text-red-500 hover:text-red-700">
-                Eliminar Dependencia
-              </button>
-            )}
-          </div>
-          <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+export default AdminIndex;

@@ -2,6 +2,9 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 })
 
+const fs = require('fs');
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -19,6 +22,20 @@ const nextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
+  },
+  async redirects() {
+    const redirectsMapPath = path.join(__dirname, 'redirects-map.json');
+    let redirects = [];
+
+    if (fs.existsSync(redirectsMapPath)) {
+      const rawData = fs.readFileSync(redirectsMapPath, 'utf8');
+      redirects = JSON.parse(rawData);
+      console.log(`Loaded ${redirects.length} redirects from redirects-map.json`);
+    } else {
+      console.log('redirects-map.json not found. No redirects loaded.');
+    }
+
+    return redirects;
   },
 }
 

@@ -7,10 +7,23 @@
  * @returns El string normalizado.
  */
 export function toSlug(s: any): string {
-  return String(s || '')
-    .trim()
+  if (!s) return '';
+  s = String(s);
+
+  // 1. Convert to lowercase
+  // 2. Normalize accented characters (e.g., á -> a)
+  // 3. Replace non-alphanumeric characters (except hyphens) with nothing
+  // 4. Replace spaces and multiple hyphens with a single hyphen
+  // 5. Remove leading/trailing hyphens
+  return s
+    .normalize("NFD") // Normalize to NFD (Canonical Decomposition Form)
+    .replace(/\p{M}/gu, "") // Remove diacritics (accents)
     .toLowerCase()
-    .replace(/\s+/g, '-')
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove all non-alphanumeric chars except spaces and hyphens
+    .replace(/\s+/g, '-') // Replace spaces with single hyphen
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
 
 /**
@@ -20,7 +33,7 @@ export function toSlug(s: any): string {
  */
 export function getProductHref(p: any): string {
   if (p._id) {
-    return `/productos/detail/${p._id}`;
+    return `/productos/detail/${p.slug}`;
   }
   // Fallback if essential data is missing
   return `/productos/not-found`;

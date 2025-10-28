@@ -59,8 +59,7 @@ async function generateSitemap() {
     .map(({ _id }) => {
       return `
   <url>
-    <loc>${BASE_URL}/productos/detail/${_id}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
+            <loc>${BASE_URL}/productos/detail/${slug}</loc>    <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

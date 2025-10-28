@@ -121,7 +121,22 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Nuevo: Manejo de customizationGroups
       if (fields.customizationGroups) {
         try {
-          updateDoc.customizationGroups = JSON.parse(fields.customizationGroups as string);
+          const groups = JSON.parse(fields.customizationGroups as string);
+          
+          // Asegurarse de que las URLs de las imágenes de los diseños de tapa sean completas
+          groups.forEach((group: any) => {
+            if (group.name && group.name.startsWith('Diseño de Tapa') && group.options) {
+              group.options.forEach((option: any) => {
+                if (option.image && !option.image.startsWith('http')) {
+                  // Si la imagen no es una URL completa, construirla.
+                  option.image = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/processed/${option.image}`;
+                }
+              });
+            }
+          });
+
+          updateDoc.customizationGroups = groups;
+
         } catch (e) {
           console.error("Error parsing customizationGroups on edit", e);
           return res.status(400).json({ error: 'Formato de grupos de personalización inválido.' });

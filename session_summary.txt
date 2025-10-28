@@ -1,60 +1,159 @@
-## Resumen de la Sesión de Trabajo - 20 de Octubre de 2025
+Resumen de la Sesión:
 
-**Objetivo Principal:** Optimización integral de la carga de imágenes, implementación de revalidación bajo demanda para categorías y corrección de errores de compilación.
+  Trabajo Realizado:
 
-### 1. Optimización de Carga de Imágenes
+   * Se identificó el problema de las imágenes de diseño de tapa deformadas y la complejidad de la    
+     experiencia de usuario en la selección de diseños.
+   * Se analizó la estructura de archivos y los componentes clave (pages/productos/detail/[id].tsx,   
+     models/Product.ts, models/CoverDesign.ts).
+   * Se definió un nuevo plan de UX: una galería de diseños de tapa con desplazamiento horizontal y   
+     previsualización instantánea en la imagen principal del producto, permitiendo al usuario alternar
+      entre fotos del producto y diseños de tapa.
+   * Se refactorizó el modelo models/Product.ts para incluir coverDesignGroupNames (para vincular     
+     productos a galerías de diseños) y se reintrodujo customizationGroups (para otras opciones       
+     estáticas de personalización).
+   * Se creó el componente components/NewCoverDesignGallery.tsx que implementa la galería de
+     desplazamiento horizontal.
+   * Se actualizaron las importaciones en pages/productos/detail/[id].tsx.
+   * Se actualizaron los estados y manejadores de eventos en pages/productos/detail/[id].tsx para     
+     alinearlos con la nueva lógica.
+   * Se solucionaron errores de compilación en pages/productos/detail/[id].tsx eliminando código     
+     incompleto y no utilizado relacionado con una nueva funcionalidad de galería de diseños de tapa.
 
-*   **Problema Inicial:** Lentitud percibida en la carga de imágenes debido a la descarga de tamaños no óptimos y un efecto de "fade-in" en el carrusel de productos.
-*   **Acciones Realizadas:**
-    *   **Corrección de `sizes` prop:** Se ajustó la propiedad `sizes` en los componentes `<Image>` de `components/ProductCard.tsx`, `pages/index.tsx` (imágenes de categorías), `pages/regalos-empresariales.tsx` (productos sugeridos), `pages/blog/[slug].tsx` (imagen de portada), `pages/cart.tsx` (imágenes del carrito) y `pages/productos/detail/[id].tsx` (imagen principal y productos relacionados).
-    *   **Eliminación de efecto "fade-in":** Se eliminaron las clases de transición CSS del carrusel de imágenes en `pages/productos/detail/[id].tsx` para una carga instantánea.
-    *   **Robustez del `s3-loader.ts`:** Se modificó `lib/s3-loader.ts` para que sea más robusto al procesar URLs de imágenes, eliminando cualquier sufijo de tamaño existente antes de construir la URL final.
-    *   **Verificación de URLs en DB:** Se confirmó que las URLs de `imageUrl` en la base de datos ya están en el formato correcto (sin sufijos de tamaño), por lo que el script de limpieza de URLs no actualizó ningún producto.
-    *   **Análisis de carga de 1200w:** Se determinó que la carga de imágenes de 1200w en laptops se debe al DPR (Device Pixel Ratio) para asegurar la nitidez visual, lo cual es un comportamiento esperado para la calidad.
-*   **Resultado:** Mejora significativa en el LCP de la página de detalle de producto (467 ms) y carga de imágenes más eficientes en todo el sitio.
+  Tareas Pendientes:
 
-### 2. Implementación de Revalidación Bajo Demanda para Categorías
-
-*   **Problema:** Los cambios en las categorías no se reflejaban instantáneamente en el sitio.
-*   **Acciones Realizadas:**
-    *   **Adición de `revalidateCategoryPaths`:** Se creó y añadió la función `revalidateCategoryPaths` a `lib/utils.ts`.
-    *   **Integración en APIs de Categorías:** Se integró la llamada a `revalidateCategoryPaths` en `pages/api/admin/categorias/crear.ts` y `pages/api/admin/categorias/editar.ts` para activar la revalidación bajo demanda al crear o actualizar categorías.
-*   **Resultado:** Los cambios en las categorías ahora se revalidarán automáticamente en la página de inicio, la página de la categoría y la página de la categoría padre.
-
-### 3. Pre-renderizado de Todos los Productos
-
-*   **Problema:** Solo se pre-renderizaban 10 productos en el `build`.
-*   **Acciones Realizadas:**
-    *   **Eliminación de límite en `getStaticPaths`:** Se eliminó `.limit(10)` de `getStaticPaths` en `pages/productos/detail/[id].tsx`.
-*   **Resultado:** Todas las páginas de detalle de producto se pre-renderizarán en el momento del `build`, mejorando la velocidad de carga inicial para todos los productos.
-
-### 4. Corrección y Verificación de Errores
-
-*   **Acciones Realizadas:**
-    *   **Corrección de error de sintaxis:** Se solucionó un error de sintaxis en `pages/productos/detail/[id].tsx`.
-    *   **Limpieza de caché de Next.js:** Se eliminó la carpeta `.next` para resolver un `PageNotFoundError`.
-    *   **Depuración de script de DB:** Se depuró el script `scripts/fix-image-urls.js` para corregir errores de `MODULE_NOT_FOUND` y `Product.find is not a function`, y se confirmó que las URLs en la DB ya estaban limpias.
-    *   **Verificación de Build:** Se confirmó que el proyecto compila exitosamente después de todos los cambios.
-
+   1. Actualización del JSX (Sección de Personalización): Reemplazar la interfaz de usuario antigua de
+      personalización en pages/productos/detail/[id].tsx con el nuevo componente NewCoverDesignGallery
+      y la lógica para renderizar opciones estáticas.
+   2. Eliminación del Lightbox Antiguo: Eliminar los componentes de lightbox antiguos relacionados con
+      la selección de diseños de tapa de pages/productos/detail/[id].tsx.
+   3. Refactorización de `getStaticProps`: Actualizar la función getStaticProps en
+      pages/productos/detail/[id].tsx para que cargue y combine dinámicamente los grupos de
+      personalización (estáticos y de diseños de tapa).
 ---
+## Resumen de la Sesión de Trabajo - 27 de Octubre de 2025
+
+**Objetivo Principal:** Solucionar errores de compilación en la página de detalle de producto.
+
+### 1. Corrección de Errores de Compilación
+
+*   **Problema:** El proyecto no compilaba debido a errores de TypeScript en `pages/productos/detail/[id].tsx`.
+*   **Acciones Realizadas:**
+    *   Se identificó que el error principal era `Cannot find name \'setOpen\'`.
+    *   Se añadió la declaración del estado `const [open, setOpen] = useState(false);`.
+    *   Se eliminó código incompleto y no utilizado que causaba errores adicionales. Esto incluía:
+        *   Lógica relacionada con `isSpecialProduct`, `handlePrevImage`, y `handleNextImage`.
+        *   La implementación de una nueva galería de diseños de tapa (`NewCoverDesignGallery`) y sus componentes asociados.
+        *   Variables y estados no definidos como `displayGroups`, `activeCoverDesignGroups`, etc.
+*   **Resultado:** El proyecto compila exitosamente, permitiendo continuar con el desarrollo.
 
 ### Tareas Pendientes:
 
-*   **Implementar Slugs en URLs de Productos:** El usuario desea que las URLs de los productos utilicen el `slug` en lugar del `_id` (ej. `/productos/detail/[slug]`). Esto requiere una refactorización significativa de las rutas y la lógica de `getStaticPaths` y `getStaticProps`.
-*   **Deploy a Vercel:** El usuario debe realizar un nuevo `deploy` de la aplicación a Vercel para aplicar todos los cambios de código realizados en esta sesión.
+*   Revisar y completar la implementación de la nueva galería de diseños de tapa.
+---
+## Resumen de la Sesión de Trabajo - 27 de Octubre de 2025 (Continuación)
 
- Descripción del Commit:
+**Objetivo Principal:** Implementar la nueva galería de diseños de tapa y asegurar su correcto funcionamiento.
 
-   1 Se implementaron optimizaciones exhaustivas para la carga de imágenes en todo el
-     sitio, incluyendo ajustes de `sizes` y robustez del `s3-loader`.
-   2 Se añadió la revalidación bajo demanda para categorías y se configuró el
-     pre-renderizado de todos los productos.
+### 1. Implementación de la Galería de Diseños de Tapa
 
-  Descripción del Commit:
+*   **Problema:** La galería de diseños de tapa no era visible y la implementación estaba incompleta.
+*   **Acciones Realizadas:**
+    *   Se reintrodujo el componente `NewCoverDesignGallery` en la página de detalle del producto.
+    *   Se restauró la lógica para mostrar los grupos de diseños de tapa (`activeCoverDesignGroups`).
+    *   Se refactorizó la función `getStaticProps` para cargar dinámicamente los diseños de tapa asociados a un producto y combinarlos con los grupos de personalización estáticos.
+    *   Se implementó la lógica para asegurar que solo se pueda seleccionar un diseño de tapa a la vez, incluso si hay múltiples galerías.
+*   **Resultado:** La nueva galería de diseños de tapa es ahora visible y funcional en la página de detalle del producto.
 
-   1 Se implementaron optimizaciones exhaustivas para la carga de imágenes en todo el
-     sitio, incluyendo ajustes de `sizes` y robustez del `s3-loader`.
-   2 Se añadió la revalidación bajo demanda para categorías y se configuró el
-     pre-renderizado de todos los productos.
-     pre-renderizado de todos los productos.
-   3 Se corrigieron varios errores de compilación y de script.
+### 2. Verificación de Requisitos Adicionales
+
+*   **Selección Única:** Se ha verificado que la implementación actual cumple con el requisito de selección única.
+*   **Email de Confirmación:** Se ha verificado que el diseño de tapa seleccionado se incluye en los datos del pedido y, por lo tanto, debería aparecer en el correo de confirmación sin necesidad de cambios adicionales en el backend.
+
+### Tareas Pendientes:
+
+*   Realizar pruebas funcionales para confirmar que la selección de diseños de tapa y el proceso de compra funcionan como se espera.
+*   Hacer commit de los cambios realizados.
+---
+## Resumen de la Sesión de Trabajo - 27 de Octubre de 2025 (Continuación - Implementación de Slugs)
+
+**Objetivo Principal:** Migrar las URLs de productos para usar `slug` en lugar de `id` para mejorar el SEO y la legibilidad.
+
+### 1. Beneficios SEO de los Slugs
+
+*   Se confirmó que el uso de `slugs` en las URLs es altamente beneficioso para el SEO debido a la legibilidad, la inclusión de palabras clave y la mejora del Click-Through Rate (CTR).
+
+### 2. Migración de URLs de Productos a Slugs
+
+*   **Acciones Realizadas:**
+    *   Se renombró el archivo `pages/productos/detail/[id].tsx` a `pages/productos/detail/[slug].tsx`.
+    *   Se actualizó la función `getStaticPaths` en `pages/productos/detail/[slug].tsx` para generar rutas utilizando `product.slug`.
+    *   Se actualizó la función `getStaticProps` en `pages/productos/detail/[slug].tsx` para obtener los datos del producto utilizando el `slug` de los parámetros y se actualizó la `canonicalUrl` para usar el `slug`.
+    *   Se actualizaron las referencias a las URLs de productos en los siguientes archivos para usar `product.slug` en lugar de `product._id`:
+        *   `components/ProductCard.tsx`
+        *   `components/ProductCard.test.tsx` (se actualizó a un slug de ejemplo)
+        *   `components/ReviewCard.tsx`
+        *   `lib/utils.ts`
+        *   `pages/_app.tsx` (en la comprobación de `router.pathname`)
+        *   `pages/productos/detail/[slug].tsx` (enlaces a productos relacionados)
+        *   `scripts/generate-dynamic-urls-sync.js`
+        *   `scripts/generate-sitemap.js`
+
+### 3. Corrección de Errores de Tipo en Componentes de Reseñas
+
+*   **Problema:** Errores de tipo (`Type \'IReviewData\' is missing properties from type \'IReview\'`) al pasar props de reseñas a `FeaturedReviews` y `ReviewCard`.
+*   **Acciones Realizadas:**
+    *   Se actualizó la interfaz `IReview` en `models/Review.ts` para incluir la propiedad `slug` en el campo `product`.
+    *   Se modificó `getStaticProps` en `pages/productos/detail/[slug].tsx` para poblar el campo `product` de las reseñas con `nombre`, `imageUrl` y `slug`.
+    *   Se eliminaron las interfaces `IReview` y `ReviewCardProps` locales en `components/ReviewCard.tsx` y se importó la interfaz `IReview` global.
+    *   Se eliminaron las interfaces `IReview` y `FeaturedReviewsProps` locales en `components/FeaturedReviews.tsx` y se importó la interfaz `IReview` global.
+    *   Se modificó `getStaticProps` en `pages/index.tsx` para poblar el campo `product` de las reseñas con `slug`.
+    *   Se eliminó la interfaz `IReviewData` local y se actualizó la interfaz `HomeProps` en `pages/index.tsx` para usar la interfaz `IReview` global.
+
+### Tareas Pendientes:
+
+*   Realizar un `build` completo del proyecto y ejecutar pruebas para asegurar que todos los cambios funcionan correctamente y no se han introducido regresiones.
+*   Verificar que todos los enlaces internos y referencias externas (si las hay) se hayan actualizado correctamente para usar los `slugs`.
+*   Considerar la implementación de redirecciones 301 de las antiguas URLs basadas en `id` a las nuevas URLs basadas en `slug` para evitar la pérdida de SEO y mejorar la experiencia del usuario.
+---
+## Resumen de la Sesión de Trabajo - 27 de Octubre de 2025 (Continuación - Optimización de Slugs y Redirecciones)
+
+**Objetivo Principal:** Mejorar la gestión de slugs y preparar la implementación de redirecciones 301.
+
+### 1. Optimización de la Función `toSlug`
+
+*   **Problema:** La función `toSlug` existente era básica y no manejaba adecuadamente caracteres especiales o acentos.
+*   **Acciones Realizadas:**
+    *   Se mejoró la función `toSlug` en `lib/utils.ts` para que sea más robusta, manejando acentos, caracteres especiales y espacios múltiples, generando slugs más limpios y SEO-friendly.
+
+### 2. Preparación de Script para Actualización de Slugs y Redirecciones
+
+*   **Problema:** Necesidad de una forma eficiente para actualizar los slugs en la base de datos y generar un mapa de redirecciones 301.
+*   **Acciones Realizadas:**
+    *   Se creó el script `scripts/update-slugs-and-redirects.js` para:
+        *   Conectarse a la base de datos.
+        *   Generar nuevos slugs para productos basados en sus nombres utilizando la función `toSlug` mejorada.
+        *   Actualizar el campo `slug` para productos en la base de datos si el nuevo slug es diferente.
+        *   Generar `redirects-map.json` con pares `source` (slug antiguo) y `destination` (slug nuevo) para los productos cuyos slugs hayan cambiado.
+    *   Se modificó `next.config.js` para incluir una función `redirects` que cargará las redirecciones desde `redirects-map.json`.
+    *   Se abordaron y solucionaron varios problemas de ejecución del script:
+        *   Instalación de `ts-node` y `dotenv`.
+        *   Configuración de `dotenv` en el script para cargar variables de entorno desde `.env.local`.
+        *   Creación de `scripts/tsconfig.script.json` para asegurar que `ts-node` compile con `es2017` o posterior.
+        *   Ajuste de la importación de `connectDB` en el script para manejar la exportación por defecto.
+
+### 3. Discusión sobre UX de Galería de Diseños de Tapa
+
+*   **Problema:** Usabilidad de la galería de diseños de tapa en dispositivos pequeños (scroll constante entre miniaturas y imagen principal).
+*   **Acciones Realizadas:**
+    *   Se evaluaron soluciones potenciales (imagen fija, vista combinada, modal/lightbox).
+    *   Se concluyó que un Modal/Lightbox dedicado para la selección de diseños de tapa es la solución más eficiente y efectiva para mejorar la UX en dispositivos pequeños.
+*   **Estado:** La implementación de esta mejora ha sido pospuesta por el usuario.
+
+### Tareas Pendientes:
+
+*   **Ejecutar `scripts/update-slugs-and-redirects.js`:** Este script debe ejecutarse exitosamente para actualizar los slugs en la base de datos y generar `redirects-map.json`. (Pendiente de ejecución por el usuario).
+*   **Build y Deploy:** Después de ejecutar el script, la aplicación debe ser compilada y desplegada para que los cambios de slugs y las redirecciones 301 surtan efecto.
+*   **Pruebas Funcionales:** Realizar pruebas funcionales exhaustivas para confirmar que la selección de diseños de tapa y el proceso de compra funcionan como se espera con las nuevas URLs basadas en slugs.
+*   **Verificar Enlaces Internos/Externos:** Verificar que todos los enlaces internos y referencias externas (si las hay) se hayan actualizado correctamente para usar los `slugs`.
+*   **Commit de Cambios:** Realizar un commit de todos los cambios realizados hasta ahora al repositorio git.

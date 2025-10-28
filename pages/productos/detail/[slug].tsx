@@ -13,14 +13,16 @@ import ReviewList from '../../../components/ReviewList';
 import ReviewForm from '../../../components/ReviewForm';
 import toast from 'react-hot-toast'
 import connectDB from '../../../lib/mongoose'
-import Product, { IProduct } from '../../../models/Product'
+import Product, { IProduct, ICustomizationGroup, ICustomizationOption } from '../../../models/Product'
+import CoverDesign, { ICoverDesign } from '../../../models/CoverDesign';
 import Review, { IReview } from '../../../models/Review';
-import Category from '../../../models/Category'; // Importar el modelo Category
+import Category from '../../../models/Category';
 import mongoose from 'mongoose'
-import Lightbox from "yet-another-react-lightbox";
+import Lightbox, { Slide } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import CoverDesignGallery from '../../../components/CoverDesignGallery';
 import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
+import NewCoverDesignGallery, { DesignOption } from '../../../components/NewCoverDesignGallery';
+
 
 // This interface is for the props passed to the component
 interface ProductProp {
@@ -65,89 +67,55 @@ interface Props {
 export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating, mainCategory, subCategory }: Props) {
   const { addToCart } = useCart()
   const router = useRouter()
-  const [selectedImage, setSelectedImage] = useState<string | undefined>(
-    undefined,
-  )
-  const [finish, setFinish] = useState<string | null>(null)
-  const [open, setOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
+  const [activeImage, setActiveImage] = useState(product?.imageUrl || '/placeholder.png');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showStickyButton, setShowStickyButton] = useState(false);
+  const addToCartRef = useRef<HTMLDivElement>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // --- SSR-SAFE STATE INITIALIZATION ---
-  const [selections, setSelections] = useState<Record<string, string>>({});
-
-  // New useEffect to set initial selections based on product customization groups
   useEffect(() => {
     if (product) {
       const initialSelections: Record<string, string> = {};
       const tipoTapaGroup = product.customizationGroups?.find(g => g.name === 'Tipo de Tapa');
-      const tapaDuraOption = tipoTapaGroup?.options.find(o => o.name === 'Tapa Dura');
-      if (tipoTapaGroup && tapaDuraOption) {
-        initialSelections['Tipo de Tapa'] = 'Tapa Dura';
+      if (tipoTapaGroup?.options.length) {
+         initialSelections['Tipo de Tapa'] = tipoTapaGroup.options[0].name;
       }
       setSelections(initialSelections);
     }
   }, [product]);
 
-  const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
-  const [activeImage, setActiveImage] = useState(
-    product?.imageUrl || '/placeholder.png'
-  );
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [showStickyButton, setShowStickyButton] = useState(false);
-  const addToCartRef = useRef<HTMLDivElement>(null);
+  const allProductImages = useMemo(() => {
+    const images = new Set<string>();
+    if (product?.imageUrl) images.add(product.imageUrl);
+    if (product?.images) product.images.forEach(img => images.add(img));
+    return Array.from(images);
+  }, [product?.imageUrl, product?.images]);
+
+  useEffect(() => {
+    if (product) {
+      setActiveImage(allProductImages[0] || '/placeholder.png');
+    }
+  }, [product, allProductImages]);
 
   useEffect(() => {
     const handleScroll = () => {
       if (addToCartRef.current) {
         const { top } = addToCartRef.current.getBoundingClientRect();
-        // Show sticky button if the top of the original button is off-screen
         setShowStickyButton(top < window.innerHeight);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const isSpecialProduct = useMemo(() => {
-    return product?.customizationGroups?.some(group => 
-      group.name.startsWith('Diseño de Tapa') || group.name === 'Interiores'
-    ) || false;
-  }, [product?.customizationGroups]);
-
-  const allProductImages = useMemo(() => {
-    const images = new Set<string>();
-    if (product?.imageUrl) {
-      images.add(product.imageUrl);
-    }
-    if (product?.images && product.images.length > 0) {
-      product.images.forEach(img => images.add(img));
-    }
-    // Ensure main image is first, then other unique images
-    const finalImages = product?.imageUrl ? [product.imageUrl] : [];
-    images.forEach(img => {
-      if (img !== product?.imageUrl) {
-        finalImages.push(img);
-      }
-    });
-    return finalImages;
-  }, [product?.imageUrl, product?.images]);
-
-  // New useEffect to set initial activeImage based on product type
-  useEffect(() => {
-    if (product) {
-      if (isSpecialProduct) {
-        setActiveImage(product.images?.[0] || product.imageUrl || '/placeholder.png');
-      } else {
-        setActiveImage(allProductImages[0] || '/placeholder.png');
-      }
-    }
-  }, [product, isSpecialProduct, allProductImages]);
 
   useEffect(() => {
     if (isAnimating) {
@@ -163,182 +131,85 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     }
   }, [activeImage]);
 
-  const handlePrevImage = useCallback(() => {
-    if (!isSpecialProduct && allProductImages.length > 1) {
-      const currentIndex = allProductImages.indexOf(activeImage);
-      const prevIndex = (currentIndex - 1 + allProductImages.length) % allProductImages.length;
-      handleImageChange(allProductImages[prevIndex]);
-    }
-  }, [activeImage, allProductImages, handleImageChange, isSpecialProduct]);
-
-  const handleNextImage = useCallback(() => {
-    if (!isSpecialProduct && allProductImages.length > 1) {
-      const currentIndex = allProductImages.indexOf(activeImage);
-      const nextIndex = (currentIndex + 1) % allProductImages.length;
-      handleImageChange(allProductImages[nextIndex]);
-    }
-  }, [activeImage, allProductImages, handleImageChange, isSpecialProduct]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        handlePrevImage();
-      } else if (e.key === 'ArrowRight') {
-        handleNextImage();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handlePrevImage, handleNextImage]);
-
-  // This effect now safely runs on the client after selections are made by the user
   useEffect(() => {
     if (!product) return;
 
     let currentPrice = product.basePrice || 0;
-    let hasImageSelected = false;
-
-    // Iterate through all selected options to calculate price
     product.customizationGroups?.forEach(group => {
-      if (group.type === 'text') return; // Skip text type groups as they don't have options
       const selectedOptionName = selections[group.name];
       if (selectedOptionName) {
         const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
         if (selectedOption) {
           currentPrice += selectedOption.priceModifier;
-          if (selectedOption.image) {
-            hasImageSelected = true;
-          }
         }
       }
     });
-
     setTotalPrice(currentPrice);
-
-    // If no image-bearing option is currently selected, revert to default product image
-    // This logic only applies to special products where images are driven by customizations
-    if (isSpecialProduct && !hasImageSelected && activeImage !== (product.images?.[0] || product?.imageUrl || '/placeholder.png')) {
-      handleImageChange(product.images?.[0] || product?.imageUrl || '/placeholder.png');
-    }
-
-  }, [selections, product, activeImage, handleImageChange, isSpecialProduct]);
-
+  }, [selections, product]);
 
   const handleSelectionChange = (groupName: string, value: string) => {
     const trimmedGroupName = groupName.trim();
-    const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
-    const finalValue = (group?.type === 'text') ? value : value.trim();
-
     setSelections(prev => {
-      const newSelections: Record<string, string> = {
-        ...prev,
-        [trimmedGroupName]: finalValue,
-      };
-
-      // Deselect options of dependent groups when the parent changes
+      const newSelections: Record<string, string> = { ...prev, [trimmedGroupName]: value };
       product?.customizationGroups?.forEach(group => {
         if (group.dependsOn?.groupName === trimmedGroupName && newSelections[group.name]) {
           delete newSelections[group.name];
         }
       });
-
-      // Explicitly update activeImage if the newly selected option has one, only for special products
-      const group = product?.customizationGroups?.find(g => g.name.trim() === trimmedGroupName);
-      if (group?.type !== 'text' && isSpecialProduct) {
-        const option = group?.options.find(o => o.name.trim() === finalValue);
-        if (option?.image) {
-          handleImageChange(option.image);
-        }
-      }
-
       return newSelections;
     });
   };
 
   const displayGroups = useMemo(() => {
     if (!product?.customizationGroups) return [];
-
-    const allGroups = [...product.customizationGroups];
-    const orderedGroups = [];
-    const addedGroupNames = new Set<string>();
-
-    const addGroup = (name: string, filterFn: (g: any) => boolean = (g) => g.name === name) => {
-      const group = allGroups.find(filterFn);
-      if (group && !addedGroupNames.has(group.name)) {
-        orderedGroups.push(group);
-        addedGroupNames.add(group.name);
-      }
-    };
-
-    // 1. Tipo de Tapa
-    addGroup('Tipo de Tapa');
-
-    // 2. Textura de Tapa
-    addGroup('Textura de Tapa');
-
-    // 3. Elástico
-    addGroup('Elástico');
-
-    // 4. Interiores
-    addGroup('Interiores');
-
-    // 5. Diseño de Tapa (Dura/Flexible)
-    allGroups.filter(g => g.name.startsWith('Diseño de Tapa')).forEach(group => {
-      if (!addedGroupNames.has(group.name)) {
-        orderedGroups.push(group);
-        addedGroupNames.add(group.name);
-      }
-    });
-
-    // 6. Add any other remaining groups that were not explicitly ordered
-    allGroups.forEach(group => {
-      if (!addedGroupNames.has(group.name)) {
-        orderedGroups.push(group);
-        addedGroupNames.add(group.name);
-      }
-    });
-
-    return orderedGroups;
+    return product.customizationGroups.filter(g => !g.name.startsWith('Diseño de Tapa'));
   }, [product?.customizationGroups]);
 
-  useEffect(() => {
-    if (product?.images?.[0]) {
-      setSelectedImage(product.images[0])
-    } else if (product?.imageUrl) {
-      setSelectedImage(product.imageUrl)
+  const activeCoverDesignGroups = useMemo(() => {
+    if (!product?.customizationGroups) return [];
+    return product.customizationGroups.filter(group => {
+      if (!group.name.startsWith('Diseño de Tapa')) return false;
+      if (group.dependsOn) {
+        const parentSelection = selections[group.dependsOn.groupName];
+        return parentSelection === group.dependsOn.optionName;
+      }
+      return true;
+    });
+  }, [product?.customizationGroups, selections]);
+
+  const handleCoverDesignSelect = (groupName: string, option: DesignOption) => {
+    if (option.image) {
+      handleImageChange(option.image);
     }
-  }, [product])
+    
+    setSelections(prev => {
+      const newSelections = { ...prev };
+      // Deseleccionar cualquier otra opción de diseño de tapa
+      Object.keys(newSelections).forEach(key => {
+        if (key.startsWith('Diseño de Tapa')) {
+          delete newSelections[key];
+        }
+      });
+      // Establecer la nueva selección
+      newSelections[groupName] = option.name;
+      return newSelections;
+    });
+  };
 
 
-
-  const getDisplayPrice = () => {
-    if (!product) return null
-    if (product.precioDura) return product.precioDura
-    if (product.precioFlex) return product.precioFlex
-    if (product.precio) return product.precio
-    return null
-  }
-
-  const displayPrice = getDisplayPrice()
 
   const handleAddToCart = () => {
     if (product) {
-      // --- VALIDATION LOGIC ---
       const visibleGroups = product.customizationGroups?.filter(group => {
-        if (!group.dependsOn) return true; // Always include groups without dependencies
+        if (!group.dependsOn) return true;
         const parentSelection = selections[group.dependsOn.groupName];
         return parentSelection === group.dependsOn.optionName;
       }) || [];
 
       for (const group of visibleGroups) {
-        // Los grupos de texto son opcionales, no requieren selección
         if (group.type !== 'text' && !selections[group.name]) {
           toast.error(`Por favor, selecciona una opción para "${group.name}".`);
-          return; // Stop if a selection is missing
+          return;
         }
       }
 
@@ -349,70 +220,28 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         imageUrl: activeImage,
         customizations: selections,
       };
-
       addToCart(itemToAdd);
       toast.success(`${product.nombre} ha sido agregado al carrito!`);
     }
   };
 
-  if (router.isFallback) {
-    return <div>Cargando...</div>
-  }
+  if (router.isFallback) return <div>Cargando...</div>;
+  if (!product) return <main className="min-h-screen flex items-center justify-center pt-32"><p>Producto no encontrado.</p></main>;
 
-  if (!product) {
-    return (
-      <>
-        <Navbar />
-        <main className="min-h-screen flex items-center justify-center pt-32">
-          <p className="text-gray-500 text-xl">Producto no encontrado.</p>
-        </main>
-      </>
-    )
-  }
-
-  const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`
-  const pageDescription =
-    product.seoDescription ||
-    product.descripcion ||
-    'Encuentra los mejores artículos de papelería personalizada en Kamaluso.'
-  const pageImage = product.images?.[0] || product.imageUrl || '/logo.webp'
-  const canonicalUrl = `/productos/detail/${product._id}`
-  const siteUrl = 'https://www.papeleriapersonalizada.uy'
-
-  // --- Mis datos para los Breadcrumbs --- //
+  const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`;
+  const pageDescription = product.seoDescription || product.descripcion || 'Encuentra los mejores artículos de papelería personalizada en Kamaluso.';
+  const pageImage = product.imageUrl || '/logo.webp';
+  const canonicalUrl = `/productos/detail/${product.slug}`;
+  
   const breadcrumbItems = [
     { name: 'Inicio', href: '/' },
+    ...(mainCategory ? [{ name: mainCategory.nombre, href: `/productos/${mainCategory.slug}` }] : []),
+    ...(subCategory && mainCategory ? [{ name: subCategory.nombre, href: `/productos/${mainCategory.slug}/${subCategory.slug}` }] : []),
+    { name: product.nombre, href: canonicalUrl },
   ];
 
-  if (mainCategory) {
-    breadcrumbItems.push({
-      name: mainCategory.nombre,
-      href: `/productos/${mainCategory.slug}`,
-    });
-  } else if (product.categoria) { // Fallback if mainCategory object not found but slug exists
-    breadcrumbItems.push({
-      name: product.categoria.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-      href: `/productos/${product.categoria}`,
-    });
-  } else {
-    breadcrumbItems.push({ name: 'Productos', href: '/productos' });
-  }
+  const siteUrl = 'https://www.papeleriapersonalizada.uy'; // Define siteUrl here
 
-  if (subCategory && mainCategory) { // Only add subcategory if main category is also present
-    breadcrumbItems.push({
-      name: subCategory.nombre,
-      href: `/productos/${mainCategory.slug}/${subCategory.slug}`,
-    });
-  }
-
-  breadcrumbItems.push({
-    name: product.nombre,
-    href: `/productos/detail/${product._id}`,
-  });
-
-  // --- Mi Schema para Google --- //
-
-  // Aquí defino el schema del producto para que Google entienda mejor la información.
   const productSchema = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
@@ -424,7 +253,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       '@type': 'Offer',
       url: `${siteUrl}${canonicalUrl}`,
       priceCurrency: 'UYU',
-      price: displayPrice,
+      price: totalPrice,
       availability: 'https://schema.org/InStock',
       seller: {
         '@type': 'Organization',
@@ -451,9 +280,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         worstRating: '1',
       },
     })),
-  }
+  };
 
-  // Aquí defino el schema de los breadcrumbs para que Google los muestre en los resultados.
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -463,7 +291,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       name: item.name,
       item: `${siteUrl}${item.href}`,
     })),
-  }
+  };
 
   return (
     <>
@@ -518,26 +346,12 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   />
                 </button>
 
-                {!isSpecialProduct && allProductImages.length > 1 && (
-                  <>
-                    <button onClick={handlePrevImage} className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10" aria-label="Imagen anterior">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <button onClick={handleNextImage} className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-40 hover:opacity-100 transition-opacity duration-300 z-10" aria-label="Siguiente imagen">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                    </button>
-                  </>
-                )}
+
               </div>
 
-              <Lightbox
-                open={open}
-                close={() => setOpen(false)}
-                slides={allProductImages.map(img => ({ src: img.endsWith('.webp') ? `${img.slice(0, -5)}-1200w.webp` : img }))}
-                index={allProductImages.indexOf(activeImage)}
-              />
 
-              {!isSpecialProduct && allProductImages.length > 1 && (
+
+              {allProductImages.length > 1 && (
                 <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
                   {allProductImages.map((img, index) => (
                     <button key={index} type="button" onClick={() => handleImageChange(img)} className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-pink-500' : 'border-gray-300'} flex-shrink-0`}>
@@ -570,6 +384,22 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 </p>
               )}
 
+              {/* --- Sección de Galería de Diseños de Tapa --- */}
+              {activeCoverDesignGroups.length > 0 && (
+                <div className="mt-5">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-3">Selecciona tu diseño de tapa</h3>
+                  {activeCoverDesignGroups.map(group => (
+                    <NewCoverDesignGallery
+                      key={group.name}
+                      groupName={group.name}
+                      options={group.options}
+                      selectedOptionName={selections[group.name]}
+                      onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* --- Opciones de Personalización --- */}
               <div className="space-y-5">
                 {displayGroups.map((group) => {
@@ -577,15 +407,6 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   if (group.dependsOn) {
                     const parentSelection = selections[group.dependsOn.groupName];
                     if (parentSelection !== group.dependsOn.optionName) return null;
-                  }
-
-                  if (groupName.startsWith('Diseño de Tapa')) {
-                    return (
-                      <div key={groupName}>
-                        <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
-                        <CoverDesignGallery options={group.options} selectedOption={selections[groupName]} onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)} />
-                      </div>
-                    );
                   }
 
                   if (groupName === 'Interiores') {
@@ -613,7 +434,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     );
                   }
 
-                  // --- Nuevo Renderizador de Botones Modernos ---
+                  // --- Renderizador de Botones Modernos para otros grupos ---
                   return (
                     <div key={groupName}>
                       <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
@@ -677,7 +498,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {relatedProducts.map((p) => (
-                <Link key={p._id} href={`/productos/detail/${p._id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
+                <Link key={p._id} href={`/productos/detail/${p.slug}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
                   <div className="relative w-full aspect-square">
                     <Image
                       src={p.images?.[0] || p.imageUrl || '/placeholder.png'}
@@ -725,7 +546,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   const products = await Product.find({}).lean()
 
   const paths = products.map((product) => ({
-    params: { id: product._id.toString() },
+    params: { slug: product.slug },
   }))
 
   return {
@@ -735,22 +556,49 @@ export const getStaticPaths: GetStaticPaths = async () => {
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { id } = context.params
+  const { slug } = context.params
 
-  if (!id || typeof id !== 'string' || !mongoose.Types.ObjectId.isValid(id)) {
+  if (!slug || typeof slug !== 'string') {
     return { notFound: true }
   }
 
   try {
     await connectDB()
 
-    const productData = await Product.findById(id).lean()
+    const productData = await Product.findOne({ slug }).lean()
 
     if (!productData) {
       return { notFound: true }
     }
 
     const product = JSON.parse(JSON.stringify(productData))
+
+    // Combine static and dynamic customization groups
+    const staticGroups = product.customizationGroups || [];
+    const coverDesignGroups = [];
+
+    if (product.coverDesignGroupNames && product.coverDesignGroupNames.length > 0) {
+      for (const groupName of product.coverDesignGroupNames) {
+        const designs = await CoverDesign.find({ groups: groupName }).lean();
+        if (designs.length > 0) {
+          coverDesignGroups.push({
+            name: `Diseño de Tapa - ${groupName}`,
+            options: designs.map(d => ({
+              name: d.name,
+              image: d.imageUrl,
+              priceModifier: 0 // O el modificador de precio si lo tienes
+            })),
+            type: 'cover-design',
+            dependsOn: { // Ejemplo de dependencia
+              groupName: 'Tipo de Tapa',
+              optionName: groupName.includes('Dura') ? 'Tapa Dura' : 'Tapa Flexible'
+            }
+          });
+        }
+      }
+    }
+
+    product.customizationGroups = [...staticGroups, ...coverDesignGroups];
 
     let mainCategory = null;
     if (product.categoria) {
@@ -764,7 +612,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
     }
 
     // Fetch approved reviews
-    const reviewsData = await Review.find({ product: product._id, isApproved: true }).sort({ createdAt: -1 }).lean();
+    const reviewsData = await Review.find({ product: product._id, isApproved: true })
+      .populate('product', 'nombre imageUrl slug') // Populate product with necessary fields
+      .sort({ createdAt: -1 })
+      .lean();
     const reviews = JSON.parse(JSON.stringify(reviewsData));
 
     // Calculate average rating from approved reviews
@@ -782,6 +633,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         .limit(4)
         .lean()
     }
+
     const relatedProducts = JSON.parse(JSON.stringify(relatedProductsData))
 
     return {
@@ -797,7 +649,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       revalidate: 3600, // Revalidate once per hour
     }
   } catch (error) {
-    console.error(`Error fetching product details for id: ${id}`, error)
+    console.error(`Error fetching product details for slug: ${slug}`, error)
     return { notFound: true }
   }
 }

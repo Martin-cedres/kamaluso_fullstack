@@ -2,7 +2,12 @@ import mongoose, { Document, Schema, Model } from 'mongoose';
 
 export interface IReview extends Document {
   _id: string;
-  product: mongoose.Types.ObjectId;
+  product: {
+    _id: mongoose.Types.ObjectId;
+    nombre: string;
+    imageUrl?: string;
+    slug?: string;
+  };
   user: {
     id: string;
     name: string;

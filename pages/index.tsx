@@ -11,6 +11,7 @@ import connectDB from '../lib/mongoose' // Importar connectDB
 import { GetStaticProps } from 'next' // Importar GetStaticProps
 import FeaturedReviews from '../components/FeaturedReviews'; // Importar FeaturedReviews
 import ProductCard from '../components/ProductCard'; // Importar ProductCard
+import { IReview } from '../models/Review'; // Importar la interfaz IReview global
 
 // Interfaces
 interface Categoria {
@@ -18,15 +19,6 @@ interface Categoria {
   nombre: string
   slug: string
   imagen?: string
-}
-
-interface IReviewData {
-  _id: string;
-  user: { name: string };
-  product: { _id: string; nombre: string; imageUrl?: string };
-  rating: number;
-  comment: string;
-  createdAt: string;
 }
 
 interface Product {
@@ -48,7 +40,7 @@ interface Product {
 interface HomeProps {
   destacados: Product[]
   categories: Categoria[]
-  reviews: IReviewData[];
+  reviews: IReview[];
 }
 
 export default function Home({ destacados, categories, reviews }: HomeProps) {
@@ -280,7 +272,7 @@ export const getStaticProps: GetStaticProps = async () => {
     .sort({ createdAt: -1 })
     .limit(15)
     .populate('user', 'name')
-    .populate('product', 'nombre imageUrl _id')
+    .populate('product', 'nombre imageUrl _id slug')
     .lean();
   const reviews = JSON.parse(JSON.stringify(reviewsData));
 

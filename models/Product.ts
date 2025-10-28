@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Model } from 'mongoose'
 
 export interface ICustomizationOption {
-  _id?: string; // Añadido para identificar unívocamente la opción
+  _id?: string;
   name: string;
   priceModifier: number;
   image?: string;
@@ -23,11 +23,8 @@ export interface IProduct extends Document {
   slug: string;
   descripcion: string;
   basePrice: number;
-  precioFlex?: number; // Campo legado, opcional
-  precioDura?: number; // Campo legado, opcional
-  categoria?: string; // Ahora opcional
+  categoria?: string;
   subCategoria?: string[];
-  tapa?: string; // Campo legado, opcional
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string[];
@@ -40,8 +37,9 @@ export interface IProduct extends Document {
   averageRating?: number;
   numReviews?: number;
   claveDeGrupo?: string;
-  customizationGroups?: ICustomizationGroup[];
-  order?: number; // Nuevo campo para el orden de visualización
+  customizationGroups?: ICustomizationGroup[]; // Para opciones estáticas (Tipo de Tapa, etc.)
+  coverDesignGroupNames?: string[]; // Para galerías de diseños dinámicas
+  order?: number;
 }
 
 const productSchema: Schema<IProduct> = new Schema(
@@ -51,11 +49,8 @@ const productSchema: Schema<IProduct> = new Schema(
     claveDeGrupo: { type: String, trim: true, index: true },
     descripcion: { type: String, required: true },
     basePrice: { type: Number, required: true },
-    precioFlex: { type: Number }, // Campo legado
-    precioDura: { type: Number }, // Campo legado
-    categoria: { type: String }, // Ahora opcional
+    categoria: { type: String },
     subCategoria: [{ type: String }],
-    tapa: { type: String }, // Campo legado
     seoTitle: { type: String },
     seoDescription: { type: String },
     seoKeywords: [{ type: String }],
@@ -65,7 +60,8 @@ const productSchema: Schema<IProduct> = new Schema(
     destacado: { type: Boolean, default: false },
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
-    order: { type: Number, default: 0 }, // Nuevo campo para el orden
+    order: { type: Number, default: 0 },
+    coverDesignGroupNames: [{ type: String }],
     customizationGroups: [
       {
         name: String,

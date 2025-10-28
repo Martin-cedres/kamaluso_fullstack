@@ -124,7 +124,7 @@ export default function App({ Component, pageProps }: AppProps) {
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />
-              {router.pathname !== '/productos/detail/[id]' && <DynamicWhatsAppButton />}
+              {router.pathname !== '/productos/detail/[slug]' && <DynamicWhatsAppButton />}
               <DynamicFooter />
             </main>
           </div>
