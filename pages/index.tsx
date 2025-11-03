@@ -11,6 +11,7 @@ import { GetStaticProps } from 'next' // Importar GetStaticProps
 import FeaturedReviews from '../components/FeaturedReviews'; // Importar FeaturedReviews
 import ProductCard from '../components/ProductCard'; // Importar ProductCard
 import { IReview } from '../models/Review'; // Importar la interfaz IReview global
+import NewsletterForm from '../components/NewsletterForm'; // Importar NewsletterForm
 
 // Interfaces
 interface Categoria {
@@ -213,6 +214,9 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
             </Link>
           </div>
         </section>
+
+        {/* Newsletter Form */}
+        <NewsletterForm />
       </main>
     </>
   )
