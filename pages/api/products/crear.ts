@@ -148,6 +148,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         status: String(fields.status || 'activo'),
         destacado:
           fields.destacado === 'true' || fields.destacado === true || false,
+        showCoverType:
+          fields.showCoverType === 'true' || fields.showCoverType === true || false,
         imageUrl,
         images: imagesUrls,
         customizationGroups: customizationGroups, // Guardar el array con las URLs de imagen

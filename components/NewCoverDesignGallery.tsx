@@ -65,7 +65,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
+      <h3 className="font-bold text-lg text-gray-800 mb-2">{groupName}</h3>
       <div className="relative group">
         <div 
           ref={scrollContainerRef} 
@@ -78,7 +78,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
               onClick={() => onSelectOption(option)}
               className={`relative flex-shrink-0 w-24 h-24 rounded-lg border-2 transition-all duration-200 ${
                 selectedOptionName === option.name
-                  ? 'border-pink-500 ring-2 ring-pink-500/50 shadow-md'
+                  ? 'border-pink-500 ring-2 ring-pink-500/50 shadow-kamalusoPink'
                   : 'border-gray-200 bg-white hover:border-pink-400'
               }`}
               title={option.name}
@@ -107,7 +107,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
           <button 
             type="button"
             onClick={() => scroll('left')}
-            className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-4 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-white"
+            className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-4 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-kamalusoPink transition-opacity z-20 hover:bg-white"
             aria-label="Scroll left"
           >
             <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
@@ -117,7 +117,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
           <button 
             type="button"
             onClick={() => scroll('right')}
-            className="absolute top-1/2 right-0 transform -translate-y-1/2 translate-x-4 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-white"
+            className="absolute top-1/2 right-0 transform -translate-y-1/2 translate-x-4 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-kamalusoPink transition-opacity z-20 hover:bg-white"
             aria-label="Scroll right"
           >
             <ChevronRightIcon className="h-6 w-6 text-gray-700" />

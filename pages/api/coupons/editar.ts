@@ -10,7 +10,7 @@ export default async function handler(
 
   if (req.method === 'PUT') {
     try {
-      const { code, ...updateData } = req.body
+      const { code, applicableItems, ...updateData } = req.body
 
       if (!code) {
         return res
@@ -22,7 +22,7 @@ export default async function handler(
 
       const updatedCoupon = await Coupon.findOneAndUpdate(
         { code: code },
-        updateData,
+        { ...updateData, applicableItems },
         { new: true },
       )
 

@@ -15,6 +15,7 @@ export interface CartItem {
   categoria?: string
   quantity: number
   finish?: string // Acabado del producto
+  selections?: Record<string, string> // Nuevo campo para personalizaciones
 }
 
 // Define the shape of an applied coupon
@@ -47,8 +48,15 @@ export const useCart = () => {
   return context
 }
 
-// Helper to generate a unique ID for a cart item based on product ID and finish
-export const getCartItemId = (product: { _id: string; finish?: string }) => {
+// Helper to generate a unique ID for a cart item based on product ID and selections/finish
+export const getCartItemId = (product: { _id: string; finish?: string; selections?: Record<string, string> }) => {
+  if (product.selections && Object.keys(product.selections).length > 0) {
+    const selectionString = Object.entries(product.selections)
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([key, value]) => `${key}:${value}`)
+      .join('|');
+    return `${product._id}-${selectionString}`;
+  }
   return product.finish ? `${product._id}-${product.finish}` : product._id
 }
 

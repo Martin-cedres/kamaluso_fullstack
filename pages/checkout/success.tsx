@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link' // Import Link
 import { useCart } from '../../context/CartContext'
-import Navbar from '../../components/Navbar'
 import toast from 'react-hot-toast'
 
 type OrderStatus = 'processing' | 'success' | 'error' | 'idle'
@@ -135,8 +134,7 @@ const CheckoutSuccessPage = () => {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-6 flex items-center justify-center">
+      <main className="min-h-screen bg-gray-50 px-6 flex items-center justify-center">
         <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-lg w-full">
           {renderContent()}
           <div className="mt-6">

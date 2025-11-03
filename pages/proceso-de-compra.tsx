@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Navbar from '../components/Navbar';
 import SeoMeta from '../components/SeoMeta';
 import { GetStaticProps } from 'next';
 
@@ -19,7 +18,8 @@ const Step: React.FC<StepProps> = ({ number, title, description }) => (
       <p className="text-gray-600">{description}</p>
     </div>
   </div>
-);
+);
+
 export default function ProcesoDeCompra() {
   const pageTitle = "Proceso de Compra | Kamaluso Papelería";
   const pageDescription = "Descubre cómo comprar y personalizar tus productos en Kamaluso Papelería. Guía paso a paso para agendas, libretas y más.";
@@ -78,8 +78,8 @@ export default function ProcesoDeCompra() {
         />
       </Head>
 
-      <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8 pb-16">
+      
+      <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 pb-16">
         <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg">
           <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">Proceso de Compra</h1>
           <div className="space-y-8">

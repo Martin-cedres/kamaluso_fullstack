@@ -1,6 +1,5 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
 import Head from 'next/head' // Importo Head
-import Navbar from '../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProductHref } from '../../lib/utils'
@@ -170,8 +169,8 @@ export default function CategoryPage({
   if (!category) {
     return (
       <>
-        <Navbar />
-        <main className="min-h-screen bg-gray-50 pt-32 px-6">
+        
+        <main className="min-h-screen bg-gray-50 px-6">
           <h1 className="text-3xl font-semibold text-center mb-10">
             Categoría no encontrada
           </h1>
@@ -213,8 +212,8 @@ export default function CategoryPage({
         />
       </Head>
 
-      <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8">
+      
+      <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <Breadcrumbs items={breadcrumbItems} />
@@ -371,6 +370,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
     };
   });
 
+  // Add the root /productos path
+  paths.push({ params: { slug: [] } });
+
   return {
     paths,
     fallback: false,
@@ -378,7 +380,36 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { slug } = context.params as { slug: string[] };
+  const slug = context.params?.slug as string[] | undefined || [];
+
+  // Handle the /productos route (no slug)
+  if (slug.length === 0) {
+    await connectDB();
+    const productsData = await Product.find({ soloDestacado: { $ne: true } })
+      .sort({ order: 1, createdAt: -1 })
+      .lean();
+
+    const products = JSON.parse(JSON.stringify(productsData));
+
+    const breadcrumbItems = [
+      { name: 'Inicio', href: '/' },
+      { name: 'Todos los Productos', href: '/productos' },
+    ];
+
+    return {
+      props: {
+        category: {
+          nombre: 'Todos los Productos',
+          descripcion: 'Explora el catálogo completo de productos personalizados de Kamaluso.',
+        },
+        subCategories: [],
+        initialProducts: products,
+        initialTotalPages: 1, // Assuming no pagination for this view for now
+        breadcrumbItems,
+      },
+      revalidate: 3600,
+    };
+  }
 
   let currentCategorySlug: string;
   let parentCategorySlug: string | null = null;
@@ -399,6 +430,17 @@ export const getStaticProps: GetStaticProps = async (context) => {
     const currentCategory = await Category.findOne({ slug: currentCategorySlug }).lean();
 
     if (!currentCategory) {
+      // Si no se encuentra una categoría, podría ser una URL de producto antigua. Intentemos redirigir.
+      const product = await Product.findOne({ slug: currentCategorySlug }).lean();
+      if (product) {
+        return {
+          redirect: {
+            destination: `/productos/detail/${product.slug}`,
+            permanent: true, // Usar redirección permanente para SEO
+          },
+        };
+      }
+
       console.log('getStaticProps: Returning 404 - currentCategory not found for slug:', currentCategorySlug);
       return { notFound: true };
     }

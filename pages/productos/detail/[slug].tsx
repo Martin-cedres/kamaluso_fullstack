@@ -1,11 +1,11 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
 import Head from 'next/head'
-import Navbar from '../../../components/Navbar'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
 import StarRating from '../../../components/StarRating';
@@ -44,6 +44,7 @@ interface ProductProp {
   precioFlex?: number
   soloDestacado?: boolean // Nuevo campo
   customizationGroups?: any[]; // Nuevo campo
+  showCoverType?: boolean; // Nuevo campo
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
@@ -64,11 +65,32 @@ interface Props {
   subCategory: { nombre: string; slug: string } | null;
 }
 
+const customGroupTitles: Record<string, string> = {
+  'Diseño de Tapa': 'Elige el diseño de la tapa',
+  'Elástico': 'Con elástico de cierre?',
+  'Frase/Nombre': 'Agrega Nombre o Frase a la tapa (opcional)',
+};
+
+const groupOrder: Record<string, number> = {
+  'Diseño de Tapa': 1,
+  'Elástico': 2,
+  'Frase/Nombre': 3,
+};
+
 export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating, mainCategory, subCategory }: Props) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [isClient, setIsClient] = useState(false);
-  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [selections, setSelections] = useState<Record<string, string>>(() => {
+    const defaultSelections: Record<string, string> = {};
+    if (product) {
+      const tipoDeTapaGroup = product.customizationGroups?.find(g => g.name === 'Tipo de Tapa');
+      if (tipoDeTapaGroup && tipoDeTapaGroup.options && tipoDeTapaGroup.options.length > 0) {
+        defaultSelections['Tipo de Tapa'] = tipoDeTapaGroup.options[0].name;
+      }
+    }
+    return defaultSelections;
+  });
   const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
   const [activeImage, setActiveImage] = useState(product?.imageUrl || '/placeholder.png');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -76,22 +98,66 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const addToCartRef = useRef<HTMLDivElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const thumbnailCarouselRef = useRef<HTMLDivElement>(null);
+  const [showThumbnailLeftArrow, setShowThumbnailLeftArrow] = useState(false);
+  const [showThumbnailRightArrow, setShowThumbnailRightArrow] = useState(false);
 
-
-  useEffect(() => {
-    setIsClient(true);
+  const checkForThumbnailScroll = useCallback(() => {
+    const container = thumbnailCarouselRef.current;
+    if (container) {
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      setShowThumbnailLeftArrow(scrollLeft > 0);
+      setShowThumbnailRightArrow(scrollLeft < scrollWidth - clientWidth - 1); // -1 for precision issues
+    }
   }, []);
 
-  useEffect(() => {
-    if (product) {
-      const initialSelections: Record<string, string> = {};
-      const tipoTapaGroup = product.customizationGroups?.find(g => g.name === 'Tipo de Tapa');
-      if (tipoTapaGroup?.options.length) {
-         initialSelections['Tipo de Tapa'] = tipoTapaGroup.options[0].name;
-      }
-      setSelections(initialSelections);
+  const scrollThumbnails = (direction: 'left' | 'right') => {
+    const container = thumbnailCarouselRef.current;
+    if (container) {
+      const scrollAmount = container.clientWidth * 0.8;
+      container.scrollBy({ 
+        left: direction === 'left' ? -scrollAmount : scrollAmount, 
+        behavior: 'smooth' 
+      });
     }
-  }, [product]);
+  };
+
+  const activeCoverDesignGroups = useMemo(() => {
+    return product?.customizationGroups?.filter(g => g.name === 'Diseño de Tapa') || [];
+  }, [product?.customizationGroups]);
+
+  const displayGroups = useMemo(() => {
+    if (!product?.customizationGroups) return [];
+    // Filter out the main cover design group (handled by activeCoverDesignGroups) and the now-hidden 'Tipo de Tapa' group
+    return product.customizationGroups.filter(g => 
+      g.name !== 'Diseño de Tapa' && g.name !== 'Tipo de Tapa'
+    );
+  }, [product?.customizationGroups]);
+
+  const orderedCustomizationGroups = useMemo(() => {
+    const allVisibleGroups = [...activeCoverDesignGroups, ...displayGroups];
+    
+    const getSortKey = (groupName: string) => {
+      if (groupName.startsWith('Diseño de Tapa')) return 'Diseño de Tapa';
+      return groupName;
+    };
+
+    return allVisibleGroups.sort((a, b) => {
+      // Prioritize displayOrder from the database if it exists
+      if (a.displayOrder !== undefined && b.displayOrder !== undefined) {
+        return a.displayOrder - b.displayOrder;
+      }
+      if (a.displayOrder !== undefined) return -1; // a comes first
+      if (b.displayOrder !== undefined) return 1;  // b comes first
+
+      // Fallback to hardcoded order
+      const keyA = getSortKey(a.name);
+      const keyB = getSortKey(b.name);
+      const orderA = groupOrder[keyA] ?? 99;
+      const orderB = groupOrder[keyB] ?? 99;
+      return orderA - orderB;
+    });
+  }, [activeCoverDesignGroups, displayGroups]);
 
   const allProductImages = useMemo(() => {
     const images = new Set<string>();
@@ -99,6 +165,20 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     if (product?.images) product.images.forEach(img => images.add(img));
     return Array.from(images);
   }, [product?.imageUrl, product?.images]);
+
+  useEffect(() => {
+    const container = thumbnailCarouselRef.current;
+    if (container) {
+      checkForThumbnailScroll();
+      window.addEventListener('resize', checkForThumbnailScroll);
+      container.addEventListener('scroll', checkForThumbnailScroll);
+
+      return () => {
+        window.removeEventListener('resize', checkForThumbnailScroll);
+        container.removeEventListener('scroll', checkForThumbnailScroll);
+      };
+    }
+  }, [allProductImages, checkForThumbnailScroll]);
 
   useEffect(() => {
     if (product) {
@@ -160,22 +240,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     });
   };
 
-  const displayGroups = useMemo(() => {
-    if (!product?.customizationGroups) return [];
-    return product.customizationGroups.filter(g => !g.name.startsWith('Diseño de Tapa'));
-  }, [product?.customizationGroups]);
 
-  const activeCoverDesignGroups = useMemo(() => {
-    if (!product?.customizationGroups) return [];
-    return product.customizationGroups.filter(group => {
-      if (!group.name.startsWith('Diseño de Tapa')) return false;
-      if (group.dependsOn) {
-        const parentSelection = selections[group.dependsOn.groupName];
-        return parentSelection === group.dependsOn.optionName;
-      }
-      return true;
-    });
-  }, [product?.customizationGroups, selections]);
 
   const handleCoverDesignSelect = (groupName: string, option: DesignOption) => {
     if (option.image) {
@@ -196,270 +261,170 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     });
   };
 
-
-
   const handleAddToCart = () => {
-    if (product) {
-      const visibleGroups = product.customizationGroups?.filter(group => {
-        if (!group.dependsOn) return true;
-        const parentSelection = selections[group.dependsOn.groupName];
-        return parentSelection === group.dependsOn.optionName;
-      }) || [];
-
-      for (const group of visibleGroups) {
-        if (group.type !== 'text' && !selections[group.name]) {
-          toast.error(`Por favor, selecciona una opción para "${group.name}".`);
-          return;
-        }
-      }
-
-      const itemToAdd = {
-        _id: String(product._id),
-        nombre: product.nombre,
-        precio: totalPrice,
-        imageUrl: activeImage,
-        customizations: selections,
-      };
-      addToCart(itemToAdd);
-      toast.success(`${product.nombre} ha sido agregado al carrito!`);
-    }
-  };
-
-  if (router.isFallback) return <div>Cargando...</div>;
-  if (!product) return <main className="min-h-screen flex items-center justify-center pt-32"><p>Producto no encontrado.</p></main>;
-
-  const pageTitle = product.seoTitle || `${product.nombre} | Kamaluso Papelería`;
-  const pageDescription = product.seoDescription || product.descripcion || 'Encuentra los mejores artículos de papelería personalizada en Kamaluso.';
-  const pageImage = product.imageUrl || '/logo.webp';
-  const canonicalUrl = `/productos/detail/${product.slug}`;
+    if (!product) return;
   
-  const breadcrumbItems = [
+    // Validar que todas las personalizaciones requeridas estén seleccionadas
+    const requiredGroups = product.customizationGroups?.filter(g => g.required) || [];
+    const missingSelections = requiredGroups.filter(g => !selections[g.name]);
+  
+    if (missingSelections.length > 0) {
+      toast.error(`Por favor, selecciona una opción para: ${missingSelections.map(g => g.name).join(', ')}`);
+      return;
+    }
+  
+    const cartItem = {
+      _id: product._id,
+      nombre: product.nombre,
+      precio: totalPrice,
+      imageUrl: activeImage,
+      selections: selections,
+      categoria: product.categoria,
+    };
+  
+    addToCart(cartItem);
+    toast.success(`${product.nombre} fue agregado al carrito!`);
+  };
+
+  if (router.isFallback) {
+    return <div>Cargando...</div>
+  }
+
+  if (!product) {
+    return <div>Producto no encontrado</div>
+  }
+
+  const breadcrumbs = [
     { name: 'Inicio', href: '/' },
-    ...(mainCategory ? [{ name: mainCategory.nombre, href: `/productos/${mainCategory.slug}` }] : []),
-    ...(subCategory && mainCategory ? [{ name: subCategory.nombre, href: `/productos/${mainCategory.slug}/${subCategory.slug}` }] : []),
-    { name: product.nombre, href: canonicalUrl },
+    { name: 'Productos', href: '/productos' },
   ];
+  if (mainCategory) {
+    breadcrumbs.push({ name: mainCategory.nombre, href: `/productos/${mainCategory.slug}` });
+  }
+  if (subCategory) {
+    breadcrumbs.push({ name: subCategory.nombre, href: `/productos/${mainCategory?.slug}/${subCategory.slug}` });
+  }
+  breadcrumbs.push({ name: product.nombre, href: `/productos/detail/${product.slug}` });
 
-  const siteUrl = 'https://www.papeleriapersonalizada.uy'; // Define siteUrl here
 
-  const productSchema = {
-    '@context': 'https://schema.org/',
-    '@type': 'Product',
-    name: product.nombre,
-    image: pageImage.startsWith('http') ? pageImage : `${siteUrl}${pageImage}`,
-    description: pageDescription,
-    sku: product._id,
-    offers: {
-      '@type': 'Offer',
-      url: `${siteUrl}${canonicalUrl}`,
-      priceCurrency: 'UYU',
-      price: totalPrice,
-      availability: 'https://schema.org/InStock',
-      seller: {
-        '@type': 'Organization',
-        name: 'Kamaluso Papelería',
-      },
-    },
-    aggregateRating: reviewCount > 0 ? {
-      '@type': 'AggregateRating',
-      ratingValue: averageRating,
-      reviewCount: reviewCount,
-    } : undefined,
-    review: reviews.map((review) => ({
-      '@type': 'Review',
-      author: {
-        '@type': 'Person',
-        name: review.user.name,
-      },
-      datePublished: new Date(review.createdAt).toISOString(),
-      reviewBody: review.comment,
-      reviewRating: {
-        '@type': 'Rating',
-        ratingValue: review.rating,
-        bestRating: '5',
-        worstRating: '1',
-      },
-    })),
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: breadcrumbItems.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
-      item: `${siteUrl}${item.href}`,
-    })),
-  };
 
   return (
     <>
       <SeoMeta
-        title={pageTitle}
-        description={pageDescription}
-        image={pageImage}
-        url={canonicalUrl}
-        type="product"
+        title={product.seoTitle || product.nombre}
+        description={product.seoDescription || product.descripcion}
+        image={product.imageUrl}
       />
-      <Head>
-        {/* Inyecto los datos estructurados en la página para que Google los lea */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-          key="product-jsonld"
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-          key="breadcrumb-jsonld"
-        />
-      </Head>
 
-      <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="bg-white pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <Breadcrumbs items={breadcrumbItems} />
-          </div>
+          <Breadcrumbs items={breadcrumbs} />
 
-          {/* Contenedor Principal de la Grilla */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-12">
-            
-            {/* --- Columna Izquierda: Carrusel de Imágenes --- */}
-            <div className="w-full lg:sticky top-32 self-start">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  className="block w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg cursor-zoom-in"
-                >
-                  <Image
-                    key={activeImage}
-                    src={activeImage}
-                    alt={product.alt || product.nombre}
-                    fill
-                    sizes="(max-width: 767px) 400px, (max-width: 1023px) 800px, 640px"
-                    style={{ objectFit: 'cover' }}
-                    className="rounded-2xl"
-                    priority // LCP Image
-                  />
-                </button>
-
-
+          <div className="grid lg:grid-cols-2 gap-x-12 gap-y-8 mt-6">
+            {/* --- Columna Izquierda: Galería de Imágenes --- */}
+            <div className="flex flex-col items-center">
+              <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4">
+                <Image
+                  key={activeImage}
+                  src={activeImage}
+                  alt={product.alt || product.nombre}
+                  fill
+                  sizes="(max-width: 768px) 90vw, 50vw"
+                  style={{ objectFit: 'cover' }}
+                  className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
+                  priority
+                  onClick={() => setLightboxOpen(true)}
+                />
               </div>
-
-
-
+              
               {allProductImages.length > 1 && (
-                <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-                  {allProductImages.map((img, index) => (
-                    <button key={index} type="button" onClick={() => handleImageChange(img)} className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-pink-500' : 'border-gray-300'} flex-shrink-0`}>
-                      <Image src={img} alt={product.alt || product.nombre} fill sizes="100px" style={{ objectFit: 'cover' }} className="rounded-lg" />
+                <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center">
+                  {showThumbnailLeftArrow && (
+                    <button onClick={() => scrollThumbnails('left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
+                      <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
                     </button>
-                  ))}
+                  )}
+                  <div ref={thumbnailCarouselRef} className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1">
+                    {allProductImages.map((img, index) => (
+                      <div
+                        key={index}
+                        className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-200 ${activeImage === img ? 'ring-2 ring-pink-500 ring-offset-2' : 'hover:opacity-80'}`}
+                        onClick={() => handleImageChange(img)}
+                      >
+                        <Image
+                          src={img}
+                          alt={`Thumbnail ${index + 1}`}
+                          fill
+                          sizes="80px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {showThumbnailRightArrow && (
+                    <button onClick={() => scrollThumbnails('right')} className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
+                      <ChevronRightIcon className="h-6 w-6 text-gray-700" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* --- Columna Derecha: Información y Personalización --- */}
-            <div className="w-full mt-8 lg:mt-0">
-              {reviewCount > 0 && (
-                <div className="flex items-center mb-3">
-                  <StarRating rating={parseFloat(averageRating)} />
-                  <a href="#reviews-section" className="text-gray-600 ml-2 text-sm hover:underline">
-                    ({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})
-                  </a>
-                </div>
-              )}
-              <h1 className="text-2xl md:text-3xl font-bold mb-3">{product.nombre}</h1>
+            {/* --- Columna Derecha: Información y Controles --- */}
+            <div className="flex flex-col justify-center">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
+              <div className="flex items-center mt-3">
+                <StarRating rating={parseFloat(averageRating)} />
+                <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
+              </div>
+              <p className="text-3xl font-semibold text-pink-500 mt-4">$U {totalPrice}</p>
               
-              {isClient ? (
-                <p key={totalPrice} className="text-pink-500 font-bold text-4xl mb-6 transition-all duration-300 ease-in-out animate-pulse-once">
-                  $U {totalPrice}
-                </p>
-              ) : (
-                <p className="text-pink-500 font-bold text-4xl mb-6">
-                  $U {product?.basePrice || 0}
-                </p>
-              )}
+              {/* --- Grupos de Personalización Unificados y Ordenados --- */}
+              <div className="mt-6 space-y-6">
+                {orderedCustomizationGroups.map((group, index) => {
+                  const groupNumber = index + 1;
+                  const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
 
-              {/* --- Sección de Galería de Diseños de Tapa --- */}
-              {activeCoverDesignGroups.length > 0 && (
-                <div className="mt-5">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3">Selecciona tu diseño de tapa</h3>
-                  {activeCoverDesignGroups.map(group => (
-                    <NewCoverDesignGallery
-                      key={group.name}
-                      groupName={group.name}
-                      options={group.options}
-                      selectedOptionName={selections[group.name]}
-                      onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* --- Opciones de Personalización --- */}
-              <div className="space-y-5">
-                {displayGroups.map((group) => {
-                  const groupName = group.name.trim();
-                  if (group.dependsOn) {
-                    const parentSelection = selections[group.dependsOn.groupName];
-                    if (parentSelection !== group.dependsOn.optionName) return null;
-                  }
-
-                  if (groupName === 'Interiores') {
+                  if (isCoverDesignGroup) {
+                    const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
                     return (
-                      <div key={groupName}>
-                        <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
-                        <InteriorDesignGallery options={group.options} selectedOption={selections[groupName]} onSelectOption={(optionName) => handleSelectionChange(groupName, optionName)} />
+                      <NewCoverDesignGallery
+                        key={group.name}
+                        groupName={`${groupNumber}. ${groupTitle}`}
+                        options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
+                        onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
+                        selectedOptionName={selections[group.name]}
+                      />
+                    );
+                  } else {
+                    const groupTitle = customGroupTitles[group.name] || group.name;
+                    return (
+                      <div key={group.name}>
+                        <h3 className="font-bold text-lg text-gray-800 mb-2">{groupNumber}. {groupTitle}{group.required && <span className="text-red-500 ml-1">*</span>}</h3>
+                        {group.type === 'text' ? (
+                          <input
+                            type="text"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
+                            placeholder="Escribe aquí..."
+                            value={selections[group.name] || ''}
+                            onChange={(e) => handleSelectionChange(group.name, e.target.value)}
+                          />
+                        ) : (
+                          <div className="flex flex-wrap gap-3">
+                            {(group.options || []).map((option) => (
+                              <button
+                                key={option.name}
+                                onClick={() => handleSelectionChange(group.name, option.name)}
+                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                {option.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   }
-
-                  if (group.type === 'text') {
-                    return (
-                      <div key={groupName}>
-                        <label htmlFor={groupName} className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
-                        <textarea
-                          id={groupName}
-                          value={selections[groupName] || ''}
-                          onChange={(e) => handleSelectionChange(groupName, e.target.value)}
-                          placeholder={group.value || 'Escribe tu texto aquí...'}
-                          rows={3}
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
-                        />
-                      </div>
-                    );
-                  }
-
-                  // --- Renderizador de Botones Modernos para otros grupos ---
-                  return (
-                    <div key={groupName}>
-                      <label className="block text-sm font-medium text-gray-800 mb-2">{groupName}</label>
-                      <div className="flex flex-wrap gap-2">
-                        {group.options.map((option: any) => {
-                          const isSelected = selections[groupName] === option.name.trim();
-                          return (
-                            <button
-                              key={option.name}
-                              type="button"
-                              onClick={() => handleSelectionChange(groupName, option.name)}
-                              className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors duration-200 ${
-                                isSelected
-                                  ? 'bg-gray-900 text-white border-gray-900'
-                                  : 'bg-white text-gray-800 border-gray-300 hover:border-gray-900'
-                              }`}
-                            >
-                              {option.name}
-                              {option.priceModifier > 0 && <span className="ml-1 font-normal text-xs"> (+ $U {option.priceModifier})</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
                 })}
               </div>
 
@@ -521,7 +486,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             </div>
           </section>
         )}
-      </main>
+      </div>
 
       {/* --- Botón de Compra Pegajoso para Móviles --- */}
       {showStickyButton && (
@@ -575,27 +540,26 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
     // Combine static and dynamic customization groups
     const staticGroups = product.customizationGroups || [];
-    const coverDesignGroups = [];
+    const allCoverDesigns = [];
 
     if (product.coverDesignGroupNames && product.coverDesignGroupNames.length > 0) {
       for (const groupName of product.coverDesignGroupNames) {
         const designs = await CoverDesign.find({ groups: groupName }).lean();
-        if (designs.length > 0) {
-          coverDesignGroups.push({
-            name: `Diseño de Tapa - ${groupName}`,
-            options: designs.map(d => ({
-              name: d.name,
-              image: d.imageUrl,
-              priceModifier: 0 // O el modificador de precio si lo tienes
-            })),
-            type: 'cover-design',
-            dependsOn: { // Ejemplo de dependencia
-              groupName: 'Tipo de Tapa',
-              optionName: groupName.includes('Dura') ? 'Tapa Dura' : 'Tapa Flexible'
-            }
-          });
-        }
+        allCoverDesigns.push(...designs);
       }
+    }
+
+    const coverDesignGroups = [];
+    if (allCoverDesigns.length > 0) {
+      coverDesignGroups.push({
+        name: 'Diseño de Tapa',
+        type: 'cover-design',
+        options: allCoverDesigns.map(d => ({
+          name: d.name,
+          image: d.imageUrl,
+          priceModifier: 0 // O el modificador de precio si lo tienes
+        })),
+      });
     }
 
     product.customizationGroups = [...staticGroups, ...coverDesignGroups];

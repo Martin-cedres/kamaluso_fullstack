@@ -1,5 +1,4 @@
 import { GetStaticProps } from 'next'
-import Navbar from '../components/Navbar'
 import SeoMeta from '../components/SeoMeta'
 
 const faqs = [
@@ -39,9 +38,7 @@ export default function FaqPage() {
         url="/faq"
       />
 
-      <Navbar />
-
-      <main className="min-h-screen bg-gray-50 pt-32 px-6 pb-16">
+      <main className="min-h-screen bg-gray-50 px-6 pb-16">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">
             Preguntas Frecuentes

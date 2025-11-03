@@ -1,5 +1,4 @@
 import { GetStaticProps } from 'next'
-import Navbar from '../components/Navbar'
 import SeoMeta from '../components/SeoMeta'
 import Link from 'next/link'
 
@@ -16,9 +15,7 @@ export default function ContactoPage() {
         url={canonicalUrl}
       />
 
-      <Navbar />
-
-      <main className="min-h-screen bg-gray-50 pt-32 px-4 sm:px-6 lg:px-8 pb-16">
+      <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 pb-16">
         <div className="max-w-6xl mx-auto bg-white p-8 rounded-2xl shadow-lg lg:grid lg:grid-cols-2 lg:gap-12 items-center">
           <div className="lg:order-1">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">

@@ -9,8 +9,11 @@ export interface ICustomizationOption {
 
 export interface ICustomizationGroup {
   name: string;
-  type: 'radio' | 'checkbox' | 'text';
+  displayTitle?: string;
+  displayOrder?: number; // Nuevo campo para el orden
+  type: 'radio' | 'checkbox' | 'text' | 'cover-design';
   options: ICustomizationOption[];
+  required?: boolean;
   dependsOn?: {
     groupName: string;
     optionName: string;
@@ -65,7 +68,10 @@ const productSchema: Schema<IProduct> = new Schema(
     customizationGroups: [
       {
         name: String,
+        displayTitle: String,
+        displayOrder: Number, // Nuevo campo para el orden
         type: String,
+        required: Boolean,
         options: [
           {
             name: String,

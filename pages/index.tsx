@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import Head from 'next/head' // Importo Head para añadir el schema
-import Navbar from '../components/Navbar'
 import SeoMeta from '../components/SeoMeta'; // Importar SeoMeta
 
 import Product from '../models/Product'; // Importar el MODELO Product
@@ -101,8 +100,6 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         />
       </Head>
 
-      <Navbar />
-
       <main className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
         {/* Hero */}
         <section className="flex flex-col items-center justify-center text-center px-6 py-24">
@@ -116,16 +113,17 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Papelería Personalizada en Uruguay
           </h1>
-          <p className="text-lg text-gray-600 mb-0">
+          <p className="text-lg text-gray-600 mb-8">
             Agendas, libretas y cuadernos únicos. <br /> ✨ Envíos a todo
             Uruguay ✨
           </p>
+
         </section>
 
         {/* Categorías Dinámicas */}
         <section className="px-6 py-12 bg-gray-50">
           <h2 className="text-3xl font-semibold text-center mb-10">
-            Categorías
+            Explora nuestras colecciones
           </h2>
           <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
             {categories.map((cat) => (
@@ -155,7 +153,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         {destacados.length > 0 && (
           <section className="px-6 py-12">
             <h2 className="text-3xl font-semibold text-center mb-10">
-              Productos Destacados
+              Los más elegidos
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
               {destacados.map((product) => (

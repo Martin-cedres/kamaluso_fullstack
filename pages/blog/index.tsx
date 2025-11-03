@@ -1,6 +1,5 @@
 import { GetStaticProps } from 'next'
 import Link from 'next/link'
-import Navbar from '../../components/Navbar'
 import SeoMeta from '../../components/SeoMeta'
 import connectDB from '../../lib/mongoose'
 import Post from '../../models/Post'
@@ -28,9 +27,7 @@ export default function BlogIndexPage({ posts }: Props) {
         url="/blog"
       />
 
-      <Navbar />
-
-      <main className="min-h-screen bg-gray-50 pt-32 px-6">
+      <main className="min-h-screen bg-gray-50 px-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-semibold text-center mb-10">
             Nuestro Blog

@@ -617,7 +617,13 @@ const AdminIndex = () => {
 
       // Handle form fields, excluding complex objects
       Object.keys(form).forEach((key) => {
-        if (key !== 'customizationGroups' && key !== 'categoria' && key !== 'subCategoria') {
+        if (key === 'seoKeywords') {
+          const keywords = form.seoKeywords.split(',').map((kw: string) => kw.trim()).filter((kw: string) => kw);
+          // Append each keyword separately
+          keywords.forEach((keyword: string, index: number) => {
+            formData.append(`seoKeywords[${index}]`, keyword);
+          });
+        } else if (key !== 'customizationGroups' && key !== 'categoria' && key !== 'subCategoria') {
           formData.append(key, form[key]);
         }
       });
@@ -1026,6 +1032,10 @@ const AdminIndex = () => {
                     <div className="flex items-center gap-2 pt-2">
                       <input type="checkbox" checked={form.destacado} onChange={(e) => setForm((f: any) => ({ ...f, destacado: e.target.checked }))} className="h-4 w-4 rounded text-pink-600 focus:ring-pink-500" />
                       <label className="text-sm text-gray-700">Marcar como Producto Destacado</label>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <input type="checkbox" checked={form.showCoverType} onChange={(e) => setForm((f: any) => ({ ...f, showCoverType: e.target.checked }))} className="h-4 w-4 rounded text-pink-600 focus:ring-pink-500" />
+                      <label className="text-sm text-gray-700">Mostrar Selector de Tipo de Tapa</label>
                     </div>
 
                   </div>

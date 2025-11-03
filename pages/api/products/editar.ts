@@ -173,6 +173,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         updateDoc.destacado = String(fields.destacado).toLowerCase() === 'true'
       }
 
+      if (fields.showCoverType !== undefined) {
+        updateDoc.showCoverType = String(fields.showCoverType).toLowerCase() === 'true'
+      }
+
       // Campo de keywords (array de strings)
       if (typeof fields.seoKeywords === 'string') {
         updateDoc.seoKeywords = fields.seoKeywords

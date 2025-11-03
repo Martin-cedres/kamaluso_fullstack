@@ -1,5 +1,4 @@
 import { GetStaticProps } from 'next'
-import Navbar from '../components/Navbar'
 import SeoMeta from '../components/SeoMeta'
 import Image from 'next/image'
 
@@ -12,9 +11,7 @@ export default function SobreNosotrosPage() {
         url="/sobre-nosotros"
       />
 
-      <Navbar />
-
-      <main className="min-h-screen bg-white pt-32">
+      <main className="min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-6 pb-16">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-800 mb-4">

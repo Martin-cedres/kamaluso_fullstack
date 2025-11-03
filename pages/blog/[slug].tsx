@@ -1,7 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import Navbar from '../../components/Navbar'
 import SeoMeta from '../../components/SeoMeta'
 
 interface Post {
@@ -24,8 +23,8 @@ export default function BlogPostPage({ post }: Props) {
   if (!post) {
     return (
       <>
-        <Navbar />
-        <main className="min-h-screen flex items-center justify-center pt-32">
+        
+        <main className="min-h-screen flex items-center justify-center">
           <p className="text-gray-500 text-xl">Post no encontrado.</p>
         </main>
       </>
@@ -66,9 +65,9 @@ export default function BlogPostPage({ post }: Props) {
         </script>
       </Head>
 
-      <Navbar />
+      
 
-      <main className="min-h-screen bg-white pt-32 px-6">
+      <main className="min-h-screen bg-white px-6">
         <div className="max-w-4xl mx-auto">
           <article>
             {post.coverImage && (

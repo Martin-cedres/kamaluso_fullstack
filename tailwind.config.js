@@ -35,6 +35,8 @@ module.exports = {
       boxShadow: {
         kamaluso: '0 4px 16px rgba(255,107,53,0.15)',
         kamalusoSoft: '0 4px 14px rgba(0,0,0,0.1)',
+        kamalusoPink: '0 4px 16px rgba(232, 67, 147, 0.2)',
+        kamalusoPinkXl: '0 20px 25px -5px rgba(232, 67, 147, 0.1), 0 8px 10px -6px rgba(232, 67, 147, 0.1)',
       },
       borderRadius: {
         xl: '1rem',

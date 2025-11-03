@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useCart } from '../context/CartContext'
-import Navbar from '../components/Navbar'
 import toast from 'react-hot-toast'
 
 const departments = [
@@ -219,8 +218,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 px-6">
+      <main className="min-h-screen bg-gray-50 px-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-semibold text-center mb-10">
             Finalizar Compra

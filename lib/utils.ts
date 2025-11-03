@@ -98,7 +98,7 @@ export async function revalidateProductPaths(categoria: string, slug: string, id
     '/',
     '/productos',
     `/productos/${categoria}`,
-    `/productos/detail/${id}`,
+    `/productos/detail/${slug}`,
   ];
 
   const secret = process.env.REVALIDATE_TOKEN;

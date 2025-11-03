@@ -1,5 +1,4 @@
 import { GetStaticProps } from 'next'
-import Navbar from '../components/Navbar'
 import SeoMeta from '../components/SeoMeta'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -34,8 +33,6 @@ export default function RegalosEmpresarialesPage() {
         description="Sorprende a tus clientes y empleados con regalos empresariales únicos. Agendas y libretas personalizadas con tu logo. Cotiza hoy. Envíos a todo Uruguay."
         url="/regalos-empresariales"
       />
-
-      <Navbar />
 
       <main className="min-h-screen bg-white text-gray-900 font-sans">
         {/* Hero Section */}
