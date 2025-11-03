@@ -230,7 +230,7 @@ Resumen de la Sesión:
 
 *   **Panel de Administración:** Se identificó que el selector "Interactivo/Estándar" sigue visible en el panel de administración. Se intentó localizar el archivo del formulario de productos para eliminarlo, pero no se pudo encontrar. **Acción pendiente para el usuario:** localizar el archivo o dejar la eliminación del selector para una futura sesión.
 
-### Tareas Pendientes
+### Tareas Pendientes:
 
 *   **Mejorar Títulos de Categorías (Navbar):**
     *   **Problema:** Los nombres largos de las categorías (ej. "Ver Artículos con Tapa Dura") no son adecuados para la barra de navegación.
@@ -243,3 +243,38 @@ Resumen de la Sesión:
     *   **Paso 1 (Backend):** Crear una nueva ruta de API (ej. `/api/subscribe`) que reciba una dirección de correo y la guarde en una nueva colección en MongoDB.
     *   **Paso 2 (Frontend):** Crear un nuevo componente en React para el formulario de suscripción (campo de email y botón).
     *   **Paso 3 (Integración):** Añadir el componente a la página de inicio (`pages/index.tsx`) y conectarlo con la API.
+
+---
+## Resumen de la Sesión de Trabajo - 2 de Noviembre de 2025 (Continuación - Implementación de Suscripción al Boletín)
+
+**Objetivo Principal:** Implementar la funcionalidad de suscripción al boletín con descuento del 10% para la primera compra.
+
+### 1. Implementación del Backend
+*   **Acciones Realizadas:**
+    *   Creación del modelo `models/Subscriber.ts` para almacenar las direcciones de correo electrónico de los suscriptores.
+    *   Creación de la ruta de API `pages/api/subscribe.ts` que:
+        *   Recibe el correo electrónico del suscriptor.
+        *   Verifica si el correo ya está suscrito.
+        *   Guarda el nuevo suscriptor en la base de datos.
+        *   Genera un código de cupón único (`BIENVENIDA-XXXXX`) con un 10% de descuento, válido por 30 días y de un solo uso.
+        *   Guarda el cupón generado en la colección `Coupon`.
+        *   Envía un correo electrónico de bienvenida al suscriptor con el código del cupón, utilizando la configuración de `lib/nodemailer.ts`.
+
+### 2. Implementación del Frontend
+*   **Acciones Realizadas:**
+    *   Creación del componente `components/NewsletterForm.tsx` que incluye un campo de entrada para el correo electrónico y un botón de suscripción.
+    *   Manejo de estados de carga, éxito y error en el formulario.
+    *   Integración del `NewsletterForm` en la página de inicio (`pages/index.tsx`), colocándolo antes del cierre de la etiqueta `<main>`.
+    *   Se añadió la importación del `NewsletterForm` en `pages/index.tsx`.
+
+### 3. Depuración y Verificación
+*   **Acciones Realizadas:**
+    *   Se eliminó el botón "Ver todos los productos" de la sección Hero en `pages/index.tsx` a solicitud del usuario.
+    *   Se investigó un problema reportado por el usuario donde el cupón de prueba no aplicaba el descuento.
+    *   Se revisaron `pages/api/coupons/aplicar.ts`, `lib/couponValidator.ts`, `pages/checkout.tsx` y `context/CartContext.tsx`, confirmando que la lógica de aplicación de cupones era correcta.
+    *   Se creó y depuró un script (`scripts/debug-coupon.ts`) para obtener detalles del cupón y del producto directamente de la base de datos, resolviendo problemas de carga de variables de entorno y módulos TypeScript.
+    *   Se confirmó que el cupón de prueba era válido y aplicable.
+    *   El usuario verificó que el cupón funcionaba correctamente, indicando que el problema inicial fue un error de interacción (no hacer clic en el botón "Aplicar").
+
+### Tareas Pendientes:
+*   Implementar un script para exportar los correos de los suscriptores a un archivo CSV (pospuesto por el usuario).

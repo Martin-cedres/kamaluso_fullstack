@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectDB from '../../lib/mongoose';
-import Subscriber from '../../models/Subscriber';
 import Coupon from '../../models/Coupon';
+import SubscriberModel, { ISubscriber } from '../../models/Subscriber';
 import { transporter, mailOptions } from '../../lib/nodemailer';
+import { Model } from 'mongoose';
 
 // Función para generar un código de cupón único
 const generateUniqueCouponCode = async (): Promise<string> => {
@@ -38,13 +39,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const existingSubscriber = await Subscriber.findOne({ email });
+    const existingSubscriber = await (SubscriberModel as Model<ISubscriber>).findOne({ email });
 
     if (existingSubscriber) {
       return res.status(409).json({ message: 'Este correo ya está suscrito.' });
     }
 
-    const newSubscriber = new Subscriber({ email });
+    const newSubscriber = new (SubscriberModel as Model<ISubscriber>)({ email });
     await newSubscriber.save();
 
     const couponCode = await generateUniqueCouponCode();
