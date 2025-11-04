@@ -6,6 +6,7 @@ import Category from '../../../../models/Category';
 import { uploadFileToS3 } from '../../../../lib/s3-upload';
 import os from 'os';
 import { revalidateCategoryPaths } from '../../../../lib/utils'; // Importar la función de revalidación
+import mongoose from 'mongoose';
 
 export const config = { api: { bodyParser: false } };
 
@@ -16,55 +17,63 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   await connectDB();
 
-  const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
+  await new Promise<void>((resolve, reject) => {
+    const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      return res.status(400).json({ error: 'Error processing form', details: String(err) });
-    }
-
-    try {
-      const { nombre, slug, descripcion, parent } = fields;
-
-      if (!nombre || !slug || !descripcion) {
-        return res.status(400).json({ error: 'Nombre, slug y descripción son obligatorios.' });
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        res.status(400).json({ error: 'Error processing form', details: String(err) });
+        return reject(err);
       }
 
-      const newCategory: any = {
-        nombre: String(nombre),
-        slug: String(slug),
-        descripcion: String(descripcion),
-      };
+      try {
+        const { nombre, slug, descripcion, parent } = fields;
 
-      if (parent && String(parent)) {
-        newCategory.parent = String(parent);
-      } else {
-        newCategory.parent = null;
+        if (!nombre || !slug || !descripcion) {
+          res.status(400).json({ error: 'Nombre, slug y descripción son obligatorios.' });
+          return reject(new Error('Campos obligatorios faltantes'));
+        }
+
+        const newCategory: any = {
+          nombre: String(nombre),
+          slug: String(slug),
+          descripcion: String(descripcion),
+        };
+
+        const parentId = Array.isArray(parent) ? parent[0] : parent;
+
+        if (parentId && mongoose.Types.ObjectId.isValid(String(parentId))) {
+          newCategory.parent = new mongoose.Types.ObjectId(String(parentId));
+        } else {
+          newCategory.parent = null;
+        }
+
+        const imageFileArray = files.imagen as formidable.File[];
+        const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
+
+        if (imageFile) {
+          const imageUrl = await uploadFileToS3(imageFile);
+          newCategory.imagen = imageUrl;
+        }
+
+        const category = new Category(newCategory);
+        await category.save();
+
+        await revalidateCategoryPaths(newCategory.slug, newCategory.parent);
+
+        res.status(201).json({ success: true, message: 'Categoría creada con éxito', data: category });
+        resolve();
+
+      } catch (error: any) {
+        if (error.code === 11000) {
+          res.status(409).json({ error: 'Ya existe una categoría con ese nombre o slug.' });
+        } else {
+          console.error('[CREATE CATEGORY ERROR]:', error);
+          res.status(500).json({ error: 'Error interno al crear la categoría' });
+        }
+        reject(error);
       }
-
-      // formidable can return an array of files, even for a single upload. Handle this case.
-      const imageFileArray = files.imagen as formidable.File[];
-      const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
-
-      if (imageFile) {
-        const imageUrl = await uploadFileToS3(imageFile);
-        newCategory.imagen = imageUrl;
-      }
-
-      const category = new Category(newCategory);
-      await category.save();
-
-      // Revalidar las rutas de la categoría
-      await revalidateCategoryPaths(newCategory.slug, newCategory.parent);
-
-      res.status(201).json({ success: true, message: 'Categoría creada con éxito', data: category });
-    } catch (error: any) {
-      if (error.code === 11000) { // Duplicate key error
-        return res.status(409).json({ error: 'Ya existe una categoría con ese nombre o slug.' });
-      }
-      console.error('[CREATE CATEGORY ERROR]:', error);
-      res.status(500).json({ error: 'Error interno al crear la categoría' });
-    }
+    });
   });
 };
 

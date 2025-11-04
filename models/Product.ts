@@ -25,6 +25,9 @@ export interface IProduct extends Document {
   nombre: string;
   slug: string;
   descripcion: string;
+  descripcionBreve?: string;
+  puntosClave?: string[];
+  descripcionExtensa?: string;
   basePrice: number;
   categoria?: string;
   subCategoria?: string[];
@@ -51,6 +54,9 @@ const productSchema: Schema<IProduct> = new Schema(
     slug: { type: String, required: true, unique: true },
     claveDeGrupo: { type: String, trim: true, index: true },
     descripcion: { type: String, required: true },
+    descripcionBreve: { type: String },
+    puntosClave: [{ type: String }],
+    descripcionExtensa: { type: String },
     basePrice: { type: Number, required: true },
     categoria: { type: String },
     subCategoria: [{ type: String }],

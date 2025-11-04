@@ -7,6 +7,7 @@ import { uploadFileToS3 } from '../../../../lib/s3-upload';
 import os from 'os';
 import { ObjectId } from 'mongodb';
 import { revalidateCategoryPaths } from '../../../../lib/utils'; // Importar la función de revalidación
+import mongoose from 'mongoose';
 
 export const config = { api: { bodyParser: false } };
 
@@ -17,65 +18,66 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   await connectDB();
 
-  const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
+  await new Promise<void>((resolve, reject) => {
+    const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      return res.status(400).json({ error: 'Error processing form', details: String(err) });
-    }
-
-    try {
-      const { id, nombre, slug, descripcion, parent } = fields;
-
-      if (!id || !ObjectId.isValid(String(id))) {
-        return res.status(400).json({ error: 'ID de categoría inválido.' });
+    form.parse(req, async (err, fields, files) => {
+      if (err) {
+        res.status(400).json({ error: 'Error processing form', details: String(err) });
+        return reject(err);
       }
 
-      const updateData: any = {
-        nombre: String(nombre),
-        slug: String(slug),
-        descripcion: String(descripcion),
-      };
+      try {
+        const { id, nombre, slug, descripcion, parent } = fields;
 
-      if (parent && String(parent)) {
-        updateData.parent = String(parent);
-      } else {
-        updateData.parent = null;
-      }
+        if (!id || !ObjectId.isValid(String(id))) {
+          res.status(400).json({ error: 'ID de categoría inválido.' });
+          return reject(new Error('ID de categoría inválido'));
+        }
 
-      // formidable can return an array of files, even for a single upload. Handle this case.
-      const imageFileArray = files.imagen as formidable.File[];
-      const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
+        const updateData: any = {
+          nombre: String(nombre),
+          slug: String(slug),
+          descripcion: String(descripcion),
+        };
 
-      if (imageFile) {
-        try {
+        const parentId = Array.isArray(parent) ? parent[0] : parent;
+        if (parentId && mongoose.Types.ObjectId.isValid(String(parentId))) {
+          updateData.parent = new mongoose.Types.ObjectId(String(parentId));
+        } else {
+          updateData.parent = null;
+        }
+
+        const imageFileArray = files.imagen as formidable.File[];
+        const imageFile = imageFileArray && imageFileArray.length > 0 ? imageFileArray[0] : null;
+
+        if (imageFile) {
           const imageUrl = await uploadFileToS3(imageFile);
           updateData.imagen = imageUrl;
-        } catch (uploadError: any) {
-          console.error('[S3 UPLOAD ERROR]:', uploadError);
-          const fileInfo = files.imagen ? JSON.stringify(files.imagen, null, 2) : 'No file object found in request.';
-          const errorMessage = `${uploadError.message}. Details: ${fileInfo}`;
-          return res.status(500).json({ error: errorMessage });
         }
+
+        const updatedCategory = await Category.findByIdAndUpdate(String(id), updateData, { new: true });
+
+        if (!updatedCategory) {
+          res.status(404).json({ error: 'Categoría no encontrada.' });
+          return reject(new Error('Categoría no encontrada'));
+        }
+
+        await revalidateCategoryPaths(updatedCategory.slug, updatedCategory.parent?.toString());
+
+        res.status(200).json({ success: true, message: 'Categoría actualizada con éxito', data: updatedCategory });
+        resolve();
+
+      } catch (error: any) {
+        if (error.code === 11000) {
+          res.status(409).json({ error: 'Ya existe una categoría con ese nombre o slug.' });
+        } else {
+          console.error('[UPDATE CATEGORY ERROR]:', error);
+          res.status(500).json({ error: 'Error interno al actualizar la categoría' });
+        }
+        reject(error);
       }
-
-      const updatedCategory = await Category.findByIdAndUpdate(String(id), updateData, { new: true });
-
-      if (!updatedCategory) {
-        return res.status(404).json({ error: 'Categoría no encontrada.' });
-      }
-
-      // Revalidar las rutas de la categoría
-      await revalidateCategoryPaths(updatedCategory.slug, updatedCategory.parent?.toString());
-
-      res.status(200).json({ success: true, message: 'Categoría actualizada con éxito', data: updatedCategory });
-    } catch (error: any) {
-      if (error.code === 11000) { // Duplicate key error
-        return res.status(409).json({ error: 'Ya existe una categoría con ese nombre o slug.' });
-      }
-      console.error('[UPDATE CATEGORY ERROR]:', error);
-      res.status(500).json({ error: 'Error interno al actualizar la categoría' });
-    }
+    });
   });
 };
 

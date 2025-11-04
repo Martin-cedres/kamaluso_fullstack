@@ -102,12 +102,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (fields.nombre) updateDoc.nombre = String(fields.nombre);
       if (fields.slug) updateDoc.slug = String(fields.slug);
       if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo);
-      if (fields.descripcion) updateDoc.descripcion = String(fields.descripcion);
+      if (fields.descripcion) updateDoc.descripcion = fields.descripcion as string;
       if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle);
       if (fields.seoDescription) updateDoc.seoDescription = String(fields.seoDescription);
       if (fields.alt) updateDoc.alt = String(fields.alt);
       if (fields.notes) updateDoc.notes = String(fields.notes);
       if (fields.status) updateDoc.status = String(fields.status);
+
+      // Nuevos campos de descripción
+      if (fields.descripcionBreve) updateDoc.descripcionBreve = String(fields.descripcionBreve);
+      if (fields.descripcionExtensa) updateDoc.descripcionExtensa = String(fields.descripcionExtensa);
+      if (typeof fields.puntosClave === 'string') {
+        updateDoc.puntosClave = fields.puntosClave.split(',').map(s => s.trim());
+      }
 
       // Campo de precio base (numérico)
       if (fields.basePrice) {

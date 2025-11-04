@@ -133,7 +133,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         nombre: String(fields.nombre || ''),
         slug: String(fields.slug || ''),
         claveDeGrupo: String(fields.claveDeGrupo || ''),
-        descripcion: String(fields.descripcion || ''),
+        descripcion: fields.descripcion as string || '',
         basePrice: parseFloat(String(fields.basePrice || '0')) || 0,
         categoria: finalCategoriaSlug,
         subCategoria: finalSubCategoriaSlugs,
@@ -154,6 +154,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         images: imagesUrls,
         customizationGroups: customizationGroups, // Guardar el array con las URLs de imagen
         creadoEn: new Date(),
+        descripcionBreve: String(fields.descripcionBreve || ''),
+        puntosClave: typeof fields.puntosClave === 'string' ? fields.puntosClave.split(',').map(s => s.trim()) : [],
+        descripcionExtensa: String(fields.descripcionExtensa || ''),
       };
 
       const result = await db.collection('products').insertOne(productoDoc);

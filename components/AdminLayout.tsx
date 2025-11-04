@@ -32,6 +32,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    console.log('Session object:', session);
+  }, [session]);
+
+  useEffect(() => {
     if (status === 'loading') return // Do nothing while loading
     if (status === 'unauthenticated') {
       router.replace('/api/auth/signin')

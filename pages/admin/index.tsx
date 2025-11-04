@@ -232,9 +232,11 @@ const AdminIndex = () => {
     notes: '',
     destacado: false,
     tipoDeProducto: 'Interactivo',
-    claveDeGrupo: '',
-    customizationGroups: [],
-  })
+        claveDeGrupo: '',
+        customizationGroups: [],
+        descripcionBreve: '',
+        puntosClave: '', // Se manejará como string separado por comas en el formulario
+      })
 
   // Handlers para el nuevo UI de personalización
   const handleCustomizationChange = (groupIndex: number, optionIndex: number, field: string, value: string) => {
@@ -434,6 +436,101 @@ const AdminIndex = () => {
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null);
   const [availableCoverDesigns, setAvailableCoverDesigns] = useState<ICoverDesign[]>([]); // New state for cover designs
+  const [isGenerating, setIsGenerating] = useState(false); // Estado para el botón de IA
+  const [quillKey, setQuillKey] = useState(0); // Key para forzar re-render de Quill
+  const [editingProduct, setEditingProduct] = useState<any>(null); // Estado para el producto en edición
+
+  useEffect(() => {
+    if (editingProduct) {
+      setEditId(String(editingProduct._id));
+      setForm({
+        nombre: editingProduct.nombre || '',
+        basePrice: editingProduct.basePrice || editingProduct.precio || '',
+        slug: editingProduct.slug || '',
+        alt: editingProduct.alt || '',
+        status: editingProduct.status || 'activo',
+        notes: editingProduct.notes || '',
+        destacado: editingProduct.destacado || false,
+        tipoDeProducto: editingProduct.tipoDeProducto || 'Interactivo',
+        claveDeGrupo: editingProduct.claveDeGrupo || '',
+        seoTitle: editingProduct.seoTitle || '',
+        seoDescription: editingProduct.seoDescription || '',
+        descripcionBreve: editingProduct.descripcionBreve || '',
+        puntosClave: Array.isArray(editingProduct.puntosClave) ? editingProduct.puntosClave.join(', ') : editingProduct.puntosClave || '',
+        customizationGroups: editingProduct.customizationGroups || [],
+        seoKeywords: Array.isArray(editingProduct.seoKeywords)
+          ? editingProduct.seoKeywords.join(', ')
+          : editingProduct.seoKeywords || '',
+        descripcion: Array.isArray(editingProduct.descripcion) ? editingProduct.descripcion[0] : editingProduct.descripcion || '',
+      });
+      setSelectedCategoria(editingProduct.categoria || '');
+      const subCatValue = Array.isArray(editingProduct.subCategoria)
+        ? editingProduct.subCategoria[0]
+        : editingProduct.subCategoria || '';
+      setSelectedSubCategoria(subCatValue || '');
+      setPreview(editingProduct.imageUrl || null);
+      setPreviewsSecundarias(
+        Array.isArray(editingProduct.images) ? editingProduct.images : editingProduct.images ? [editingProduct.images] : []
+      );
+      setImage(null);
+      setImages([]);
+      setOptionImages({});
+      setOptionImagePreviews({});
+      setShowForm(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [editingProduct]);
+
+
+
+  // --- LÓGICA DE GENERACIÓN CON IA --- //
+  const handleGenerateContent = async () => {
+    if (!form.nombre) {
+      toast.error('Por favor, introduce un nombre para el producto antes de generar contenido.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const res = await fetch('/api/admin/generate-seo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          descripcion: form.descripcion,
+          categoria: selectedCategoria,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || errorData.message || 'Error en la API de generación');
+      }
+
+      const data = await res.json();
+
+      // Actualizar el formulario con los datos generados
+      setForm((currentForm: any) => ({
+        ...currentForm,
+        seoTitle: data.seoTitle,
+        seoDescription: data.seoDescription,
+                    seoKeywords: data.seoKeywords || '',
+                    descripcionBreve: data.descripcionBreve || '',
+                    puntosClave: Array.isArray(data.puntosClave) ? data.puntosClave.join(', ') : data.puntosClave || '',
+                    // Actualizar directamente el campo de descripción principal
+                    descripcion: data.descripcionExtensa || currentForm.descripcion,
+                  }));
+      toast.success('Contenido SEO generado con éxito.');
+      setQuillKey(prevKey => prevKey + 1); // Forzar re-render de ReactQuill
+
+    } catch (error: any) {
+      console.error('Error generando contenido con IA:', error);
+      toast.error(error.message || 'No se pudo generar el contenido.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   // --- LÓGICA --- //
 
@@ -603,8 +700,9 @@ const AdminIndex = () => {
     setPreviewsSecundarias([])
     setOptionImages({});
     setOptionImagePreviews({});
-    setEditId(null)
-    setShowForm(false)
+    setEditId(null);
+    setShowForm(false);
+    setEditingProduct(null); // Limpiar el producto en edición
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -691,31 +789,7 @@ const AdminIndex = () => {
       const res = await fetch(`/api/products/get?id=${id}`)
       if (!res.ok) throw new Error('No se pudo obtener el producto')
       const p = await res.json()
-
-      setEditId(String(p._id))
-      setForm({
-        ...p,
-        basePrice: p.basePrice || p.precio || '',
-        customizationGroups: p.customizationGroups || [],
-        seoKeywords: Array.isArray(p.seoKeywords)
-          ? p.seoKeywords.join(', ')
-          : p.seoKeywords || '',
-      })
-      setSelectedCategoria(p.categoria || '')
-      const subCatValue = Array.isArray(p.subCategoria)
-        ? p.subCategoria[0]
-        : p.subCategoria || ''
-      setSelectedSubCategoria(subCatValue || '')
-      setPreview(p.imageUrl || null)
-      setPreviewsSecundarias(
-        Array.isArray(p.images) ? p.images : p.images ? [p.images] : [],
-      )
-      setImage(null)
-      setImages([])
-      setOptionImages({});
-      setOptionImagePreviews({});
-      setShowForm(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setEditingProduct(p);
     } catch (err: any) {
       console.error('EDIT CLICK ERROR:', err)
       toast.error('No se pudo cargar el producto para editar')
@@ -898,12 +972,29 @@ const AdminIndex = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                       <ReactQuill
+                        key={quillKey}
                         theme="snow"
                         value={form.descripcion}
                         onChange={(value) => setForm((f: any) => ({ ...f, descripcion: value }))}
                         className="bg-white"
                       />
                     </div>
+
+                    {/* --- Nuevos Campos de Descripción --- */}
+                    <div className="mt-6 space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción Breve (para vistas previas)</label>
+                        <textarea value={form.descripcionBreve || ''} onChange={(e) => setForm((f: any) => ({ ...f, descripcionBreve: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" rows={2} placeholder="Un resumen corto y atractivo del producto."></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Puntos Clave</label>
+                        <input type="text" value={form.puntosClave || ''} onChange={(e) => setForm((f: any) => ({ ...f, puntosClave: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" placeholder="Beneficio 1, Beneficio 2, Beneficio 3" />
+                        <p className="text-xs text-gray-500 mt-1">Separar por comas.</p>
+                      </div>
+                    </div>
+
+
+
                   </div>
                 </div>
 
@@ -1043,7 +1134,17 @@ const AdminIndex = () => {
 
                 {/* --- SEO --- */}
                 <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">SEO</h3>
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-semibold text-gray-700">SEO</h3>
+                    <button
+                      type="button"
+                      onClick={handleGenerateContent}
+                      disabled={isGenerating || !form.nombre}
+                      className="inline-flex items-center gap-2 bg-purple-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isGenerating ? 'Generando...' : '✨ Generar con IA'}
+                    </button>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Título SEO</label>

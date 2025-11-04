@@ -45,6 +45,9 @@ interface ProductProp {
   soloDestacado?: boolean // Nuevo campo
   customizationGroups?: any[]; // Nuevo campo
   showCoverType?: boolean; // Nuevo campo
+  descripcionBreve?: string; // Nuevo campo
+  puntosClave?: string[]; // Nuevo campo
+  descripcionExtensa?: string; // Nuevo campo
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
@@ -101,6 +104,21 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const thumbnailCarouselRef = useRef<HTMLDivElement>(null);
   const [showThumbnailLeftArrow, setShowThumbnailLeftArrow] = useState(false);
   const [showThumbnailRightArrow, setShowThumbnailRightArrow] = useState(false);
+  const [activeTab, setActiveTab] = useState('descripcion');
+
+  const TabButton = ({ tabName, label }: { tabName: string; label: string }) => (
+    <button
+      onClick={() => setActiveTab(tabName)}
+      className={`px-4 py-2 text-sm sm:text-base font-semibold transition-colors duration-300 whitespace-nowrap ${
+        activeTab === tabName
+          ? 'border-b-2 border-pink-500 text-pink-600'
+          : 'text-gray-500 hover:text-gray-800'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
 
   const checkForThumbnailScroll = useCallback(() => {
     const container = thumbnailCarouselRef.current;
@@ -378,6 +396,12 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
               </div>
               <p className="text-3xl font-semibold text-pink-500 mt-4">$U {totalPrice}</p>
+
+              {/* --- Descripción Breve --- */}
+              {product.descripcionBreve && (
+                <p className="text-gray-600 text-lg leading-relaxed mt-4">{product.descripcionBreve}</p>
+              )}
+
               
               {/* --- Grupos de Personalización Unificados y Ordenados --- */}
               <div className="mt-6 space-y-6">
@@ -439,24 +463,50 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               </div>
             </div>
 
-            {/* --- Fila Inferior: Descripción del Producto --- */}
-            {product.descripcion && (
-              <div className="lg:col-span-2 mt-12 pt-8 border-t">
-                <h2 className="text-2xl font-bold mb-4">Descripción del Producto</h2>
-                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.descripcion }} />
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* --- Secciones Externas: Opiniones y Relacionados --- */}
-        <section id="reviews-section" className="mt-16 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-semibold mb-8 text-center">Opiniones de nuestros clientes</h2>
-          <div className="space-y-12">
-            <ReviewForm productId={product._id} onReviewSubmit={() => window.location.reload()} />
-            <ReviewList reviews={reviews} />
+          {/* --- Nueva Sección de Pestañas --- */}
+          <div className="w-full mt-16">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex gap-x-4 sm:gap-x-6" aria-label="Tabs">
+                <TabButton tabName="descripcion" label="Descripción" />
+                {product.puntosClave && product.puntosClave.length > 0 && (
+                  <TabButton tabName="puntosClave" label="Puntos Clave" />
+                )}
+                <TabButton tabName="reseñas" label={`Reseñas (${reviewCount})`} />
+              </nav>
+            </div>
+
+            <div className="py-8">
+              {activeTab === 'descripcion' && (
+                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.descripcionExtensa || product.descripcion || '' }} />
+              )}
+              {activeTab === 'puntosClave' && (
+                <div>
+                  <ul className="space-y-4">
+                    {product.puntosClave?.map((punto, index) => (
+                      <li key={index} className="flex items-start">
+                        <svg className="h-6 w-6 text-pink-500 mr-4 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-gray-700 text-lg">{punto}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {activeTab === 'reseñas' && (
+                <div id="reviews-section" className="max-w-4xl mx-auto">
+                  <div className="space-y-12">
+                    <ReviewForm productId={product._id} onReviewSubmit={() => window.location.reload()} />
+                    <ReviewList reviews={reviews} />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </section>
+
+        </div>
 
         {relatedProducts.length > 0 && (
           <section className="mt-16">
