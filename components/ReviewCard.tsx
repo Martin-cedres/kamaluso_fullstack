@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import StarRating from './StarRating';
@@ -10,18 +12,28 @@ interface ReviewCardProps {
 }
 
 const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
+  const [imageStyle, setImageStyle] = useState({ objectFit: 'cover' as const });
+
+  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const { naturalWidth, naturalHeight } = event.currentTarget;
+    if (naturalHeight > naturalWidth) {
+      setImageStyle({ objectFit: 'contain' as const });
+    }
+  };
+
   return (
     <div className="h-full min-h-[460px] flex flex-col justify-between p-6 bg-white rounded-2xl shadow-md border border-gray-200">
       <div>
         {review.imageUrl && ( // Conditionally render image
-          <div className="mb-4 w-full h-48 relative rounded-lg overflow-hidden">
+          <div className="mb-4 w-full h-48 relative rounded-lg overflow-hidden bg-gray-100">
             <Image
               src={review.imageUrl}
               alt={`Imagen de reseña de ${review.user.name}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              style={{ objectFit: 'cover' }}
+              style={imageStyle}
               className="rounded-lg"
+              onLoad={handleImageLoad}
             />
           </div>
         )}

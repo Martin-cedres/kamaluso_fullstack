@@ -15,7 +15,7 @@ Se implementó un sistema para mejorar y extender descripciones de productos en 
 6.  **Frontend Público (`pages/productos/detail/[slug].tsx`):** Se actualizó para mostrar `descripcionBreve`, `puntosClave` y `descripcionExtensa` de forma estructurada para mejorar UX y SEO.
 7.  **Conexión Real con Gemini:** Se integró la `GEMINI_API_KEY` para usar el servicio de IA de Gemini real en lugar de la simulación.
 
-**Estado Actual:** El proyecto está compilado y listo para producción con todas las funcionalidades implementadas y los errores corregidos.
+**Estado Actual:** El proyecto está cgeminiompilado y listo para producción con todas las funcionalidades implementadas y los errores corregidos.
 
 **Mejoras en `pages/api/admin/generate-seo.ts`:**
 1.  **Mecanismo de Reintentos:** Implementado un sistema de reintentos con backoff exponencial para la llamada a la API de Gemini, mejorando la robustez.
