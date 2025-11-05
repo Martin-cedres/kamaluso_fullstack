@@ -12,12 +12,12 @@ interface ReviewCardProps {
 }
 
 const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
-  const [imageStyle, setImageStyle] = useState({ objectFit: 'cover' as const });
+  const [imageStyle, setImageStyle] = useState<React.CSSProperties>({ objectFit: 'cover' });
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const { naturalWidth, naturalHeight } = event.currentTarget;
     if (naturalHeight > naturalWidth) {
-      setImageStyle({ objectFit: 'contain' as const });
+      setImageStyle({ objectFit: 'contain' });
     }
   };
 

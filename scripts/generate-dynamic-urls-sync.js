@@ -6,6 +6,7 @@ const MONGODB_URI = process.env.MONGODB_URI
 // --- Esquemas Mínimos para la Generación de URLs ---
 const productSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
+  slug: String,
 })
 
 const categorySchema = new mongoose.Schema({
@@ -39,7 +40,7 @@ async function getDynamicUrlsSync() {
     const urlSet = new Set()
 
     // 1. URLs de Productos
-    const products = await Product.find({}, '_id').lean()
+    const products = await Product.find({}, '_id slug').lean()
     products.forEach((p) => {
       if (p._id) {
         urlSet.add(`/productos/detail/${p.slug}`)
