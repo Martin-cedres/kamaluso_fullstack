@@ -120,7 +120,7 @@ export default function App({ Component, pageProps }: AppProps) {
             className={`${inter.variable} font-sans flex flex-col min-h-screen`}
           >
             <Navbar />
-            <main className="flex-grow pb-24 pt-24">
+            <main className="flex-grow pb-24 pt-8">
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />

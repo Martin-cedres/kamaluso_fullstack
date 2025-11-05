@@ -103,7 +103,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
       <main className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
         {/* Hero */}
-        <section className="flex flex-col items-center justify-center text-center px-6 py-24">
+        <section className="flex flex-col items-center justify-center text-center px-6 py-16">
           <Image
             src="/logo.webp"
             alt="Logo Kamaluso"
@@ -123,7 +123,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
         {/* Categorías Dinámicas */}
         <section className="px-6 py-12 bg-gray-50">
-          <h2 className="text-3xl font-semibold text-center mb-10">
+          <h2 className="text-3xl font-semibold text-center mb-8">
             Explora nuestras colecciones
           </h2>
           <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
@@ -153,7 +153,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         {/* Productos Destacados */}
         {destacados.length > 0 && (
           <section className="px-6 py-12">
-            <h2 className="text-3xl font-semibold text-center mb-10">
+            <h2 className="text-3xl font-semibold text-center mb-8">
               Los más elegidos
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
@@ -179,7 +179,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
         {/* Sección de Proceso de Compra */}
         <section className="px-6 py-12 bg-white">
-          <h2 className="text-3xl font-semibold text-center mb-10">
+          <h2 className="text-3xl font-semibold text-center mb-8">
             Así funciona tu compra personalizada
           </h2>
           <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">

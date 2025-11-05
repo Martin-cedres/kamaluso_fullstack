@@ -1,4 +1,3 @@
-
 Se implementó un sistema para mejorar y extender descripciones de productos en el panel de administración y en el frontend público de Papeleria Personalizada Kamaluso, utilizando la IA de Gemini.
 
 **Tareas realizadas:**
@@ -17,3 +16,20 @@ Se implementó un sistema para mejorar y extender descripciones de productos en 
 7.  **Conexión Real con Gemini:** Se integró la `GEMINI_API_KEY` para usar el servicio de IA de Gemini real en lugar de la simulación.
 
 **Estado Actual:** El proyecto está compilado y listo para producción con todas las funcionalidades implementadas y los errores corregidos.
+
+**Mejoras en `pages/api/admin/generate-seo.ts`:**
+1.  **Mecanismo de Reintentos:** Implementado un sistema de reintentos con backoff exponencial para la llamada a la API de Gemini, mejorando la robustez.
+2.  **Manejo Robusto de JSON:** Añadido un manejo de errores específico para el parseo de la respuesta JSON de Gemini, incluyendo el registro de la respuesta cruda en caso de fallo.
+
+**Tareas Pendientes (Implementación de Chatbot):**
+1.  **Análisis de Contenido Existente:** Buscar archivos de FAQ, descripciones de productos y otro contenido relevante para extraer posibles preguntas y respuestas iniciales para `chatbot_knowledge.json`.
+2.  **Implementación de la Ruta API:** Crear el archivo `pages/api/chatbot.ts` con la lógica de procesamiento de mensajes y búsqueda en la base de conocimientos.
+3.  **Implementación del Componente Frontend:** Desarrollar el componente `components/Chatbot.tsx` con la interfaz de usuario del chat.
+4.  **Integración:** Añadir el componente `Chatbot` en `pages/_app.tsx` o en un layout adecuado.
+5.  **Presentación de la Base de Conocimientos Inicial:** Mostrar el `chatbot_knowledge.json` generado con la información extraída para revisión y expansión por parte del usuario.
+
+---
+**Instrucciones para Futuras Sesiones:**
+*   No borrar el contenido existente en `session_summary.txt`.
+*   Siempre añadir nueva información al final del archivo, detallando las tareas realizadas y las pendientes.
+*   Todos los comentarios en el código deben estar en español.
