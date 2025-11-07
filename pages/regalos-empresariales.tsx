@@ -2,6 +2,7 @@ import { GetStaticProps } from 'next'
 import SeoMeta from '../components/SeoMeta'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function RegalosEmpresarialesPage() {
   // Datos de ejemplo para productos sugeridos
@@ -25,6 +26,88 @@ export default function RegalosEmpresarialesPage() {
       imageUrl: '/logo.webp', // Reemplazar con imagen de ejemplo
     },
   ]
+
+  const [formData, setFormData] = useState({
+    companyName: '',
+    yourName: '',
+    email: '',
+    phone: '',
+    productInterest: '',
+    quantity: '',
+    message: '',
+  });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [responseMessage, setResponseMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    setResponseMessage('');
+
+    try {
+      const res = await fetch('/api/contact-b2b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatus('success');
+        setResponseMessage(data.message);
+        setFormData({
+          companyName: '',
+          yourName: '',
+          email: '',
+          phone: '',
+          productInterest: '',
+          quantity: '',
+          message: '',
+        });
+      } else {
+        setStatus('error');
+        setResponseMessage(data.message || 'Hubo un error al enviar tu solicitud.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setStatus('error');
+      setResponseMessage('Hubo un error de conexión. Inténtalo de nuevo más tarde.');
+    }
+  };
+
+  const faqs = [
+    {
+      question: '¿Cuál es la cantidad mínima para pedidos empresariales?',
+      answer: 'No tenemos un mínimo estricto, pero el precio por unidad mejora significativamente con mayores cantidades. Contáctanos con tu idea y te prepararemos una cotización a medida.',
+    },
+    {
+      question: '¿Qué opciones de personalización ofrecen?',
+      answer: 'Podemos personalizar casi todo. Esto incluye añadir tu logo, usar los colores de tu marca, e imprimir diseños personalizados en las tapas.',
+    },
+    {
+      question: '¿Cuál es el proceso para realizar un pedido?',
+      answer: 'El proceso es simple: 1) Nos contactas con tu idea. 2) Te enviamos una cotización y una muestra digital para tu aprobación. 3) Producimos tu pedido. 4) Lo enviamos a cualquier parte de Uruguay.',
+    },
+    {
+      question: '¿Cuáles son los tiempos de entrega?',
+      answer: 'Los tiempos de entrega varían según la complejidad del diseño, la cantidad solicitada y la época del año. Una vez aprobada la muestra digital, te informaremos el plazo estimado de producción y envío.',
+    },
+    {
+      question: '¿Puedo ver una muestra digital con mi logo antes de confirmar?',
+      answer: '¡Sí! Siempre preparamos y enviamos una muestra digital detallada para que puedas ver exactamente cómo quedará tu producto y dar tu aprobación antes de que empecemos la producción.',
+    },
+    {
+      question: '¿Qué métodos de pago aceptan para empresas?',
+      answer: 'Aceptamos transferencia bancaria y Mercado Pago. Los detalles se coordinan al confirmar la cotización.',
+    },
+  ];
 
   return (
     <>
@@ -125,6 +208,23 @@ export default function RegalosEmpresarialesPage() {
           </div>
         </section>
 
+        {/* Sección de Preguntas Frecuentes */}
+        <section className="px-6 py-16 bg-white">
+          <h2 className="text-3xl font-semibold text-center mb-12">
+            Preguntas Frecuentes para Empresas
+          </h2>
+          <div className="max-w-4xl mx-auto space-y-6">
+            {faqs.map((faq, index) => (
+              <div key={index} className="border-b border-gray-200 pb-4">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  {faq.question}
+                </h3>
+                <p className="text-gray-600">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Call to Action */}
         <section className="px-6 py-20 text-center">
           <h2 className="text-3xl font-semibold mb-4">¿Listo para empezar?</h2>
@@ -133,12 +233,138 @@ export default function RegalosEmpresarialesPage() {
             descubre cómo podemos ayudarte a destacar con regalos empresariales
             que dejan huella.
           </p>
-          <Link
-            href="/contacto"
-            className="bg-pink-500 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition-transform transform hover:scale-105"
-          >
-            Solicitar Cotización
-          </Link>
+        </section>
+
+        {/* Formulario de Contacto B2B */}
+        <section className="px-6 py-16 bg-gray-50">
+          <h2 className="text-3xl font-semibold text-center mb-12">
+            Solicita tu Cotización Personalizada
+          </h2>
+          <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
+                  Nombre de la Empresa <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="companyName"
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="yourName" className="block text-sm font-medium text-gray-700">
+                  Tu Nombre <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="yourName"
+                  id="yourName"
+                  value={formData.yourName}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email de Contacto <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  Teléfono (Opcional)
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  id="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="productInterest" className="block text-sm font-medium text-gray-700">
+                  Producto de Interés <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="productInterest"
+                  id="productInterest"
+                  value={formData.productInterest}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                >
+                  <option value="">Selecciona una opción</option>
+                  <option value="Agendas">Agendas</option>
+                  <option value="Libretas">Libretas</option>
+                  <option value="Planners">Planners</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
+                  Cantidad Estimada <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="quantity"
+                  id="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                  Mensaje (detalla tu idea) <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="message"
+                  id="message"
+                  rows={4}
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
+                ></textarea>
+              </div>
+              <div>
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-500 hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {status === 'loading' ? 'Enviando...' : 'Enviar Solicitud'}
+                </button>
+              </div>
+              {status === 'success' && (
+                <p className="mt-3 text-center text-sm font-medium text-green-600">
+                  {responseMessage}
+                </p>
+              )}
+              {status === 'error' && (
+                <p className="mt-3 text-center text-sm font-medium text-red-600">
+                  {responseMessage}
+                </p>
+              )}
+            </form>
+          </div>
         </section>
       </main>
     </>

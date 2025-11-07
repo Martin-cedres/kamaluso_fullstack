@@ -1,0 +1,380 @@
+uid=3_0 RootWebArea "Papelería Personalizada en Uruguay | Agendas y Libretas | Kamaluso" url="https://www.papeleriapersonalizada.uy/"
+  uid=3_1 ignored
+    uid=3_2 ignored
+      uid=3_3 generic
+        uid=3_4 generic
+        uid=3_5 ignored
+          uid=3_6 navigation
+            uid=3_7 ignored
+              uid=3_8 link "Kamaluso Logo" url="https://www.papeleriapersonalizada.uy/"
+                uid=3_9 image "Kamaluso Logo" url="https://www.papeleriapersonalizada.uy/logo.webp"
+              uid=3_10 ignored
+                uid=3_11 link "Inicio" url="https://www.papeleriapersonalizada.uy/"
+                  uid=3_12 StaticText "Inicio"
+                    uid=3_13 InlineTextBox "Inicio"
+                  uid=3_14 ignored
+                uid=3_15 generic
+                  uid=3_16 button "Tapa Dura ▾"
+                    uid=3_17 ignored
+                      uid=3_18 StaticText "Tapa Dura"
+                        uid=3_19 InlineTextBox "Tapa Dura"
+                    uid=3_20 ignored
+                      uid=3_21 StaticText "▾"
+                        uid=3_22 InlineTextBox "▾"
+                    uid=3_23 ignored
+                uid=3_24 generic
+                  uid=3_25 button "Tapa Flex ▾"
+                    uid=3_26 ignored
+                      uid=3_27 StaticText "Tapa Flex"
+                        uid=3_28 InlineTextBox "Tapa Flex"
+                    uid=3_29 ignored
+                      uid=3_30 StaticText "▾"
+                        uid=3_31 InlineTextBox "▾"
+                    uid=3_32 ignored
+                uid=3_33 link "Regalos Empresariales" url="https://www.papeleriapersonalizada.uy/regalos-empresariales"
+                  uid=3_34 StaticText "Regalos Empresariales"
+                    uid=3_35 InlineTextBox "Regalos Empresariales"
+                  uid=3_36 ignored
+                uid=3_37 link "Contacto" url="https://www.papeleriapersonalizada.uy/contacto"
+                  uid=3_38 StaticText "Contacto"
+                    uid=3_39 InlineTextBox "Contacto"
+                  uid=3_40 ignored
+                uid=3_41 link "Blog" url="https://www.papeleriapersonalizada.uy/blog"
+                  uid=3_42 StaticText "Blog"
+                    uid=3_43 InlineTextBox "Blog"
+                  uid=3_44 ignored
+              uid=3_45 ignored
+                uid=3_46 link url="https://www.papeleriapersonalizada.uy/cart"
+                  uid=3_47 image
+          uid=3_48 main
+            uid=3_49 main
+              uid=3_50 generic
+                uid=3_51 image "Logo Kamaluso" url="https://www.papeleriapersonalizada.uy/logo.webp"
+                uid=3_52 heading "Papelería Personalizada en Uruguay" level="1"
+                  uid=3_53 StaticText "Papelería Personalizada en Uruguay"
+                    uid=3_54 InlineTextBox "Papelería Personalizada en Uruguay"
+                uid=3_55 paragraph
+                  uid=3_56 StaticText "Agendas, libretas y cuadernos únicos."
+                    uid=3_57 InlineTextBox "Agendas, libretas y cuadernos únicos."
+                  uid=3_58 LineBreak "
+"
+                    uid=3_59 InlineTextBox "
+"
+                  uid=3_60 StaticText "✨ Envíos a todo Uruguay ✨"
+                    uid=3_61 InlineTextBox "✨ Envíos a todo Uruguay ✨"
+              uid=3_62 generic
+                uid=3_63 heading "Explora nuestras colecciones" level="2"
+                  uid=3_64 StaticText "Explora nuestras colecciones"
+                    uid=3_65 InlineTextBox "Explora nuestras colecciones"
+                uid=3_66 ignored
+                  uid=3_67 link "Tapa Dura Tapa Dura" url="https://www.papeleriapersonalizada.uy/productos/tapa-dura"
+                    uid=3_68 generic
+                      uid=3_69 image "Tapa Dura" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/9a2ff40a-829a-486b-8c63-9c555b713f89-800w.webp"
+                    uid=3_70 ignored
+                      uid=3_71 heading "Tapa Dura" level="3"
+                        uid=3_72 StaticText "Tapa Dura"
+                          uid=3_73 InlineTextBox "Tapa Dura"
+                  uid=3_74 link "Tapa Flex Tapa Flex" url="https://www.papeleriapersonalizada.uy/productos/tapa-flex"
+                    uid=3_75 generic
+                      uid=3_76 image "Tapa Flex" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/fde5d858-c57b-4e5c-9c2e-48653c84b716-800w.webp"
+                    uid=3_77 ignored
+                      uid=3_78 heading "Tapa Flex" level="3"
+                        uid=3_79 StaticText "Tapa Flex"
+                          uid=3_80 InlineTextBox "Tapa Flex"
+              uid=3_81 generic
+                uid=3_82 heading "Los más elegidos" level="2"
+                  uid=3_83 StaticText "Los más elegidos"
+                    uid=3_84 InlineTextBox "Los más elegidos"
+                uid=3_85 ignored
+                  uid=3_86 ignored
+                    uid=3_87 link "Agenda semanal personalizada con con capibara" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-en-columnas-tapa-flex-personalizada-2026-kamaluso"
+                      uid=3_88 image "Agenda semanal personalizada con con capibara" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/10242340-98ff-40be-8230-ddc99020312a-800w.webp"
+                    uid=3_89 ignored
+                      uid=3_90 link "Semana a la vista - vertical" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-en-columnas-tapa-flex-personalizada-2026-kamaluso"
+                        uid=3_91 heading "Semana a la vista - vertical" level="2"
+                          uid=3_92 StaticText "Semana a la vista - vertical"
+                            uid=3_93 InlineTextBox "Semana a la vista - "
+                            uid=3_94 InlineTextBox "vertical"
+                      uid=3_95 ignored
+                      uid=3_96 paragraph
+                        uid=3_97 StaticText "$U "
+                          uid=3_98 InlineTextBox "$U "
+                        uid=3_99 StaticText "480"
+                          uid=3_100 InlineTextBox "480"
+                    uid=3_101 link "Ver detalles" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-en-columnas-tapa-flex-personalizada-2026-kamaluso"
+                      uid=3_102 StaticText "Ver detalles"
+                        uid=3_103 InlineTextBox "Ver detalles"
+                  uid=3_104 ignored
+                    uid=3_105 link "Agenda tapa dura laminada azul" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-horizontal-tapa-dura-personalizada-2026"
+                      uid=3_106 image "Agenda tapa dura laminada azul" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/021c72c8-9a74-45be-b949-da70c5ad49ff-800w.webp"
+                    uid=3_107 ignored
+                      uid=3_108 link "Semana a la vista - horizontal" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-horizontal-tapa-dura-personalizada-2026"
+                        uid=3_109 heading "Semana a la vista - horizontal" level="2"
+                          uid=3_110 StaticText "Semana a la vista - horizontal"
+                            uid=3_111 InlineTextBox "Semana a la vista - "
+                            uid=3_112 InlineTextBox "horizontal"
+                      uid=3_113 ignored
+                      uid=3_114 paragraph
+                        uid=3_115 StaticText "$U "
+                          uid=3_116 InlineTextBox "$U "
+                        uid=3_117 StaticText "650"
+                          uid=3_118 InlineTextBox "650"
+                    uid=3_119 link "Ver detalles" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-horizontal-tapa-dura-personalizada-2026"
+                      uid=3_120 StaticText "Ver detalles"
+                        uid=3_121 InlineTextBox "Ver detalles"
+                  uid=3_122 ignored
+                    uid=3_123 link "Tapa de agenda semanal flexible con espiral plástico" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-horizontal-tapa-flex-personalizada-2026-kamaluso"
+                      uid=3_124 image "Tapa de agenda semanal flexible con espiral plástico" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/c1e8d578-10fe-4b45-ac7e-977f20cc73ed-800w.webp"
+                    uid=3_125 ignored
+                      uid=3_126 link "Semana a la vista - horizontal" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-horizontal-tapa-flex-personalizada-2026-kamaluso"
+                        uid=3_127 heading "Semana a la vista - horizontal" level="2"
+                          uid=3_128 StaticText "Semana a la vista - horizontal"
+                            uid=3_129 InlineTextBox "Semana a la vista - "
+                            uid=3_130 InlineTextBox "horizontal"
+                      uid=3_131 ignored
+                      uid=3_132 paragraph
+                        uid=3_133 StaticText "$U "
+                          uid=3_134 InlineTextBox "$U "
+                        uid=3_135 StaticText "480"
+                          uid=3_136 InlineTextBox "480"
+                    uid=3_137 link "Ver detalles" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-semanal-horizontal-tapa-flex-personalizada-2026-kamaluso"
+                      uid=3_138 StaticText "Ver detalles"
+                        uid=3_139 InlineTextBox "Ver detalles"
+                  uid=3_140 ignored
+                    uid=3_141 link "Docente primaria - perpetua" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-docente-primaria-perpetua-personalizable-tapa-dura-con-espiral-premium"
+                      uid=3_142 image "Docente primaria - perpetua" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/a59d37c7-8f0b-46cf-b0d1-765357b1af8e-800w.webp"
+                    uid=3_143 ignored
+                      uid=3_144 link "Docente primaria - perpetua" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-docente-primaria-perpetua-personalizable-tapa-dura-con-espiral-premium"
+                        uid=3_145 heading "Docente primaria - perpetua" level="2"
+                          uid=3_146 StaticText "Docente primaria - perpetua"
+                            uid=3_147 InlineTextBox "Docente primaria - "
+                            uid=3_148 InlineTextBox "perpetua"
+                      uid=3_149 ignored
+                      uid=3_150 paragraph
+                        uid=3_151 StaticText "$U "
+                          uid=3_152 InlineTextBox "$U "
+                        uid=3_153 StaticText "780"
+                          uid=3_154 InlineTextBox "780"
+                    uid=3_155 link "Ver detalles" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-docente-primaria-perpetua-personalizable-tapa-dura-con-espiral-premium"
+                      uid=3_156 StaticText "Ver detalles"
+                        uid=3_157 InlineTextBox "Ver detalles"
+              uid=3_158 generic
+                uid=3_159 heading "Lo que dicen nuestros clientes" level="2"
+                  uid=3_160 StaticText "Lo que dicen nuestros clientes"
+                    uid=3_161 InlineTextBox "Lo que dicen nuestros clientes"
+                uid=3_162 ignored
+                  uid=3_163 generic
+                    uid=3_164 generic
+                      uid=3_165 generic
+                        uid=3_166 ignored
+                          uid=3_167 ignored
+                            uid=3_168 generic
+                              uid=3_169 image "Imagen de reseña de Yolanda Teran" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/e6287968-072f-4f8c-996a-013572eb4ce4-1200w.webp"
+                            uid=3_170 ignored
+                              uid=3_171 ignored
+                                uid=3_172 image
+                                uid=3_173 image
+                                uid=3_174 image
+                                uid=3_175 image
+                                uid=3_176 image
+                            uid=3_177 paragraph
+                              uid=3_178 StaticText "“"
+                                uid=3_179 InlineTextBox "“"
+                              uid=3_180 StaticText "Excelente calidad, excelente atención y entrega en tiempo y forma, muchas gracias!!!"
+                                uid=3_181 InlineTextBox "Excelente calidad, excelente "
+                                uid=3_182 InlineTextBox "atención y entrega en tiempo y "
+                                uid=3_183 InlineTextBox "forma, muchas gracias!!!"
+                              uid=3_184 StaticText "”"
+                                uid=3_185 InlineTextBox "”"
+                          uid=3_186 ignored
+                            uid=3_187 paragraph
+                              uid=3_188 StaticText "Yolanda Teran"
+                                uid=3_189 InlineTextBox "Yolanda Teran"
+                            uid=3_190 link "Opinión sobre: Dos días por página - horizontal" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-2-das-por-pgina-horizontal-tapa-dura-personalizada-2026-kamaluso"
+                              uid=3_191 StaticText "Opinión sobre: "
+                                uid=3_192 InlineTextBox "Opinión sobre: "
+                              uid=3_193 StaticText "Dos días por página - horizontal"
+                                uid=3_194 InlineTextBox "Dos días por página - horizontal"
+                                uid=3_195 InlineTextBox "Dos días por página -"
+                                uid=3_196 InlineTextBox "…"
+                      uid=3_197 generic
+                        uid=3_198 ignored
+                          uid=3_199 ignored
+                            uid=3_200 generic
+                              uid=3_201 image "Imagen de reseña de Oscar Caetano" url="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/da34f61c-bffd-4c98-ab56-f9ffde39f1a3-1200w.webp"
+                            uid=3_202 ignored
+                              uid=3_203 ignored
+                                uid=3_204 image
+                                uid=3_205 image
+                                uid=3_206 image
+                                uid=3_207 image
+                                uid=3_208 image
+                            uid=3_209 paragraph
+                              uid=3_210 StaticText "“"
+                                uid=3_211 InlineTextBox "“"
+                              uid=3_212 StaticText "Me encantó. Excelente para regalar. Preciosa calidad."
+                                uid=3_213 InlineTextBox "Me encantó. Excelente para "
+                                uid=3_214 InlineTextBox "regalar. Preciosa calidad."
+                              uid=3_215 StaticText "”"
+                                uid=3_216 InlineTextBox "”"
+                          uid=3_217 ignored
+                            uid=3_218 paragraph
+                              uid=3_219 StaticText "Oscar Caetano"
+                                uid=3_220 InlineTextBox "Oscar Caetano"
+                            uid=3_221 link "Opinión sobre: Docente primaria - perpetua" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-docente-primaria-perpetua-tapa-flex-personalizable-papelera-personalizada-kamaluso"
+                              uid=3_222 StaticText "Opinión sobre: "
+                                uid=3_223 InlineTextBox "Opinión sobre: "
+                              uid=3_224 StaticText "Docente primaria - perpetua"
+                                uid=3_225 InlineTextBox "Docente primaria - perpetua"
+                                uid=3_226 InlineTextBox "Docente primaria - p"
+                                uid=3_227 InlineTextBox "…"
+                      uid=3_228 generic
+                        uid=3_229 ignored
+                          uid=3_230 ignored
+                            uid=3_231 ignored
+                              uid=3_232 ignored
+                                uid=3_233 image
+                                uid=3_234 image
+                                uid=3_235 image
+                                uid=3_236 image
+                                uid=3_237 image
+                            uid=3_238 paragraph
+                              uid=3_239 StaticText "“"
+                                uid=3_240 InlineTextBox "“"
+                              uid=3_241 StaticText "Excelentes!"
+                                uid=3_242 InlineTextBox "Excelentes!"
+                              uid=3_243 StaticText "”"
+                                uid=3_244 InlineTextBox "”"
+                          uid=3_245 ignored
+                            uid=3_246 paragraph
+                              uid=3_247 StaticText "Martín Cedrés"
+                                uid=3_248 InlineTextBox "Martín Cedrés"
+                            uid=3_249 link "Opinión sobre: Dos días por página - vertical" url="https://www.papeleriapersonalizada.uy/productos/detail/agenda-2-das-por-pgina-en-columnas-tapa-dura-personalizada-2026-kamaluso"
+                              uid=3_250 StaticText "Opinión sobre: "
+                                uid=3_251 InlineTextBox "Opinión sobre: "
+                              uid=3_252 StaticText "Dos días por página - vertical"
+                                uid=3_253 InlineTextBox "Dos días por página - vertical"
+                                uid=3_254 InlineTextBox "Dos días por página -"
+                                uid=3_255 InlineTextBox "…"
+              uid=3_256 generic
+                uid=3_257 heading "Así funciona tu compra personalizada" level="2"
+                  uid=3_258 StaticText "Así funciona tu compra personalizada"
+                    uid=3_259 InlineTextBox "Así funciona tu compra personalizada"
+                uid=3_260 ignored
+                  uid=3_261 ignored
+                    uid=3_262 ignored
+                      uid=3_263 StaticText "1"
+                        uid=3_264 InlineTextBox "1"
+                    uid=3_265 heading "Elige y Personaliza" level="3"
+                      uid=3_266 StaticText "Elige y Personaliza"
+                        uid=3_267 InlineTextBox "Elige y Personaliza"
+                    uid=3_268 paragraph
+                      uid=3_269 StaticText "Selecciona tu producto y ajusta los detalles a tu gusto."
+                        uid=3_270 InlineTextBox "Selecciona tu producto y ajusta los "
+                        uid=3_271 InlineTextBox "detalles a tu gusto."
+                  uid=3_272 ignored
+                    uid=3_273 ignored
+                      uid=3_274 StaticText "2"
+                        uid=3_275 InlineTextBox "2"
+                    uid=3_276 heading "Paga Seguro" level="3"
+                      uid=3_277 StaticText "Paga Seguro"
+                        uid=3_278 InlineTextBox "Paga Seguro"
+                    uid=3_279 paragraph
+                      uid=3_280 StaticText "Completa tu compra con nuestros métodos de pago seguros."
+                        uid=3_281 InlineTextBox "Completa tu compra con nuestros "
+                        uid=3_282 InlineTextBox "métodos de pago seguros."
+                  uid=3_283 ignored
+                    uid=3_284 ignored
+                      uid=3_285 StaticText "3"
+                        uid=3_286 InlineTextBox "3"
+                    uid=3_287 heading "Recibe en Casa" level="3"
+                      uid=3_288 StaticText "Recibe en Casa"
+                        uid=3_289 InlineTextBox "Recibe en Casa"
+                    uid=3_290 paragraph
+                      uid=3_291 StaticText "Tu pedido llega a la puerta de tu casa en todo Uruguay."
+                        uid=3_292 InlineTextBox "Tu pedido llega a la puerta de tu "
+                        uid=3_293 InlineTextBox "casa en todo Uruguay."
+                uid=3_294 generic
+                  uid=3_295 link "Ver Proceso Completo" url="https://www.papeleriapersonalizada.uy/proceso-de-compra"
+                    uid=3_296 StaticText "Ver Proceso Completo"
+                      uid=3_297 InlineTextBox "Ver Proceso Completo"
+              uid=3_298 generic
+                uid=3_299 ignored
+                  uid=3_300 heading "¡Celebramos el Cyber Lunes! 10% OFF en tu Compra!" level="2"
+                    uid=3_301 StaticText "¡Celebramos el Cyber Lunes! 10% OFF en tu Compra!"
+                      uid=3_302 InlineTextBox "¡Celebramos el Cyber Lunes! 10% OFF en tu Compra!"
+                  uid=3_303 paragraph
+                    uid=3_304 StaticText "Suscríbete a nuestro boletín y recibe un cupón de descuento para tu próxima compra."
+                      uid=3_305 InlineTextBox "Suscríbete a nuestro boletín y recibe un cupón de descuento para tu próxima compra."
+                  uid=3_306 generic
+                    uid=3_307 ignored
+                      uid=3_308 textbox "Tu correo electrónico" required
+                        uid=3_309 ignored
+                        uid=3_310 generic
+                      uid=3_311 button "Suscribirme"
+                        uid=3_312 StaticText "Suscribirme"
+                          uid=3_313 InlineTextBox "Suscribirme"
+            uid=3_314 link "Contactar por WhatsApp" url="https://wa.me/59898615074?text=%C2%A1Hola!%20Vi%20sus%20productos%20en%20Papeler%C3%ADa%20Personalizada%20y%20quiero%20m%C3%A1s%20info."
+              uid=3_315 image
+            uid=3_316 sectionfooter
+              uid=3_317 ignored
+                uid=3_318 ignored
+                  uid=3_319 ignored
+                    uid=3_320 heading "Navegación" level="3"
+                      uid=3_321 StaticText "Navegación"
+                        uid=3_322 InlineTextBox "Navegación"
+                    uid=3_323 list
+                      uid=3_324 listitem level="1"
+                        uid=3_325 link "Inicio" url="https://www.papeleriapersonalizada.uy/"
+                          uid=3_326 StaticText "Inicio"
+                            uid=3_327 InlineTextBox "Inicio"
+                      uid=3_328 listitem level="1"
+                        uid=3_329 link "Regalos Empresariales" url="https://www.papeleriapersonalizada.uy/regalos-empresariales"
+                          uid=3_330 StaticText "Regalos Empresariales"
+                            uid=3_331 InlineTextBox "Regalos Empresariales"
+                      uid=3_332 listitem level="1"
+                        uid=3_333 link "Blog" url="https://www.papeleriapersonalizada.uy/blog"
+                          uid=3_334 StaticText "Blog"
+                            uid=3_335 InlineTextBox "Blog"
+                  uid=3_336 ignored
+                    uid=3_337 heading "Soporte" level="3"
+                      uid=3_338 StaticText "Soporte"
+                        uid=3_339 InlineTextBox "Soporte"
+                    uid=3_340 list
+                      uid=3_341 listitem level="1"
+                        uid=3_342 link "Sobre Nosotros" url="https://www.papeleriapersonalizada.uy/sobre-nosotros"
+                          uid=3_343 StaticText "Sobre Nosotros"
+                            uid=3_344 InlineTextBox "Sobre Nosotros"
+                      uid=3_345 listitem level="1"
+                        uid=3_346 link "Preguntas Frecuentes" url="https://www.papeleriapersonalizada.uy/faq"
+                          uid=3_347 StaticText "Preguntas Frecuentes"
+                            uid=3_348 InlineTextBox "Preguntas Frecuentes"
+                      uid=3_349 listitem level="1"
+                        uid=3_350 link "Envíos" url="https://www.papeleriapersonalizada.uy/envios"
+                          uid=3_351 StaticText "Envíos"
+                            uid=3_352 InlineTextBox "Envíos"
+                      uid=3_353 listitem level="1"
+                        uid=3_354 link "Proceso de Compra" url="https://www.papeleriapersonalizada.uy/proceso-de-compra"
+                          uid=3_355 StaticText "Proceso de Compra"
+                            uid=3_356 InlineTextBox "Proceso de Compra"
+                uid=3_357 ignored
+                  uid=3_358 paragraph
+                    uid=3_359 StaticText "© "
+                      uid=3_360 InlineTextBox "© "
+                    uid=3_361 StaticText "2025"
+                      uid=3_362 InlineTextBox "2025"
+                    uid=3_363 StaticText " Papelería Personalizada Kamaluso. Todos los derechos reservados."
+                      uid=3_364 InlineTextBox " Papelería Personalizada Kamaluso. Todos los derechos reservados."
+                  uid=3_365 paragraph
+                    uid=3_366 StaticText "Tienda online desarrollada por "
+                      uid=3_367 InlineTextBox "Tienda online desarrollada por "
+                    uid=3_368 strong
+                      uid=3_369 StaticText "Martín Cedrés"
+                        uid=3_370 InlineTextBox "Martín Cedrés"
+                    uid=3_371 StaticText ". ¿Quieres la tuya?"
+                      uid=3_372 InlineTextBox ". ¿Quieres la tuya?"
+                    uid=3_373 link "Contáctame por WhatsApp" url="https://wa.me/59891090705?text=Hola%20Mart%C3%ADn,%20vi%20la%20tienda%20Kamaluso%20y%20estoy%20interesado/a%20en%20un%20sitio%20web."
+                      uid=3_374 StaticText "Contáctame por WhatsApp"
+                        uid=3_375 InlineTextBox "Contáctame por WhatsApp"
+      uid=3_376 generic
+        uid=3_377 alert

@@ -17,6 +17,9 @@ interface IProduct {
   _id: string;
   nombre: string;
   descripcion?: string;
+  descripcionBreve?: string;
+  puntosClave?: string[];
+  descripcionExtensa?: string;
   basePrice?: number; // Nuevo
   precio?: number; // Antiguo
   precioFlex?: number; // Antiguo
@@ -310,6 +313,10 @@ export default function CategoryPage({
                     imagen: product.imageUrl || '/placeholder.png',
                     averageRating: product.averageRating,
                     numReviews: product.numReviews,
+                    // Pasar los nuevos campos para el schema
+                    descripcionBreve: product.descripcionBreve,
+                    descripcionExtensa: product.descripcionExtensa,
+                    puntosClave: product.puntosClave,
                   }} />
                 ))}
               </div>

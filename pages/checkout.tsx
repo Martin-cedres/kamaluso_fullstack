@@ -282,7 +282,12 @@ export default function CheckoutPage() {
                 {surcharge > 0 && (
                   <div className="flex justify-between text-md text-orange-600">
                     <span>Recargo por Mercado Pago (10%)</span>
-                    <span>+$U {surcharge.toFixed(2)}</span>
+                    <span className="flex items-center">
+                      +$U {surcharge.toFixed(2)}
+                      <span className="ml-2 text-xs text-gray-500" title="Esta es la comisión que nos cobra el procesador de pagos.">
+                        (i)
+                      </span>
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold">
@@ -468,6 +473,17 @@ export default function CheckoutPage() {
                         </option>
                       ))}
                     </select>
+                    {/* Dynamic Payment Instructions */}
+                    {(paymentMethod === 'brou' ||
+                      paymentMethod === 'oca_blue' ||
+                      paymentMethod === 'mi_dinero' ||
+                      paymentMethod === 'prex' ||
+                      paymentMethod === 'abitab' ||
+                      paymentMethod === 'red_pagos') && (
+                      <p className="text-sm text-gray-600 mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+                        Recibirás las instrucciones para completar el pago en tu correo electrónico una vez que confirmes el pedido.
+                      </p>
+                    )}
                   </div>
 
                   <div>

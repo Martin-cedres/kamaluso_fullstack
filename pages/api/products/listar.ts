@@ -155,6 +155,10 @@ export default async function handler(
           nombre: 1,
           slug: 1,
           descripcion: 1,
+          descripcionBreve: 1,
+          descripcionExtensa: 1,
+          puntosClave: 1,
+          basePrice: 1, // Asegurarse de incluir basePrice
           precio: 1,
           precioFlex: 1,
           precioDura: 1,

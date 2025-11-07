@@ -214,12 +214,55 @@ export default function CartPage() {
                     <span>Total Final</span>
                     <span>$U {finalTotal.toFixed(2)}</span>
                   </div>
+
+                  {/* Información de Envío */}
+                  <div className="mt-4 pt-4 border-t text-sm text-gray-600 space-y-2">
+                    <p>
+                      <b>¡Nosotros nos encargamos del despacho!</b> Llevamos tu pedido
+                      hasta la agencia de transportes (DAC o El Correo) sin costo
+                      extra.
+                    </p>
+                    <p>
+                      El costo del envío final lo abonas directamente a la agencia al
+                      recibir tu paquete. El tiempo de entrega es de aprox. 48hs
+                      hábiles luego de confirmado el pago y el diseño.
+                    </p>
+                    <Link
+                      href="/envios"
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      Ver más detalles sobre envíos
+                    </Link>
+                  </div>
+
+                  {/* Trust Signals */}
+                  <div className="mt-4 flex items-center justify-center text-gray-500">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Pago Seguro y Garantizado</span>
+                  </div>
+
                   <button
                     onClick={() => router.push('/checkout')}
-                    className="w-full mt-6 bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
+                    className="w-full mt-4 bg-pink-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-lg hover:bg-pink-600 transition"
                   >
                     Proceder al Pago
                   </button>
+
+                  {/* Guest Checkout Info */}
+                  <p className="text-center text-xs text-gray-500 mt-2">
+                    No es necesario registrarse para comprar.
+                  </p>
                 </div>
               </div>
             </div>

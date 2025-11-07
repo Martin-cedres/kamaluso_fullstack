@@ -35,6 +35,10 @@ interface Product {
   tapa?: string
   averageRating?: number; // Para el rating
   numReviews?: number; // Para el rating
+  // Nuevos campos para el schema
+  descripcionBreve?: string;
+  descripcionExtensa?: string;
+  puntosClave?: string[];
 }
 
 interface HomeProps {
@@ -168,6 +172,10 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                   categoria: product.categoria || '',
                   averageRating: product.averageRating,
                   numReviews: product.numReviews,
+                  // Pasar los nuevos campos para el schema
+                  descripcionBreve: product.descripcionBreve,
+                  descripcionExtensa: product.descripcionExtensa,
+                  puntosClave: product.puntosClave,
                 }} />
               ))}
             </div>
@@ -255,7 +263,7 @@ export const getStaticProps: GetStaticProps = async () => {
         numReviews: { $size: '$approvedReviews' },
       },
     },
-    { $project: { reviews: 0, approvedReviews: 0 } },
+    { $project: { reviews: 0, approvedReviews: 0, 'customizationGroups.options._id': 0 } },
   ];
 
   const destacadosData = await Product.aggregate(destacadosPipeline);
