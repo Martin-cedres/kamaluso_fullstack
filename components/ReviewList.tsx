@@ -11,8 +11,7 @@ const ReviewList = ({ reviews }: ReviewListProps) => {
   if (reviews.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Todavía no hay comentarios para este producto.</p>
-        <p className="text-gray-400 text-sm">¡Sé el primero en dejar tu opinión!</p>
+        <p className="text-gray-500 text-lg font-semibold">¡Sé el primero en dejar tu opinión sobre este producto!</p>
       </div>
     );
   }

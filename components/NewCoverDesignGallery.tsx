@@ -107,7 +107,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
           <button 
             type="button"
             onClick={() => scroll('left')}
-            className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-4 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-kamalusoPink transition-opacity z-20 hover:bg-white"
+            className="absolute top-1/2 left-1 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-kamalusoPink transition-opacity z-20 hover:bg-white"
             aria-label="Scroll left"
           >
             <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
@@ -117,7 +117,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
           <button 
             type="button"
             onClick={() => scroll('right')}
-            className="absolute top-1/2 right-0 transform -translate-y-1/2 translate-x-4 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-kamalusoPink transition-opacity z-20 hover:bg-white"
+            className="absolute top-1/2 right-1 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-kamalusoPink transition-opacity z-20 hover:bg-white"
             aria-label="Scroll right"
           >
             <ChevronRightIcon className="h-6 w-6 text-gray-700" />

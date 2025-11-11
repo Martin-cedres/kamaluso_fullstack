@@ -93,8 +93,7 @@ export default function BlogPostPage({ post }: Props) {
               Publicado el {new Date(post.createdAt).toLocaleDateString()}
             </p>
             <div className="prose lg:prose-xl max-w-none mb-8">
-              {/* Render the post content. If it's HTML, you'd use dangerouslySetInnerHTML */}
-              {post.content}
+              <div dangerouslySetInnerHTML={{ __html: post.content }} />
             </div>
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-8">

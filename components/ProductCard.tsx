@@ -35,12 +35,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     schemaDescription += ` Puntos Clave: ${product.puntosClave.join(', ')}.`;
   }
 
+  const absoluteImageUrl = product.imagen.startsWith('http')
+    ? product.imagen
+    : `${siteUrl}${product.imagen}`;
+
   // Construir el script JSON-LD para el schema de producto
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.nombre,
-    image: `${siteUrl}${product.imagen}`,
+    image: absoluteImageUrl,
     description: schemaDescription,
     sku: product._id,
     brand: {
@@ -66,16 +70,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <>
-      <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-          key={`product-schema-${product._id}`}
-        />
-      </Head>
+
       <div className="flex flex-col h-full rounded-2xl border border-transparent overflow-hidden shadow-md transition-shadow hover:shadow-lg hover:shadow-pink-500/50 hover:border-2 hover:border-pink-500/50">
         {/* Imagen como enlace */}
-        <Link href={productUrl} className="block relative w-full aspect-square">
+        <Link href={productUrl} className="block relative w-full aspect-square min-w-0 overflow-hidden">
           <Image
             src={product.imagen}
             alt={product.alt || product.nombre}
@@ -88,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Contenido */}
         <div className="flex flex-col flex-grow p-4">
           <Link href={productUrl}>
-            <h2 className="text-lg font-bold text-gray-800 line-clamp-2 hover:text-pink-600">
+            <h2 className="text-base md:text-lg font-bold text-gray-800 line-clamp-2 hover:text-pink-600">
               {product.nombre}
             </h2>
           </Link>

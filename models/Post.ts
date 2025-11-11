@@ -8,6 +8,8 @@ export interface IPost extends Document {
   subtitle?: string
   coverImage?: string
   tags?: string[]
+  seoTitle?: string
+  seoDescription?: string
 }
 
 const postSchema: Schema<IPost> = new Schema(
@@ -19,6 +21,8 @@ const postSchema: Schema<IPost> = new Schema(
     subtitle: { type: String },
     coverImage: { type: String },
     tags: [{ type: String }],
+    seoTitle: { type: String },
+    seoDescription: { type: String },
   },
   {
     timestamps: true, // This will add createdAt and updatedAt fields

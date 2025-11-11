@@ -22,7 +22,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     try {
-      const { title, slug, content, excerpt, subtitle, tags } = fields
+      const { title, slug, content, excerpt, subtitle, tags, seoTitle, seoDescription } = fields
 
       if (!title || !slug || !content) {
         return res
@@ -47,6 +47,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         subtitle: String(subtitle || ''),
         tags: Array.isArray(tags) ? tags : String(tags || '').split(',').map(tag => tag.trim()),
         coverImage: coverImageUrl,
+        seoTitle: String(seoTitle || ''),
+        seoDescription: String(seoDescription || ''),
       }
 
       const newPost = await Post.create(postDoc)

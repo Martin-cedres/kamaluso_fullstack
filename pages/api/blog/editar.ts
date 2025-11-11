@@ -31,7 +31,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       await connectDB()
 
       try {
-        const { _id, title, slug, content, excerpt, subtitle, tags } = fields
+        const { _id, title, slug, content, excerpt, subtitle, tags, seoTitle, seoDescription } = fields
 
         if (!_id) {
           res.status(400).json({ error: 'Post ID is required' })
@@ -49,6 +49,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         if (content) updateDoc.content = String(content)
         if (excerpt) updateDoc.excerpt = String(excerpt)
         if (subtitle) updateDoc.subtitle = String(subtitle)
+        if (seoTitle) updateDoc.seoTitle = String(seoTitle)
+        if (seoDescription) updateDoc.seoDescription = String(seoDescription)
         if (tags) {
           if (Array.isArray(tags)) {
             updateDoc.tags = tags

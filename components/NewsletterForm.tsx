@@ -43,8 +43,8 @@ const NewsletterForm = () => {
   return (
     <section className="bg-gray-100 py-16">
       <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-3xl font-semibold mb-4">¡Celebramos el Cyber Lunes! 10% OFF en tu Compra!</h2>
-        <p className="text-gray-700 mb-8">Suscríbete a nuestro boletín y recibe un cupón de descuento para tu próxima compra.</p>
+        <h2 className="text-3xl font-semibold mb-4">Te regalamos 10% OFF en tu primer compra. </h2>
+        <p className="text-gray-700 mb-8">¡Acceso a beneficios y regalos exclusivos, solo para suscriptores!</p>
         
         <form onSubmit={handleSubmit} className="max-w-md mx-auto">
           <div className="flex items-center">
@@ -59,9 +59,9 @@ const NewsletterForm = () => {
             <button 
               type="submit"
               disabled={loading}
-              className="bg-pink-500 text-white px-6 py-3 rounded-r-md font-semibold hover:bg-pink-600 disabled:bg-gray-400 transition-colors"
+              className="bg-pink-500 text-white px-6 py-3 rounded-r-md font-semibold hover:bg-pink-600 disabled:bg-gray-400 transition-colors flex-shrink-0"
             >
-              {loading ? 'Enviando...' : 'Suscribirme'}
+              {loading ? 'Enviando...' : 'Quiero mi cupón'}
             </button>
           </div>
         </form>

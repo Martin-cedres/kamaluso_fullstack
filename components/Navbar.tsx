@@ -1,9 +1,10 @@
 import { useSession, signOut } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '../context/CartContext';
 import { useCategories } from '../context/CategoryContext';
+import MegaMenu from './MegaMenu';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,6 +13,7 @@ export default function Navbar() {
   const { cartCount } = useCart();
   const { data: session, status } = useSession();
   const [isClient, setIsClient] = useState(false);
+  const menuCloseTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -26,29 +28,38 @@ export default function Navbar() {
     setOpenDropdown(openDropdown === slug ? null : slug);
   };
 
+  const handleMenuEnter = () => {
+    if (menuCloseTimer.current) {
+      clearTimeout(menuCloseTimer.current);
+    }
+    setOpenDropdown('productos');
+  };
+
+  const handleMenuLeave = () => {
+    menuCloseTimer.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 200); // 200ms delay before closing
+  };
+
   const renderCategoryLinks = (isMobile: boolean = false) => {
     if (loading) {
       return <div className={isMobile ? "block py-2" : "py-1"}>Cargando categorías...</div>;
     }
 
+    // This function is now only for the mobile menu's accordion
     return categories.map((cat) => (
-      <div
-        key={cat._id}
-        className={isMobile ? '' : 'relative'}
-        onMouseEnter={() => !isMobile && setOpenDropdown(cat.slug)}
-        onMouseLeave={() => !isMobile && setOpenDropdown(null)}
-      >
+      <div key={cat._id}>
         {cat.children && cat.children.length > 0 ? (
           <>
             <button
-              onClick={() => isMobile && handleDropdownToggle(cat.slug)}
-              className={`relative py-1 text-gray-900 font-medium transition group hover:text-pink-500 flex items-center gap-1 ${isMobile ? 'w-full text-left justify-between py-2' : ''}`}>
+              onClick={() => handleDropdownToggle(cat.slug)}
+              className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500 flex items-center gap-1 w-full text-left justify-between"
+            >
               <span>{cat.nombre}</span>
               <span className="transform transition-transform duration-200" style={{ transform: openDropdown === cat.slug ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
-              {!isMobile && <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>}
             </button>
             {openDropdown === cat.slug && (
-              <div className={isMobile ? 'pl-4 mt-1 flex flex-col gap-1' : 'absolute top-full left-0 bg-white shadow-lg rounded-xl py-2 w-48 z-50'}>
+              <div className="pl-4 mt-1 flex flex-col gap-1">
                 <Link href={`/productos/${cat.slug}`} onClick={closeAllMenus} className="block px-4 py-2 hover:bg-pink-50 hover:text-pink-500 transition font-semibold">
                   Ver Todo {cat.nombre}
                 </Link>
@@ -61,9 +72,8 @@ export default function Navbar() {
             )}
           </>
         ) : (
-          <Link href={`/productos/${cat.slug}`} onClick={closeAllMenus} className={`relative py-1 text-gray-900 font-medium transition group hover:text-pink-500 ${isMobile ? 'block py-2' : ''}`}>
+          <Link href={`/productos/${cat.slug}`} onClick={closeAllMenus} className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500 block">
             {cat.nombre}
-            {!isMobile && <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>}
           </Link>
         )}
       </div>
@@ -83,7 +93,28 @@ export default function Navbar() {
             Inicio
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          {renderCategoryLinks()}
+          
+          {/* Mega Menu Container */}
+          <div 
+            className="relative"
+            onMouseEnter={handleMenuEnter}
+            onMouseLeave={handleMenuLeave}
+          >
+            <button className="relative py-1 text-gray-900 font-medium transition flex items-center gap-1">
+              <span>Productos</span>
+              <span className="transform transition-transform duration-200" style={{ transform: openDropdown === 'productos' ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+            </button>
+            
+            {openDropdown === 'productos' && !loading && (
+              <MegaMenu 
+                categories={categories} 
+                closeAllMenus={closeAllMenus}
+                handleMouseEnter={handleMenuEnter}
+                handleMouseLeave={handleMenuLeave}
+              />
+            )}
+          </div>
+
           <Link href="/regalos-empresariales" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
             Regalos Empresariales
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
@@ -100,15 +131,12 @@ export default function Navbar() {
             <>
               <Link href="/admin" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
                 Admin
-                <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
               </Link>
               <Link href="/admin/pedidos" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
                 Pedidos
-                <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
               </Link>
               <button onClick={() => signOut()} className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
                 Logout
-                <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
               </button>
             </>
           )}
@@ -133,8 +161,8 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      {isClient && menuOpen && (
-        <div className="md:hidden bg-white shadow-md px-6 py-4 space-y-2">
+      {isClient && (
+        <div className={`md:hidden bg-white shadow-md px-6 py-4 space-y-2 overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-screen' : 'max-h-0'}`}>
           <Link href="/" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Inicio</Link>
           {renderCategoryLinks(true)}
           <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Regalos Empresariales</Link>

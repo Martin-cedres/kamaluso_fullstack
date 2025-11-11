@@ -182,8 +182,16 @@ export default function CategoryPage({
     )
   }
 
-  const pageTitle = `${category.nombre} Personalizadas en Uruguay | Kamaluso`
-  const pageDescription = `${category.descripcion}. Calidad y diseño único con envío a todo Uruguay.`
+  const isAgendaCategory = category?.nombre.toLowerCase().includes('agenda');
+
+  const pageTitle = isAgendaCategory
+    ? `Agendas 2026 y Planners Personalizados en Uruguay | Kamaluso`
+    : `${category.nombre} Personalizadas en Uruguay | Kamaluso`;
+
+  const pageDescription = isAgendaCategory
+    ? `Descubre nuestras agendas 2026, planners y cuadernos personalizados. Diseños únicos para organizar tu año. ¡Envíos a todo Uruguay!`
+    : `${category.descripcion}. Calidad y diseño único con envío a todo Uruguay.`;
+
   const canonicalUrl = `/productos/${category.slug}`
   const siteUrl = 'https://www.papeleriapersonalizada.uy'
 
@@ -216,9 +224,9 @@ export default function CategoryPage({
       </Head>
 
       
-      <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 pt-24">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
+          <div className="mb-8 flex md:hidden">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
           <h1 className="text-3xl md:text-4xl font-semibold text-center mb-4">
@@ -292,7 +300,7 @@ export default function CategoryPage({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl max-w-full mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 max-w-full mx-auto">
                 {products.length === 0 && (
                   <p className="col-span-full text-center w-full text-gray-500">
                     No se encontraron productos para esta selección.

@@ -18,8 +18,7 @@ import CoverDesign, { ICoverDesign } from '../../../models/CoverDesign';
 import Review, { IReview } from '../../../models/Review';
 import Category from '../../../models/Category';
 import mongoose from 'mongoose'
-import Lightbox, { Slide } from "yet-another-react-lightbox";
-import "yet-another-react-lightbox/styles.css";
+
 import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
 import NewCoverDesignGallery, { DesignOption } from '../../../components/NewCoverDesignGallery';
 
@@ -97,14 +96,17 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
   const [activeImage, setActiveImage] = useState(product?.imageUrl || '/placeholder.png');
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showStickyButton, setShowStickyButton] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [open, setOpen] = useState(false);
   const thumbnailCarouselRef = useRef<HTMLDivElement>(null);
   const [showThumbnailLeftArrow, setShowThumbnailLeftArrow] = useState(false);
   const [showThumbnailRightArrow, setShowThumbnailRightArrow] = useState(false);
   const [activeTab, setActiveTab] = useState('descripcion');
+  const coverGalleryRef = useRef<HTMLDivElement>(null);
+  const [tapaSeleccionada, setTapaSeleccionada] = useState<any>(null);
+
+  useEffect(() => {
+    setIsClient(true); // Indicar que el componente se ha montado en el cliente
+  }, []);
 
   const TabButton = ({ tabName, label }: { tabName: string; label: string }) => (
     <button
@@ -124,12 +126,14 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     const container = thumbnailCarouselRef.current;
     if (container) {
       const { scrollLeft, scrollWidth, clientWidth } = container;
+      console.log('Checking thumbnail scroll:', { scrollLeft, scrollWidth, clientWidth });
       setShowThumbnailLeftArrow(scrollLeft > 0);
       setShowThumbnailRightArrow(scrollLeft < scrollWidth - clientWidth - 1); // -1 for precision issues
     }
   }, []);
 
   const scrollThumbnails = (direction: 'left' | 'right') => {
+    console.log('Scrolling thumbnails:', direction);
     const container = thumbnailCarouselRef.current;
     if (container) {
       const scrollAmount = container.clientWidth * 0.8;
@@ -187,16 +191,30 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   useEffect(() => {
     const container = thumbnailCarouselRef.current;
     if (container) {
-      checkForThumbnailScroll();
-      window.addEventListener('resize', checkForThumbnailScroll);
-      container.addEventListener('scroll', checkForThumbnailScroll);
+      const handleScrollCheck = () => {
+        const { scrollLeft, scrollWidth, clientWidth } = container;
+        setShowThumbnailLeftArrow(scrollLeft > 0);
+        setShowThumbnailRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
+      };
 
+      // Check immediately
+      handleScrollCheck();
+
+      // Check after a short delay for images to load
+      const timeoutId = setTimeout(handleScrollCheck, 150);
+
+      // Add event listeners
+      container.addEventListener('scroll', handleScrollCheck);
+      window.addEventListener('resize', handleScrollCheck);
+
+      // Cleanup
       return () => {
-        window.removeEventListener('resize', checkForThumbnailScroll);
-        container.removeEventListener('scroll', checkForThumbnailScroll);
+        clearTimeout(timeoutId);
+        container.removeEventListener('scroll', handleScrollCheck);
+        window.removeEventListener('resize', handleScrollCheck);
       };
     }
-  }, [allProductImages, checkForThumbnailScroll]);
+  }, [allProductImages]); // Depend only on allProductImages
 
   useEffect(() => {
     if (product) {
@@ -204,30 +222,142 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     }
   }, [product, allProductImages]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (addToCartRef.current) {
-        const { top } = addToCartRef.current.getBoundingClientRect();
-        setShowStickyButton(top < window.innerHeight);
+    const handleImageChange = useCallback((newImage: string) => {
+
+      if (newImage !== activeImage) {
+
+        setActiveImage(newImage);
+
+        setIsAnimating(true);
+
       }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+
+    }, [activeImage]);
+
+  
+
+    const handleCoverDesignSelect = useCallback((groupName: string, option: DesignOption) => {
+
+      if (option.image) {
+
+        handleImageChange(option.image);
+
+      }
+
+      
+
+      setSelections(prev => {
+
+        const newSelections = { ...prev };
+
+        // Deseleccionar cualquier otra opción de diseño de tapa
+
+        Object.keys(newSelections).forEach(key => {
+
+          if (key.startsWith('Diseño de Tapa')) {
+
+            delete newSelections[key];
+
+          }
+
+        });
+
+        // Establecer la nueva selección
+
+        newSelections[groupName] = option.name;
+
+        return newSelections;
+
+      });
+
+    }, [handleImageChange]);
 
   useEffect(() => {
-    if (isAnimating) {
-      const timer = setTimeout(() => setIsAnimating(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isAnimating]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (!coverGalleryRef.current?.contains(document.activeElement)) return;
 
-  const handleImageChange = useCallback((newImage: string) => {
-    if (newImage !== activeImage) {
-      setActiveImage(newImage);
-      setIsAnimating(true);
+      e.preventDefault();
+
+      const coverGroup = orderedCustomizationGroups.find(g => g.name.startsWith('Diseño de Tapa'));
+      if (!coverGroup || !coverGroup.options) return;
+
+      setSelections(prevSelections => {
+        const selectedName = prevSelections[coverGroup.name];
+        const currentIndex = coverGroup.options.findIndex(opt => opt.name === selectedName);
+        
+        let nextIndex;
+        if (e.key === 'ArrowRight') {
+          nextIndex = currentIndex >= 0 ? (currentIndex + 1) % coverGroup.options.length : 0;
+        } else { // ArrowLeft
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : coverGroup.options.length - 1;
+        }
+
+        const nextOption = coverGroup.options[nextIndex];
+        if (nextOption) {
+          if (nextOption.image) {
+            handleImageChange(nextOption.image);
+          }
+          const newSelections = { ...prevSelections };
+          Object.keys(newSelections).forEach(key => {
+            if (key.startsWith('Diseño de Tapa')) {
+              delete newSelections[key];
+            }
+          });
+          newSelections[coverGroup.name] = nextOption.name;
+          return newSelections;
+        }
+        return prevSelections;
+      });
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [orderedCustomizationGroups, handleImageChange]);
+
+
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (!thumbnailCarouselRef.current?.contains(document.activeElement)) return;
+
+      e.preventDefault();
+
+      const currentIndex = allProductImages.findIndex(img => img === activeImage);
+      if (currentIndex === -1) return;
+
+      let nextIndex;
+      if (e.key === 'ArrowRight') {
+        nextIndex = (currentIndex + 1) % allProductImages.length;
+      } else { // ArrowLeft
+        nextIndex = (currentIndex - 1 + allProductImages.length) % allProductImages.length;
+      }
+      handleImageChange(allProductImages[nextIndex]);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [allProductImages, activeImage, handleImageChange]);
+
+
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    const currentIndex = allProductImages.findIndex(img => img === activeImage);
+    if (currentIndex === -1) return;
+
+    let nextIndex;
+    if (direction === 'next') {
+      nextIndex = (currentIndex + 1) % allProductImages.length;
+    } else {
+      nextIndex = (currentIndex - 1 + allProductImages.length) % allProductImages.length;
     }
-  }, [activeImage]);
+    handleImageChange(allProductImages[nextIndex]);
+  };
 
   useEffect(() => {
     if (!product) return;
@@ -236,9 +366,13 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     product.customizationGroups?.forEach(group => {
       const selectedOptionName = selections[group.name];
       if (selectedOptionName) {
-        const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
-        if (selectedOption) {
-          currentPrice += selectedOption.priceModifier;
+        if (group.options && Array.isArray(group.options)) {
+          const selectedOption = group.options.find(opt => opt.name === selectedOptionName);
+          if (selectedOption) {
+            currentPrice += selectedOption.priceModifier;
+          }
+        } else {
+          console.warn(`El grupo de personalización "${group.name}" no tiene un array de opciones.`, group);
         }
       }
     });
@@ -259,25 +393,6 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   };
 
 
-
-  const handleCoverDesignSelect = (groupName: string, option: DesignOption) => {
-    if (option.image) {
-      handleImageChange(option.image);
-    }
-    
-    setSelections(prev => {
-      const newSelections = { ...prev };
-      // Deseleccionar cualquier otra opción de diseño de tapa
-      Object.keys(newSelections).forEach(key => {
-        if (key.startsWith('Diseño de Tapa')) {
-          delete newSelections[key];
-        }
-      });
-      // Establecer la nueva selección
-      newSelections[groupName] = option.name;
-      return newSelections;
-    });
-  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -324,6 +439,19 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   }
   breadcrumbs.push({ name: product.nombre, href: `/productos/detail/${product.slug}` });
 
+  const tipoDeTapaGroup = product?.customizationGroups?.find(g => g.name === 'Tipo de Tapa');
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: `https://www.papeleriapersonalizada.uy${item.href}`,
+    })),
+  };
+
 
 
   return (
@@ -333,15 +461,67 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         description={product.seoDescription || product.descripcion}
         image={product.imageUrl}
       />
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Product',
+              name: product.nombre,
+              image: allProductImages.map(img => img.startsWith('http') ? img : `https://www.papeleriapersonalizada.uy${img}`),
+              description: product.seoDescription || product.descripcion,
+              sku: product._id,
+              brand: {
+                '@type': 'Brand',
+                name: 'Kamaluso',
+              },
+              offers: {
+                '@type': 'Offer',
+                url: `https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`,
+                priceCurrency: 'UYU',
+                price: product.basePrice, // Assuming basePrice is the main price for schema
+                availability: 'https://schema.org/InStock',
+                itemCondition: 'https://schema.org/NewCondition',
+              },
+              aggregateRating: reviewCount > 0 ? {
+                '@type': 'AggregateRating',
+                ratingValue: averageRating,
+                reviewCount: reviewCount,
+              } : undefined,
+            }),
+          }}
+          key="product-schema"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+          key="breadcrumb-jsonld"
+        />
+      </Head>
 
-      <div className="bg-white pb-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <Breadcrumbs items={breadcrumbs} />
+      <div className="bg-white pt-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Migas de pan para Escritorio */}
+          <div className="hidden md:block pb-6">
+            <Breadcrumbs items={breadcrumbs} />
+          </div>
 
-          <div className="grid lg:grid-cols-2 gap-x-12 gap-y-8 mt-6">
-            {/* --- Columna Izquierda: Galería de Imágenes --- */}
-            <div className="flex flex-col items-center">
-              <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4">
+          {/* Botón "Volver" para Móvil */}
+          <div className="md:hidden mb-4">
+            <button onClick={() => router.back()} className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900">
+              <ChevronLeftIcon className="h-5 w-5 mr-1" />
+              Volver
+            </button>
+          </div>
+
+        </div>
+
+        {/* --- ESTRUCTURA PARA ESCRITORIO (md y superior) --- */}
+        <div className="hidden md:grid mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid-cols-2 gap-14 mt-6">
+          {/* Columna Izquierda Pegajosa (Imagen + Miniaturas) */}
+          <div className="md:sticky top-28 self-start">
+            <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4 group mx-auto">
                 <Image
                   key={activeImage}
                   src={activeImage}
@@ -351,22 +531,41 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   style={{ objectFit: 'cover' }}
                   className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
                   priority
-                  onClick={() => setLightboxOpen(true)}
+                  onLoadingComplete={() => setIsAnimating(false)}
                 />
+                {allProductImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                      aria-label="Imagen anterior"
+                    >
+                      <ChevronLeftIcon className="h-6 w-6" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                      aria-label="Siguiente imagen"
+                    >
+                      <ChevronRightIcon className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
               </div>
-              
+
+            {/* Miniaturas para Escritorio */}
               {allProductImages.length > 1 && (
-                <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center">
+                <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto mt-4">
                   {showThumbnailLeftArrow && (
                     <button onClick={() => scrollThumbnails('left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
                       <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
                     </button>
                   )}
-                  <div ref={thumbnailCarouselRef} className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1">
+                  <div ref={thumbnailCarouselRef} tabIndex={0} className="flex flex-nowrap gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-4">
                     {allProductImages.map((img, index) => (
                       <div
                         key={index}
-                        className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-200 ${activeImage === img ? 'ring-2 ring-pink-500 ring-offset-2' : 'hover:opacity-80'}`}
+                        className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-200 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 ring-offset-2' : 'hover:opacity-80'}`}
                         onClick={() => handleImageChange(img)}
                       >
                         <Image
@@ -386,25 +585,23 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   )}
                 </div>
               )}
-            </div>
+          </div>
 
-            {/* --- Columna Derecha: Información y Controles --- */}
-            <div className="flex flex-col justify-center">
+          {/* Columna Derecha con Scroll */}
+          <div className="min-w-0 space-y-8">
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
-              <div className="flex items-center mt-3">
+              <div className="flex items-center">
                 <StarRating rating={parseFloat(averageRating)} />
                 <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
               </div>
-              <p className="text-3xl font-semibold text-pink-500 mt-4">$U {totalPrice}</p>
+              <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
 
-              {/* --- Descripción Breve --- */}
               {product.descripcionBreve && (
-                <p className="text-gray-600 text-lg leading-relaxed mt-4">{product.descripcionBreve}</p>
+                <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
               )}
 
-              
-              {/* --- Grupos de Personalización Unificados y Ordenados --- */}
-              <div className="mt-6 space-y-6">
+              {/* --- Grupos de Personalización --- */}
+              <div ref={addToCartRef} className="space-y-6">
                 {orderedCustomizationGroups.map((group, index) => {
                   const groupNumber = index + 1;
                   const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
@@ -412,13 +609,14 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   if (isCoverDesignGroup) {
                     const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
                     return (
-                      <NewCoverDesignGallery
-                        key={group.name}
-                        groupName={`${groupNumber}. ${groupTitle}`}
-                        options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
-                        onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
-                        selectedOptionName={selections[group.name]}
-                      />
+                      <div ref={coverGalleryRef} key={group.name}>
+                        <NewCoverDesignGallery
+                          groupName={`${groupNumber}. ${groupTitle}`}
+                          options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
+                          onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
+                          selectedOptionName={selections[group.name]}
+                        />
+                      </div>
                     );
                   } else {
                     const groupTitle = customGroupTitles[group.name] || group.name;
@@ -439,7 +637,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                               <button
                                 key={option.name}
                                 onClick={() => handleSelectionChange(group.name, option.name)}
-                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                                className={`px-6 py-3 rounded-lg border text-base font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                               >
                                 {option.name}
                               </button>
@@ -450,25 +648,115 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     );
                   }
                 })}
+
+
               </div>
 
               {/* --- Botones de Acción --- */}
-              <div ref={addToCartRef} className="flex flex-col sm:flex-row gap-4 mt-8">
+              <div className="hidden md:flex flex-col sm:flex-row gap-4 mt-8">
                 <button onClick={handleAddToCart} className="w-full sm:w-auto bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition flex-grow">
                   Agregar al carrito
                 </button>
-                <button onClick={() => router.back()} className="w-full sm:w-auto px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold text-center hover:bg-gray-100 transition">
-                  Ir atrás
-                </button>
               </div>
-            </div>
+          </div>
+        </div>
 
+        {/* --- ESTRUCTURA PARA MÓVIL (hasta md) --- */}
+        <div className="md:hidden mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2">
+          {/* Contenedor de Imagen Principal Pegajosa */}
+          <div className="sticky top-20 z-30 bg-white pb-4">
+            <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg group mx-auto">
+              <Image
+                key={activeImage}
+                src={activeImage}
+                alt={product.alt || product.nombre}
+                fill
+                sizes="(max-width: 768px) 90vw, 50vw"
+                style={{ objectFit: 'cover' }}
+                className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
+                priority
+                onLoadingComplete={() => setIsAnimating(false)}
+              />
+              {allProductImages.length > 1 && (
+                <>
+                  <button onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20" aria-label="Imagen anterior">
+                    <ChevronLeftIcon className="h-6 w-6" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); navigateImage('next'); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20" aria-label="Siguiente imagen">
+                    <ChevronRightIcon className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* --- Nueva Sección de Pestañas --- */}
-          <div className="w-full mt-16">
+          {/* Contenido con Scroll (Miniaturas, Info, Opciones) */}
+          <div className="min-w-0 space-y-8 mt-4">
+            {/* Miniaturas para Móvil */}
+            {allProductImages.length > 1 && (
+              <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto">
+                {showThumbnailLeftArrow && (
+                  <button onClick={() => scrollThumbnails('left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
+                    <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
+                  </button>
+                )}
+                <div ref={thumbnailCarouselRef} tabIndex={0} className="flex flex-nowrap gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-4">
+                  {allProductImages.map((img, index) => (
+                    <div key={index} className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-200 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 ring-offset-2' : 'hover:opacity-80'}`} onClick={() => handleImageChange(img)}>
+                      <Image src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+                {showThumbnailRightArrow && (
+                  <button onClick={() => scrollThumbnails('right')} className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
+                    <ChevronRightIcon className="h-6 w-6 text-gray-700" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
+            <div className="flex items-center">
+              <StarRating rating={parseFloat(averageRating)} />
+              <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
+            </div>
+            <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
+
+            {product.descripcionBreve && (
+              <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
+            )}
+
+            {/* --- Grupos de Personalización --- */}
+            <div ref={addToCartRef} className="space-y-6">
+              {orderedCustomizationGroups.map((group, index) => {
+                const groupNumber = index + 1;
+                const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
+                if (isCoverDesignGroup) {
+                  const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
+                  return (
+                    <div ref={coverGalleryRef} key={group.name}>
+                      <NewCoverDesignGallery groupName={`${groupNumber}. ${groupTitle}`} options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))} onSelectOption={(option) => handleCoverDesignSelect(group.name, option)} selectedOptionName={selections[group.name]} />
+                    </div>
+                  );
+                } else {
+                  const groupTitle = customGroupTitles[group.name] || group.name;
+                  return (
+                    <div key={group.name}>
+                      <h3 className="font-bold text-lg text-gray-800 mb-2">{groupNumber}. {groupTitle}{group.required && <span className="text-red-500 ml-1">*</span>}</h3>
+                      {group.type === 'text' ? (<input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500" placeholder="Escribe aquí..." value={selections[group.name] || ''} onChange={(e) => handleSelectionChange(group.name, e.target.value)} />) : (<div className="flex flex-wrap gap-3">{(group.options || []).map((option) => (<button key={option.name} onClick={() => handleSelectionChange(group.name, option.name)} className={`px-6 py-3 rounded-lg border text-base font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>{option.name}</button>))}</div>)}
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* --- CONTENIDO COMÚN (Sección de Pestañas y Relacionados) --- */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="w-full mt-8 md:mt-16">
             <div className="border-b border-gray-200">
-              <nav className="-mb-px flex gap-x-4 sm:gap-x-6" aria-label="Tabs">
+              <nav className="-mb-px flex gap-x-4 sm:gap-x-6 overflow-x-auto scrollbar-hide" aria-label="Tabs">
                 <TabButton tabName="descripcion" label="Descripción" />
                 {product.puntosClave && product.puntosClave.length > 0 && (
                   <TabButton tabName="puntosClave" label="Puntos Clave" />
@@ -479,7 +767,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
             <div className="py-8">
               {activeTab === 'descripcion' && (
-                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: product.descripcionExtensa || product.descripcion || '' }} />
+                <div className="prose max-w-none text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.descripcionExtensa || product.descripcion || '' }} />
               )}
               {activeTab === 'puntosClave' && (
                 <div>
@@ -505,13 +793,13 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               )}
             </div>
           </div>
-
         </div>
 
         {relatedProducts.length > 0 && (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <section className="mt-16">
             <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {relatedProducts.map((p) => (
                 <Link key={p._id} href={`/productos/detail/${p.slug}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
                   <div className="relative w-full aspect-square">
@@ -535,23 +823,42 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               ))}
             </div>
           </section>
+          </div>
         )}
       </div>
 
       {/* --- Botón de Compra Pegajoso para Móviles --- */}
-      {showStickyButton && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-600">Precio Total</p>
-              <p className="font-bold text-xl text-pink-500">$U {totalPrice}</p>
+      
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
+          <div className="flex justify-between items-center gap-4">
+            {/* Precio a la izquierda */}
+            <div className="text-left flex-1">
+              <p className="text-xs text-gray-500 -mb-1">Total</p>
+              <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
             </div>
-            <button onClick={handleAddToCart} className="bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition">
+            {/* Botón de Añadir a la derecha (principal) */}
+            <button 
+              onClick={handleAddToCart} 
+              className="bg-pink-500 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition text-lg whitespace-nowrap"
+            >
               Agregar al carrito
             </button>
+
           </div>
         </div>
-      )}
+      
+
+      {/* --- Botón Flotante de WhatsApp para Móviles --- */}
+      <a
+        href="https://wa.me/59898615074?text=%C2%A1Hola!%20Vi%20sus%20productos%20en%20Papeler%C3%ADa%20Personalizada%20y%20quiero%20m%C3%A1s%20info."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="md:hidden fixed bottom-20 right-4 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-colors duration-300 z-50 flex items-center justify-center"
+        aria-label="Contactar por WhatsApp"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01s-.521.074-.792.372c-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"></path></svg>
+      </a>
+
     </>
   )
 }
@@ -580,6 +887,22 @@ export const getStaticProps: GetStaticProps = async (context) => {
   try {
     await connectDB()
 
+    // Check if the slug could be a MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      const productById = await Product.findById(slug).lean();
+      
+      // If a product is found with this ID, redirect to its slug-based URL
+      if (productById && productById.slug) {
+        return {
+          redirect: {
+            destination: `/productos/detail/${productById.slug}`,
+            permanent: true, // 301 Permanent Redirect
+          },
+        };
+      }
+    }
+
+    // If it's not an ID or no product was found, proceed with finding by slug
     const productData = await Product.findOne({ slug }).lean()
 
     if (!productData) {

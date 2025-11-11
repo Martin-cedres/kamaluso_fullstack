@@ -41,10 +41,24 @@ const generateItemsHTML = (items: any[]) => {
   return items
     .map((item) => {
       let customizationsHTML = '';
-      if (item.customizations && typeof item.customizations === 'object') {
-        for (const [key, value] of Object.entries(item.customizations)) {
-          if (typeof value === 'string') { // Ensure value is a string to display
-            customizationsHTML += `<br><small><strong>${key}:</strong> ${value}</small>`;
+      // Corregido: usar item.selections en lugar de item.customizations
+      if (item.selections && typeof item.selections === 'object') {
+        for (const [key, value] of Object.entries(item.selections)) {
+          let displayValue = '';
+          if (typeof value === 'string') {
+            displayValue = value;
+          } else if (Array.isArray(value)) {
+            // Esto es una suposición, si los valores pueden ser arrays de objetos
+            displayValue = value.map(opt => typeof opt === 'object' && opt !== null ? opt.name : opt).join(', ');
+          } else if (typeof value === 'object' && value !== null) {
+            // Asumiendo que el objeto tiene una propiedad 'name' o 'title'
+            if ('name' in value) displayValue = (value as any).name;
+            else if ('title' in value) displayValue = (value as any).title;
+          }
+
+          // Solo añadir si hay un valor que mostrar y no es una clave interna
+          if (displayValue && key !== '_id') {
+            customizationsHTML += `<br><small><strong>${key}:</strong> ${displayValue}</small>`;
           }
         }
       }
@@ -179,6 +193,11 @@ const generateEmailContent = (order: OrderForDB) => {
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
         ${shippingInfo}
+
+        ${order.notes ? `
+        <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Notas Adicionales del Pedido</h2>
+        <p>${order.notes}</p>
+        ` : ''}
       </div>
     `,
   }
@@ -278,6 +297,11 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
             ${shippingInfo}
 
+            ${order.notes ? `
+            <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Notas Adicionales del Pedido</h2>
+            <p>${order.notes}</p>
+            ` : ''}
+
             <p style="text-align:center; margin-top:20px;">ID del Pedido: ${orderId}</p>
         </div>
         `,
@@ -292,6 +316,7 @@ export default async function handler(
 ) {
   if (req.method === 'POST') {
     console.log('[CREAR ORDEN] API route started.')
+    console.log('[CREAR ORDEN] Contenido de items recibido:', JSON.stringify(req.body.items, null, 2));
     try {
       await connectDB() // Establish Mongoose connection
       console.log('[CREAR ORDEN] Mongoose connection established.')
