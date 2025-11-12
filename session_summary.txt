@@ -10,3 +10,30 @@ El usuario ha reportado un problema de responsividad en la página de detalle de
 
 **Próximos pasos:**
 Se recomienda al usuario desplegar estos cambios y verificar la responsividad en dispositivos pequeños o utilizando el emulador de dispositivos móviles del navegador. Si el problema persiste, se necesitará más información sobre el comportamiento exacto observado (por ejemplo, elementos específicos que aún se desbordan, capturas de pantalla, etc.) para una investigación más profunda.
+
+
+
+
+
+feat(UX): Refactorización completa de la página de detalle de producto
+
+Este commit introduce una refactorización exhaustiva de la página de detalle del producto ([slug].tsx) para mejorar la experiencia de usuario (UX) y la coherencia visual en todos los dispositivos.
+
+Se han abordado y solucionado problemas de layout, navegación y comportamiento "sticky" que afectaban tanto a la vista móvil como a la de escritorio.
+
+**Cambios Clave en la Vista Móvil:**
+
+- **Barra de Compra Fija:** La barra inferior ahora es permanentemente visible para un acceso constante al precio y al botón de "Agregar al carrito". Se eliminó el botón "Volver" para priorizar la conversión.
+- **Imagen Principal Fija (`sticky`):** La imagen principal del producto ahora permanece fija en la parte superior de la pantalla mientras el usuario se desplaza por las opciones de personalización, mejorando el contexto visual.
+- **Navegación Simplificada:** Se reemplazaron las migas de pan completas por un simple botón "Volver" en la parte superior del contenido, optimizando el espacio y la claridad.
+- **Optimización de Espacios:** Se han ajustado los márgenes y se ha eliminado la duplicidad de información (como el precio) para una interfaz más limpia.
+
+**Cambios Clave en la Vista de Escritorio y Tablet:**
+
+- **Layout de Dos Columnas Restaurado:** Se corrigió la estructura para asegurar un diseño de dos columnas, con la galería de imágenes a la izquierda y la información/opciones a la derecha.
+- **Columna de Galería Fija (`sticky`):** Toda la columna izquierda (imagen principal y miniaturas) ahora permanece fija mientras el usuario se desplaza por las opciones de la columna derecha, mejorando la usabilidad al personalizar productos largos.
+- **Navegación Limpia:** Se eliminaron los botones "Volver" redundantes, dejando las migas de pan como el método principal de navegación jerárquica.
+
+**Solución Arquitectónica Implementada:**
+
+- Para resolver los conflictos de comportamiento `sticky` entre la vista móvil y la de escritorio, se implementó una solución robusta que utiliza dos estructuras de layout distintas, controladas por las utilidades `md:hidden` y `hidden md:block` de Tailwind CSS. Esto asegura que cada vista tenga el comportamiento deseado sin interferencias.

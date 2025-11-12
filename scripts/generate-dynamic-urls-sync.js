@@ -7,6 +7,10 @@ const MONGODB_URI = process.env.MONGODB_URI
 const productSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
   slug: String,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+  },
 })
 
 const categorySchema = new mongoose.Schema({
@@ -40,10 +44,11 @@ async function getDynamicUrlsSync() {
     const urlSet = new Set()
 
     // 1. URLs de Productos
-    const products = await Product.find({}, '_id slug').lean()
+    const products = await Product.find({}).populate('category').lean()
     products.forEach((p) => {
-      if (p._id) {
-        urlSet.add(`/productos/detail/${p.slug}`)
+      // Asegurarse de que el producto, su slug, su categoría y el slug de la categoría existan
+      if (p._id && p.slug && p.category && p.category.slug) {
+        urlSet.add(`/productos/${p.category.slug}/${p.slug}`)
       }
     })
 

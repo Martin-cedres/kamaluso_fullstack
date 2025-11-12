@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import SeoMeta from '../../components/SeoMeta'
 import Breadcrumbs from '../../components/Breadcrumbs';
+import { isValidObjectId } from 'mongoose';
 import connectDB from '../../lib/mongoose';
 import Product from '../../models/Product';
 import Category from '@/models/Category';
@@ -24,7 +25,8 @@ interface IProduct {
   precio?: number; // Antiguo
   precioFlex?: number; // Antiguo
   precioDura?: number; // Antiguo
-  categoria?: string;
+  categoria?: string; // Keep this for non-populated cases or other uses
+  category?: Category; // Add this for the populated case
   destacado?: boolean;
   imageUrl?: string;
   images?: string[];
@@ -390,12 +392,40 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths,
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const slug = context.params?.slug as string[] | undefined || [];
+
+  // --- START: NEW REDIRECT LOGIC FOR OLD /detail/:id URLs ---
+  if (slug && slug.length === 2 && slug[0] === 'detail') {
+    const oldId = slug[1];
+
+    // Check if it's a valid MongoDB ObjectId before hitting the DB
+    if (isValidObjectId(oldId)) {
+      await connectDB();
+      // Find the product by its ID and populate its category to get the category slug
+                const product = (await Product.findById(oldId).populate('category').lean()) as IProduct;
+      // Ensure we have a product, a category, a category slug, and a product slug
+      if (product && product.category && (product.category as any).slug && product.slug) {
+        // Construct the new, correct SEO-friendly URL
+        const newUrl = `/productos/${(product.category as any).slug}/${product.slug}`;
+
+        return {
+          redirect: {
+            destination: newUrl,
+            permanent: true, // Use 301 redirect for SEO
+          },
+        };
+      }
+    }
+
+    // If the ID is not valid, or the product is not found, return 404
+    return { notFound: true };
+  }
+  // --- END: NEW REDIRECT LOGIC ---
 
   // Handle the /productos route (no slug)
   if (slug.length === 0) {
