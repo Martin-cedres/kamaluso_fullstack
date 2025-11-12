@@ -878,7 +878,26 @@ export const getStaticPaths: GetStaticPaths = async () => {
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const { slug } = context.params
+  const { slug } = context.params as { slug: string };
+
+  // --- START: REDIRECT LOGIC FOR OLD ID-BASED URLs ---
+  // Check if the slug could be a MongoDB ObjectId
+  if (mongoose.Types.ObjectId.isValid(slug)) {
+    await connectDB();
+    const productById = await Product.findById(slug).lean();
+    
+    // If a product is found with this ID, and it has a category slug, redirect to the new URL structure
+    if (productById && productById.categoria && productById.slug) {
+      const newUrl = `/productos/${productById.categoria}/${productById.slug}`;
+      return {
+        redirect: {
+          destination: newUrl,
+          permanent: true, // 301 Permanent Redirect
+        },
+      };
+    }
+  }
+  // --- END: REDIRECT LOGIC ---
 
   if (!slug || typeof slug !== 'string') {
     return { notFound: true }
@@ -887,22 +906,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   try {
     await connectDB()
 
-    // Check if the slug could be a MongoDB ObjectId
-    if (mongoose.Types.ObjectId.isValid(slug)) {
-      const productById = await Product.findById(slug).lean();
-      
-      // If a product is found with this ID, redirect to its slug-based URL
-      if (productById && productById.slug) {
-        return {
-          redirect: {
-            destination: `/productos/detail/${productById.slug}`,
-            permanent: true, // 301 Permanent Redirect
-          },
-        };
-      }
-    }
-
-    // If it's not an ID or no product was found, proceed with finding by slug
+    // If it's not an ID or no product was found by ID, proceed with finding by slug
     const productData = await Product.findOne({ slug }).lean()
 
     if (!productData) {

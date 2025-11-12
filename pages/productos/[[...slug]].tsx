@@ -392,34 +392,12 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths,
-    fallback: 'blocking',
+    fallback: false,
   };
 };
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const slug = context.params?.slug as string[] | undefined || [];
-
-  // --- START: NEW REDIRECT LOGIC FOR OLD /detail/:id URLs ---
-  try {
-    if (slug && slug.length === 2 && slug[0] === 'detail') {
-      // --- TEMPORARY DEBUGGING ---
-      // This will test if the redirect logic is being triggered at all,
-      // without involving the database.
-      console.log(`--- TEMPORARY REDIRECT TEST for slug: ${slug.join('/')} ---`);
-      return {
-        redirect: {
-          destination: '/', // Redirect to homepage for testing
-          permanent: false, // Use temporary redirect for this test
-        },
-      };
-      // --- END TEMPORARY DEBUGGING ---
-    }
-  } catch (error) {
-    console.error('--- CRITICAL ERROR IN REDIRECT LOGIC ---', error);
-    // In case of a server error, it's safer to return 404 than to crash
-    return { notFound: true };
-  }
-  // --- END: NEW REDIRECT LOGIC ---
 
   // Handle the /productos route (no slug)
   if (slug.length === 0) {
