@@ -65,6 +65,7 @@ interface Props {
   averageRating: string
   mainCategory: { nombre: string; slug: string } | null;
   subCategory: { nombre: string; slug: string } | null;
+  noindex?: boolean; // Add this
 }
 
 const customGroupTitles: Record<string, string> = {
@@ -79,7 +80,7 @@ const groupOrder: Record<string, number> = {
   'Frase/Nombre': 3,
 };
 
-export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating, mainCategory, subCategory }: Props) {
+export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating, mainCategory, subCategory, noindex }: Props) {
   const { addToCart } = useCart()
   const router = useRouter()
   const [isClient, setIsClient] = useState(false);
@@ -462,6 +463,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         image={product.imageUrl}
       />
       <Head>
+        {noindex && <meta name="robots" content="noindex" />}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -880,7 +882,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 export const getStaticProps: GetStaticProps = async (context) => {
   const { slug } = context.params as { slug: string };
 
-  // --- START: REDIRECT LOGIC FOR OLD ID-BASED URLs ---
+  // --- START: REDIRECT/NOINDEX LOGIC FOR OLD ID-BASED URLs ---
   // Check if the slug could be a MongoDB ObjectId
   if (mongoose.Types.ObjectId.isValid(slug)) {
     await connectDB();
@@ -895,9 +897,25 @@ export const getStaticProps: GetStaticProps = async (context) => {
           permanent: true, // 301 Permanent Redirect
         },
       };
+    } else {
+      // If it's a valid ObjectId but no product is found, or data is missing,
+      // return a 404 with noindex to prevent indexing of these old invalid URLs.
+      return {
+        props: {
+          product: null,
+          relatedProducts: [],
+          reviews: [],
+          reviewCount: 0,
+          averageRating: "0.0",
+          mainCategory: null,
+          subCategory: null,
+          noindex: true, // Signal to the component to add noindex tag
+        },
+        revalidate: 3600, // Still revalidate to pick up changes if product is added/fixed
+      };
     }
   }
-  // --- END: REDIRECT LOGIC ---
+  // --- END: REDIRECT/NOINDEX LOGIC ---
 
   if (!slug || typeof slug !== 'string') {
     return { notFound: true }
