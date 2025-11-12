@@ -408,7 +408,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
       // Check if it's a valid MongoDB ObjectId before hitting the DB
       if (isValidObjectId(oldId)) {
+        console.log('MONGODB_URI loaded:', !!process.env.MONGODB_URI);
+        console.log('About to connect to DB...');
         await connectDB();
+        console.log('DB connection successful (or already connected).');
+
         // Find the product by its ID and populate its category to get the category slug
         const product = (await Product.findById(oldId).populate('category').lean()) as IProduct;
         console.log('Product found in DB:', product ? `Yes, ID: ${product._id}` : 'No');
