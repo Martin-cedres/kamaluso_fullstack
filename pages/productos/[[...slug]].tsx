@@ -402,43 +402,17 @@ export const getStaticProps: GetStaticProps = async (context) => {
   // --- START: NEW REDIRECT LOGIC FOR OLD /detail/:id URLs ---
   try {
     if (slug && slug.length === 2 && slug[0] === 'detail') {
-      console.log(`--- REDIRECT LOGIC TRIGGERED for slug: ${slug.join('/')} ---`);
-      const oldId = slug[1];
-      console.log('Attempting redirect for old ID:', oldId);
-
-      // Check if it's a valid MongoDB ObjectId before hitting the DB
-      if (isValidObjectId(oldId)) {
-        console.log('MONGODB_URI loaded:', !!process.env.MONGODB_URI);
-        console.log('About to connect to DB...');
-        await connectDB();
-        console.log('DB connection successful (or already connected).');
-
-        // Find the product by its ID and populate its category to get the category slug
-        const product = (await Product.findById(oldId).populate('category').lean()) as IProduct;
-        console.log('Product found in DB:', product ? `Yes, ID: ${product._id}` : 'No');
-
-        // Ensure we have a product, a category, a category slug, and a product slug
-        if (product && product.category && product.category.slug && product.slug) {
-          // Construct the new, correct SEO-friendly URL
-          const newUrl = `/productos/${product.category.slug}/${product.slug}`;
-          console.log('Constructed new URL:', newUrl);
-
-          return {
-            redirect: {
-              destination: newUrl,
-              permanent: true, // Use 301 redirect for SEO
-            },
-          };
-        } else {
-          console.log('Redirect condition not met. Product:', !!product, 'Category:', !!product?.category, 'Category Slug:', product?.category?.slug, 'Product Slug:', product?.slug);
-        }
-      } else {
-        console.log('Invalid ObjectId:', oldId);
-      }
-
-      // If the ID is not valid, or the product is not found, or data is missing, return 404
-      console.log('Falling through to 404.');
-      return { notFound: true };
+      // --- TEMPORARY DEBUGGING ---
+      // This will test if the redirect logic is being triggered at all,
+      // without involving the database.
+      console.log(`--- TEMPORARY REDIRECT TEST for slug: ${slug.join('/')} ---`);
+      return {
+        redirect: {
+          destination: '/', // Redirect to homepage for testing
+          permanent: false, // Use temporary redirect for this test
+        },
+      };
+      // --- END TEMPORARY DEBUGGING ---
     }
   } catch (error) {
     console.error('--- CRITICAL ERROR IN REDIRECT LOGIC ---', error);
