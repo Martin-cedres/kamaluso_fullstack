@@ -40,7 +40,7 @@ interface IProduct {
 }
 
 interface Category {
-  id: string
+  _id: string // Changed from 'id' to '_id'
   nombre: string
   descripcion: string
   tipoPrecios: string
@@ -245,7 +245,7 @@ export default function CategoryPage({
               <div className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
                 {subCategories.map((cat) => (
                   <Link
-                    key={cat.id}
+                    key={cat._id} // Changed from 'cat.id' to 'cat._id'
                     href={`/productos/${category.slug}/${cat.slug}`}
                     className="w-full sm:w-56 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
                   >
