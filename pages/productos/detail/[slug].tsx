@@ -666,7 +666,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         {/* --- ESTRUCTURA PARA MÓVIL (hasta md) --- */}
         <div className="md:hidden mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2">
           {/* Contenedor de Imagen Principal Pegajosa */}
-          <div className="sticky top-20 z-30 bg-white pb-4">
+          <div className="sticky top-16 z-40 bg-white pb-4">
             <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg group mx-auto">
               <Image
                 key={activeImage}
