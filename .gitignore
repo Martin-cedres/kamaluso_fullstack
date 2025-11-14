@@ -35,3 +35,6 @@ coverage/
 # IDEs (VSCode, JetBrains, etc.)
 .vscode/
 .idea/
+
+.env*
+.vscode/settings.json

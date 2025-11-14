@@ -162,7 +162,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isClient && (
-        <div className={`md:hidden bg-white shadow-md px-6 py-4 space-y-2 overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-screen' : 'max-h-0'}`}>
+        <div className={`md:hidden bg-white shadow-md px-6 space-y-2 overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-screen py-4' : 'max-h-0'}`}>
           <Link href="/" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Inicio</Link>
           {renderCategoryLinks(true)}
           <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Regalos Empresariales</Link>

@@ -43,37 +43,43 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const client = await clientPromise;
       const db = client.db('kamaluso');
 
-      // --- Nueva Lógica de Categorías ---
-      let leafCategorySlugFromForm: string;
-      const subCategoriaFromForm = getFieldValue(fields.subCategoria);
-
-      if (subCategoriaFromForm) {
-        leafCategorySlugFromForm = subCategoriaFromForm;
-      } else {
-        leafCategorySlugFromForm = getFieldValue(fields.categoria);
-      }
-
-      const categorySlug = norm(leafCategorySlugFromForm);
+      // --- Lógica de Categorías Refactorizada ---
       let finalCategoriaSlug = '';
       let finalSubCategoriaSlugs: string[] = [];
+      
+      const leafCategorySlugFromForm = getFieldValue(fields.subCategoria) || getFieldValue(fields.categoria);
 
-      if (categorySlug) {
+      if (leafCategorySlugFromForm) {
+        const categorySlug = norm(leafCategorySlugFromForm);
         const leafCategory = await db.collection('categories').findOne({ slug: categorySlug });
+
         if (!leafCategory) {
           return res.status(400).json({ error: `La categoría con slug '${categorySlug}' no fue encontrada.` });
         }
 
-        finalCategoriaSlug = categorySlug;
         if (leafCategory.parent) {
           const parentCategory = await db.collection('categories').findOne({ _id: leafCategory.parent });
           if (!parentCategory) {
-            return res.status(500).json({ error: 'No se pudo encontrar la categoría padre.' });
+            return res.status(500).json({ error: 'No se pudo encontrar la categoría padre asociada.' });
           }
           finalCategoriaSlug = parentCategory.slug;
-          finalSubCategoriaSlugs.push(leafCategory.slug);
+          finalSubCategoriaSlugs = [leafCategory.slug];
+        } else {
+          finalCategoriaSlug = leafCategory.slug;
+          finalSubCategoriaSlugs = [];
         }
       }
-      // --- Fin Nueva Lógica de Categorías ---
+      // --- Fin Lógica de Categorías Refactorizada ---
+
+      // Verificar unicidad del slug
+      const slug = String(fields.slug || '');
+      if (!slug) {
+        return res.status(400).json({ error: 'El campo slug es obligatorio.' });
+      }
+      const existingProduct = await db.collection('products').findOne({ slug: slug });
+      if (existingProduct) {
+        return res.status(409).json({ error: `El slug '${slug}' ya existe. Por favor, elige otro.` });
+      }
 
       const filePrincipal = (files.image || files.imagen) as any;
       if (!filePrincipal)
@@ -163,7 +169,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       // Revalidar las páginas afectadas
       if (productoDoc.slug && productoDoc.categoria) {
-        await revalidateProductPaths(productoDoc.categoria, productoDoc.slug, result.insertedId.toString());
+        const subCategoriaSlug = productoDoc.subCategoria && productoDoc.subCategoria.length > 0 ? productoDoc.subCategoria[0] : undefined;
+        await revalidateProductPaths(
+          productoDoc.categoria,
+          subCategoriaSlug,
+          productoDoc.slug,
+          result.insertedId.toString()
+        );
       }
 
       res

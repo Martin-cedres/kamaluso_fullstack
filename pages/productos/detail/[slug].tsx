@@ -769,7 +769,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
             <div className="py-8">
               {activeTab === 'descripcion' && (
-                <div className="prose max-w-none text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.descripcionExtensa || product.descripcion || '' }} />
+                <div className="prose max-w-none text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.descripcion || product.descripcionExtensa || '' }} />
               )}
               {activeTab === 'puntosClave' && (
                 <div>
@@ -1005,7 +1005,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         mainCategory: JSON.parse(JSON.stringify(mainCategory)),
         subCategory: JSON.parse(JSON.stringify(subCategory)),
       },
-      revalidate: 3600, // Revalidate once per hour
+      // revalidate: 3600, // Revalidate once per hour
     }
   } catch (error) {
     console.error(`Error fetching product details for slug: ${slug}`, error)

@@ -259,7 +259,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Revalidar las páginas afectadas
       const updatedProduct = await db.collection('products').findOne({ _id: new ObjectId(productId) });
       if (updatedProduct && updatedProduct.slug && updatedProduct.categoria) {
-        await revalidateProductPaths(updatedProduct.categoria, updatedProduct.slug, updatedProduct._id.toString());
+        const subCategoriaSlug = updatedProduct.subCategoria && updatedProduct.subCategoria.length > 0 ? updatedProduct.subCategoria[0] : undefined;
+        await revalidateProductPaths(
+          updatedProduct.categoria,
+          subCategoriaSlug,
+          updatedProduct.slug,
+          updatedProduct._id.toString()
+        );
       }
 
       res

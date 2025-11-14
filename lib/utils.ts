@@ -90,16 +90,28 @@ export async function revalidateCategoryPaths(categorySlug: string, parentCatego
 
 /**
  * Dispara la revalidación bajo demanda para las páginas de un producto.
- * @param categoria La categoría del producto.
+ * @param categoria El slug de la categoría principal del producto.
+ * @param subCategoriaSlug El slug de la subcategoría (si existe).
  * @param slug El slug del producto.
+ * @param id El ID del producto.
  */
-export async function revalidateProductPaths(categoria: string, slug: string, id: string) {
+export async function revalidateProductPaths(
+  categoria: string,
+  subCategoriaSlug: string | undefined,
+  slug: string,
+  id: string
+) {
   const pathsToRevalidate = [
     '/',
     '/productos',
     `/productos/${categoria}`,
     `/productos/detail/${slug}`,
   ];
+
+  // Si hay una subcategoría, añadir su path específico
+  if (subCategoriaSlug) {
+    pathsToRevalidate.push(`/productos/${categoria}/${subCategoriaSlug}`);
+  }
 
   const secret = process.env.REVALIDATE_TOKEN;
   if (!secret) {

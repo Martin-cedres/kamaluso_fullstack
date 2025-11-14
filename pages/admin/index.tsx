@@ -514,12 +514,11 @@ const AdminIndex = () => {
         ...currentForm,
         seoTitle: data.seoTitle,
         seoDescription: data.seoDescription,
-                    seoKeywords: data.seoKeywords || '',
-                    descripcionBreve: data.descripcionBreve || '',
-                    puntosClave: Array.isArray(data.puntosClave) ? data.puntosClave.join(', ') : data.puntosClave || '',
-                    // Actualizar directamente el campo de descripción principal
-                    descripcion: data.descripcionExtensa || currentForm.descripcion,
-                  }));
+        seoKeywords: Array.isArray(data.seoKeywords) ? data.seoKeywords.join(', ') : data.seoKeywords || '',
+        puntosClave: Array.isArray(data.puntosClave) ? data.puntosClave.join(', ') : data.puntosClave || '',
+        // Actualizar directamente el campo de descripción principal
+        descripcion: data.descripcionExtensa || currentForm.descripcion,
+      }));
       toast.success('Contenido SEO generado con éxito.');
       setQuillKey(prevKey => prevKey + 1); // Forzar re-render de ReactQuill
 

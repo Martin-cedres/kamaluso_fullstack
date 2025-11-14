@@ -28,17 +28,30 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     await Product.bulkWrite(bulkOperations);
 
-    // Revalidar las páginas afectadas (página de inicio y páginas de productos)
-    // Esto podría ser más granular, pero para simplificar, revalidamos la home y todas las categorías
-    await revalidateProductPaths('/', '/', '/'); // Revalidar la home
-    // Para revalidar categorías, necesitaríamos los slugs de todas las categorías
-    // Por ahora, revalidamos la home y confiamos en el revalidate de los productos individuales
+    // Revalidar la página de inicio directamente
+    const secret = process.env.REVALIDATE_TOKEN;
+    const baseUrl = process.env.NEXTAUTH_URL;
+    if (secret && baseUrl) {
+      try {
+        await fetch(`${baseUrl}/api/revalidate?secret=${secret}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: '/' }),
+        });
+        console.log('Successfully revalidated: /');
+      } catch (error) {
+        console.error('Error revalidating homepage:', error);
+      }
+    } else {
+      console.error('REVALIDATE_TOKEN o NEXTAUTH_URL no configurados para revalidar la home.');
+    }
 
     // Revalidar productos individuales que cambiaron de orden
     for (const item of newOrder) {
       const product = await Product.findById(item._id).lean();
       if (product && product.categoria && product.slug) {
-        await revalidateProductPaths(product.categoria, product.slug, product._id.toString());
+        const subCategoriaSlug = product.subCategoria && product.subCategoria.length > 0 ? product.subCategoria[0] : undefined;
+        await revalidateProductPaths(product.categoria, subCategoriaSlug, product.slug, product._id.toString());
       }
     }
 

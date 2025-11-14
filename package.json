@@ -9,8 +9,14 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "next lint",
     "format": "prettier --write . --ignore-path .gitignore",
-    "test": "jest"
+    "test": "jest",
+    "dev:martin": "dotenv -e .env.martin -- next dev",
+    "dev:com":   "dotenv -e .env.companero -- next dev",
+    "start:martin": "dotenv -e .env.martin -- node server.js",
+    "start:com":    "dotenv -e .env.companero -- node server.js"
   },
+
+  
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
     "@google/generative-ai": "^0.24.1",
@@ -58,6 +64,7 @@
     "@types/react": "^18.2.0",
     "autoprefixer": "^10.4.21",
     "cross-env": "^10.0.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.2.32",
     "eslint-config-prettier": "^10.1.8",
@@ -72,4 +79,8 @@
     "ts-node": "^10.9.2",
     "typescript": "5.9.2"
   }
+
+
+
+
 }

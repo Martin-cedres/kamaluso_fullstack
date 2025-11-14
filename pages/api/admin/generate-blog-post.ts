@@ -33,8 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const storeName = "Papelería Personalizada Kamaluso";
 
     const prompt = `
-      Eres un experto en SEO y redactor de contenidos para un e-commerce de papelería personalizada en Uruguay llamado "${storeName}".
+      Eres un experto en SEO y redactor de contenidos para un e-commerce de papelería personalizada en Uruguay llamado "${storeName}". Tu taller se encuentra en San José y realizas envíos a todo el país.
       Tu misión es escribir un artículo de blog atractivo, bien estructurado y optimizado para SEO sobre un tema específico.
+
+      **Instrucciones Estratégicas Clave:**
+      1. **Identifica la Keyword Principal:** Del "Tema del artículo", extrae la palabra clave más importante (ej: "agendas 2026", "regalos corporativos"). Debes usar esta keyword en el 'title', 'seoTitle', y de forma natural en el primer párrafo y algún subtítulo del 'content'.
+      2. **Piensa en el Lector:** Antes de escribir, define a quién le hablas (¿un estudiante, un gerente de marketing, alguien buscando un regalo?). Adapta el tono y el contenido a esa persona.
+      3. **Enlazado Interno Inteligente:** Cuando menciones un producto de la lista JSON, DEBES crear un enlace HTML. Intenta incluir de 2 a 3 enlaces a productos de forma natural. El texto del enlace debe ser atractivo y relevante al contexto, no solo el nombre del producto. Por ejemplo: "una <a href='/productos/detail/mi-agenda'>agenda diseñada para organizar tus metas</a> es la herramienta perfecta para empezar".
+
       El tono debe ser cercano, inspirador y profesional.
       El contenido debe ser 100% original y relevante para personas en Uruguay interesadas en papelería, regalos, organización y creatividad.
 
