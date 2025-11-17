@@ -3,7 +3,7 @@ import Head from 'next/head' // Importo Head
 import Image from 'next/image'
 import Link from 'next/link'
 import { getProductHref } from '../../lib/utils'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import SeoMeta from '../../components/SeoMeta'
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -98,29 +98,29 @@ export default function CategoryPage({
       return
     }
 
-    if (categorySlug) {
+    const fetchProducts = async () => {
       setLoading(true)
-      const fetchProducts = async () => {
-        try {
-          const res = await fetch(
-            `/api/products/listar?categoria=${categorySlug}&page=${currentPage}&search=${debouncedSearchTerm}`,
-          )
-          const data = await res.json()
-          if (data.products) {
-            setProducts(data.products)
-            setTotalPages(data.totalPages)
-          }
-        } catch (error) {
-          console.error('Error fetching products:', error)
-          setProducts([])
-          setTotalPages(0)
-        } finally {
-          setLoading(false)
+      try {
+        let apiUrl = `/api/products/listar?page=${currentPage}&search=${debouncedSearchTerm}`;
+        if (categorySlug) {
+          apiUrl += `&categoria=${categorySlug}`;
         }
+        
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        
+        setProducts(data.products || []);
+        setTotalPages(data.totalPages || 0);
+      } catch (error) {
+        console.error('Error fetching products:', error)
+        setProducts([])
+        setTotalPages(0)
+      } finally {
+        setLoading(false)
       }
-
-      fetchProducts()
     }
+
+    fetchProducts()
   }, [
     categorySlug,
     currentPage,
@@ -402,9 +402,18 @@ export const getStaticProps: GetStaticProps = async (context) => {
   // Handle the /productos route (no slug)
   if (slug.length === 0) {
     await connectDB();
-    const productsData = await Product.find({ soloDestacado: { $ne: true } })
+    const page = 1;
+    const limit = 12; // Productos por página
+    const query = { soloDestacado: { $ne: true } };
+
+    const productsData = await Product.find(query)
       .sort({ order: 1, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
       .lean();
+      
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
 
     const products = JSON.parse(JSON.stringify(productsData));
 
@@ -416,12 +425,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
     return {
       props: {
         category: {
+          _id: 'all-products',
           nombre: 'Todos los Productos',
-          descripcion: 'Explora el catálogo completo de productos personalizados de Kamaluso.',
+          descripcion: 'Explora el catálogo completo de productos de Papelería Personalizada Kamaluso.',
+          slug: '' // Slug vacío para identificar esta vista
         },
         subCategories: [],
         initialProducts: products,
-        initialTotalPages: 1, // Assuming no pagination for this view for now
+        initialTotalPages: totalPages, // Pasar el total de páginas calculado
         breadcrumbItems,
       },
       revalidate: 3600,

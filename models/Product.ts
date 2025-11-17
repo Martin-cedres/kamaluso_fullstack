@@ -28,6 +28,8 @@ export interface IProduct extends Document {
   descripcionBreve?: string;
   puntosClave?: string[];
   descripcionExtensa?: string;
+  faqs?: { question: string; answer: string; }[]; // Nuevo campo para FAQs
+  useCases?: string[]; // Nuevo campo para Casos de Uso
   basePrice: number;
   categoria?: string;
   subCategoria?: string[];
@@ -57,6 +59,8 @@ const productSchema: Schema<IProduct> = new Schema(
     descripcionBreve: { type: String },
     puntosClave: [{ type: String }],
     descripcionExtensa: { type: String },
+    faqs: [{ question: { type: String }, answer: { type: String } }], // Nuevo campo para FAQs
+    useCases: [{ type: String }], // Nuevo campo para Casos de Uso
     basePrice: { type: Number, required: true },
     categoria: { type: String },
     subCategoria: [{ type: String }],

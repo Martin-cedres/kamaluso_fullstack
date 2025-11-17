@@ -10,10 +10,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await connectDB();
 
-  const { topic } = req.body;
+  const { topic, outline } = req.body; // Aceptamos 'topic' por retrocompatibilidad y 'outline' para el nuevo flujo
 
-  if (!topic) {
-    return res.status(400).json({ message: 'El tema del blog es requerido' });
+  if (!topic && !outline) {
+    return res.status(400).json({ message: 'Se requiere un "topic" o un "outline".' });
   }
 
   try {
@@ -28,56 +28,70 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const modelPro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const storeName = "Papelería Personalizada Kamaluso";
+    
+    // PREPARACIÓN: Si solo se recibe un 'topic', se convierte en un 'outline' básico.
+    const finalOutline = outline || `Título del Artículo: ${topic}`;
 
     const prompt = `
-      Eres un experto en SEO y redactor de contenidos para un e-commerce de papelería personalizada en Uruguay llamado "${storeName}". Tu taller se encuentra en San José y realizas envíos a todo el país.
-      Tu misión es escribir un artículo de blog atractivo, bien estructurado y optimizado para SEO sobre un tema específico.
+      Eres un redactor de contenidos senior y experto en SEO para "${storeName}", un e-commerce de papelería personalizada en Uruguay.
+      Tu misión es tomar un esquema detallado (outline) y convertirlo en un artículo de blog completo, atractivo y optimizado para SEO.
 
       **Instrucciones Estratégicas Clave:**
-      1. **Identifica la Keyword Principal:** Del "Tema del artículo", extrae la palabra clave más importante (ej: "agendas 2026", "regalos corporativos"). Debes usar esta keyword en el 'title', 'seoTitle', y de forma natural en el primer párrafo y algún subtítulo del 'content'.
-      2. **Piensa en el Lector:** Antes de escribir, define a quién le hablas (¿un estudiante, un gerente de marketing, alguien buscando un regalo?). Adapta el tono y el contenido a esa persona.
-      3. **Enlazado Interno Inteligente:** Cuando menciones un producto de la lista JSON, DEBES crear un enlace HTML. Intenta incluir de 2 a 3 enlaces a productos de forma natural. El texto del enlace debe ser atractivo y relevante al contexto, no solo el nombre del producto. Por ejemplo: "una <a href='/productos/detail/mi-agenda'>agenda diseñada para organizar tus metas</a> es la herramienta perfecta para empezar".
+      1. **Sigue el Esquema:** El 'outline' es tu guía principal. Desarrolla cada punto del esquema en párrafos bien escritos.
+      2. **Enlazado Interno Natural:** Tienes una lista de nuestros productos. Cuando el contenido lo permita, enlaza a 1-2 productos de forma natural. El texto del enlace debe ser persuasivo, no solo el nombre del producto.
+      3. **Sugerencias Visuales:** El contenido visual es clave. Donde creas que una imagen enriquecería el texto, inserta un placeholder descriptivo, por ejemplo: "[IMAGEN: Collage de agendas 2026 con diseños personalizados]".
+      4. **Tono y Estilo:** Mantén un tono cercano, inspirador y profesional, relevante para personas en Uruguay.
 
-      El tono debe ser cercano, inspirador y profesional.
-      El contenido debe ser 100% original y relevante para personas en Uruguay interesadas en papelería, regalos, organización y creatividad.
-
-      Aquí tienes una lista de nuestros productos en formato JSON. Úsalos como base para tus recomendaciones:
+      Aquí tienes la lista de productos para el enlazado interno:
       ${productContext}
 
-      Cuando menciones un producto de la lista, DEBES crear un enlace a su URL usando una etiqueta <a> de HTML. Por ejemplo: <a href=\"/productos/detail/slug-del-producto\">Nombre del Producto</a>.
-
-      Tema del artículo: "${topic}"
+      Aquí está el esquema que debes desarrollar:
+      ---
+      ${finalOutline}
+      ---
 
       Genera un JSON válido (sin texto adicional antes ni después) con la siguiente estructura:
       {
-        "title": "Un título principal para el artículo, creativo y que enganche.",
+        "title": "Un título principal para el artículo, basado en el esquema.",
         "seoTitle": "Un título corto y directo para el SEO (máx. 60 caracteres).",
         "seoDescription": "Una meta descripción atractiva (máx. 155 caracteres) que invite a hacer clic desde Google.",
-        "content": "El contenido completo del artículo en formato HTML. Usa etiquetas como <p>, <h3>, <ul>, <li> y <strong> para estructurarlo. La respuesta debe ser un string HTML válido.",
+        "content": "El contenido completo del artículo en formato HTML. Usa etiquetas <p>, <h3>, <ul>, <li> y <strong>. Incluye los placeholders de [IMAGEN: ...].",
         "tags": "Una cadena de 5 a 7 etiquetas o palabras clave relevantes, separadas por comas."
       }
     `;
 
-    const MAX_RETRIES = 3;
-    let attempts = 0;
-    let geminiResponseText = '';
-
-    while (attempts < MAX_RETRIES) {
-      try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        geminiResponseText = response.text();
-        break; // Success, exit loop
-      } catch (retryError: any) {
-        attempts++;
-        console.warn(`Intento ${attempts} fallido al llamar a Gemini para el blog. Reintentando...`, retryError.message);
-        if (attempts >= MAX_RETRIES) {
-          throw new Error(`Fallo al generar contenido con Gemini después de ${MAX_RETRIES} intentos: ${retryError.message}`);
+    const generateWithModelAndRetries = async (modelInstance: any, promptText: string, maxRetries = 3) => {
+      let attempts = 0;
+      let lastError: any = null;
+      while (attempts < maxRetries) {
+        try {
+          const result = await modelInstance.generateContent(promptText);
+          return (await result.response).text();
+        } catch (err: any) {
+          attempts++;
+          lastError = err;
+          console.warn(`Intento ${attempts} fallido para modelo. Mensaje:`, err?.message || err);
+          if (attempts >= maxRetries) break;
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempts - 1)));
         }
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1))); // 1s, 2s, 4s...
+      }
+      throw lastError;
+    };
+
+    let geminiResponseText = '';
+    try {
+      geminiResponseText = await generateWithModelAndRetries(modelPro, prompt, 3);
+    } catch (errPro: any) {
+      console.warn('gemini-2.5-pro falló, intentando con flash:', errPro?.message || errPro);
+      try {
+        geminiResponseText = await generateWithModelAndRetries(modelFlash, prompt, 3);
+      } catch (errFlash: any) {
+        console.error('gemini-2.5-flash también falló:', errFlash?.message || errFlash);
+        throw new Error(`Fallaron PRO y FLASH: ${errFlash?.message || errFlash}`);
       }
     }
 

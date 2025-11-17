@@ -12,7 +12,7 @@ interface PostFormProps {
     title: string
     subtitle?: string
     content: string
-    slug: string
+    slug?: string
     tags?: string[]
     coverImage?: string
     seoTitle?: string
@@ -31,7 +31,7 @@ const BlogForm = ({
   const [subtitle, setSubtitle] = useState(initialData?.subtitle || '')
   const [content, setContent] = useState(initialData?.content || '')
   const [slug, setSlug] = useState(initialData?.slug || '')
-  const [tags, setTags] = useState(initialData?.tags?.join(', ') || '')
+  const [tags, setTags] = useState(Array.isArray(initialData?.tags) ? initialData.tags.join(', ') : (initialData?.tags || ''))
   const [coverImage, setCoverImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(
     initialData?.coverImage || null,
@@ -42,6 +42,7 @@ const BlogForm = ({
   // State for AI generation
   const [topic, setTopic] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const quillModules = useMemo(() => ({
     toolbar: [
@@ -52,6 +53,19 @@ const BlogForm = ({
       ['clean'],
     ],
   }), []);
+
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || '');
+      setSubtitle(initialData.subtitle || '');
+      setContent(initialData.content || '');
+      setSlug(initialData.slug || '');
+      setTags(Array.isArray(initialData.tags) ? initialData.tags.join(', ') : (initialData.tags || ''));
+      setPreview(initialData.coverImage || null);
+      setSeoTitle(initialData.seoTitle || '');
+      setSeoDescription(initialData.seoDescription || '');
+    }
+  }, [initialData]);
 
   useEffect(() => {
     if (!isEditMode && title && !slug) {
@@ -108,6 +122,43 @@ const BlogForm = ({
       toast.error(`Error: ${err.message}`, { id: toastId });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleOptimize = async () => {
+    if (!content) {
+      toast.error('No hay contenido para optimizar.');
+      return;
+    }
+    setIsOptimizing(true);
+    const toastId = toast.loading('Optimizando con Especialista SEO...');
+
+    try {
+      const res = await fetch('/api/admin/blog/optimize-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error en la respuesta de la API de optimización');
+      }
+
+      const data = await res.json();
+      
+      if (data.optimizedContent) {
+        setContent(data.optimizedContent);
+        toast.success('¡Contenido optimizado con éxito!', { id: toastId });
+      } else {
+        throw new Error('La respuesta de la API no tuvo el formato esperado.');
+      }
+
+    } catch (err: any) {
+      console.error('Error optimizing content:', err);
+      toast.error(`Error: ${err.message}`, { id: toastId });
+    } finally {
+      setIsOptimizing(false);
     }
   };
 
@@ -237,7 +288,18 @@ const BlogForm = ({
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700">Contenido</label>
+        <div className="flex justify-between items-center mb-1">
+          <label htmlFor="content" className="block text-sm font-medium text-gray-700">Contenido</label>
+          <button
+            type="button"
+            onClick={handleOptimize}
+            disabled={isOptimizing || !content}
+            className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 transition text-xs font-semibold disabled:opacity-50"
+            title="Usar IA para añadir enlaces internos y pulir el texto"
+          >
+            {isOptimizing ? 'Optimizando...' : '✨ Optimizar con IA'}
+          </button>
+        </div>
         <ReactQuill
           theme="snow"
           value={content}

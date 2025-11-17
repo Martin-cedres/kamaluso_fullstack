@@ -236,7 +236,11 @@ const AdminIndex = () => {
         customizationGroups: [],
         descripcionBreve: '',
         puntosClave: '', // Se manejará como string separado por comas en el formulario
+        faqs: [],
+        useCases: [],
       })
+
+// ... (a lot of code) ...
 
   // Handlers para el nuevo UI de personalización
   const handleCustomizationChange = (groupIndex: number, optionIndex: number, field: string, value: string) => {
@@ -439,6 +443,76 @@ const AdminIndex = () => {
   const [isGenerating, setIsGenerating] = useState(false); // Estado para el botón de IA
   const [quillKey, setQuillKey] = useState(0); // Key para forzar re-render de Quill
   const [editingProduct, setEditingProduct] = useState<any>(null); // Estado para el producto en edición
+  const [seoLoading, setSeoLoading] = useState<{ [key: string]: boolean }>({});
+  const [newUseCase, setNewUseCase] = useState('');
+
+
+  // --- Handlers for Use Cases ---
+  const addUseCase = () => {
+    if (newUseCase.trim() !== '') {
+      setForm((f: any) => ({ ...f, useCases: [...f.useCases, newUseCase.trim()] }));
+      setNewUseCase('');
+    }
+  };
+
+  const removeUseCase = (index: number) => {
+    setForm((f: any) => ({
+      ...f,
+      useCases: f.useCases.filter((_: any, i: number) => i !== index),
+    }));
+  };
+
+  // --- Handlers for FAQs ---
+  const addFaq = () => {
+    setForm((f: any) => ({
+      ...f,
+      faqs: [...f.faqs, { question: '', answer: '' }],
+    }));
+  };
+
+  const removeFaq = (index: number) => {
+    setForm((f: any) => ({
+      ...f,
+      faqs: f.faqs.filter((_: any, i: number) => i !== index),
+    }));
+  };
+
+  const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
+    const newFaqs = [...form.faqs];
+    newFaqs[index][field] = value;
+    setForm((f: any) => ({ ...f, faqs: newFaqs }));
+  };
+
+
+  // --- LÓGICA DE REGENERACIÓN SEO CON IA --- //
+  const handleRegenerateSEO = async (productId: string) => {
+    setSeoLoading(prev => ({ ...prev, [productId]: true }));
+    const toastId = toast.loading('Regenerando SEO con IA...', { id: productId });
+
+    try {
+      const res = await fetch('/api/admin/generate-seo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error en la API de regeneración de SEO');
+      }
+
+      toast.success('Contenido SEO regenerado y guardado con éxito.', { id: toastId });
+      // Opcional: podrías volver a cargar los productos para ver los cambios si los mostraras en la tabla
+      // await fetchProducts(); 
+
+    } catch (error: any) {
+      console.error('Error regenerando contenido SEO:', error);
+      toast.error(error.message || 'No se pudo regenerar el contenido.', { id: toastId });
+    } finally {
+      setSeoLoading(prev => ({ ...prev, [productId]: false }));
+    }
+  };
+
 
   useEffect(() => {
     if (editingProduct) {
@@ -458,6 +532,8 @@ const AdminIndex = () => {
         descripcionBreve: editingProduct.descripcionBreve || '',
         puntosClave: Array.isArray(editingProduct.puntosClave) ? editingProduct.puntosClave.join(', ') : editingProduct.puntosClave || '',
         customizationGroups: editingProduct.customizationGroups || [],
+        faqs: editingProduct.faqs || [],
+        useCases: editingProduct.useCases || [],
         seoKeywords: Array.isArray(editingProduct.seoKeywords)
           ? editingProduct.seoKeywords.join(', ')
           : editingProduct.seoKeywords || '',
@@ -690,6 +766,10 @@ const AdminIndex = () => {
       tipoDeProducto: 'Interactivo',
       claveDeGrupo: '',
       customizationGroups: [],
+      descripcionBreve: '',
+      puntosClave: '',
+      faqs: [],
+      useCases: [],
     })
     setSelectedCategoria('')
     setSelectedSubCategoria('')
@@ -727,6 +807,8 @@ const AdminIndex = () => {
 
       // Handle customizationGroups separately by stringifying it
       formData.append('customizationGroups', JSON.stringify(form.customizationGroups));
+      formData.append('faqs', JSON.stringify(form.faqs));
+      formData.append('useCases', JSON.stringify(form.useCases));
 
       // Append option images
       Object.keys(optionImages).forEach(key => {
@@ -989,6 +1071,69 @@ const AdminIndex = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Puntos Clave</label>
                         <input type="text" value={form.puntosClave || ''} onChange={(e) => setForm((f: any) => ({ ...f, puntosClave: e.target.value }))} className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" placeholder="Beneficio 1, Beneficio 2, Beneficio 3" />
                         <p className="text-xs text-gray-500 mt-1">Separar por comas.</p>
+                      </div>
+
+                      {/* --- Casos de Uso --- */}
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Casos de Uso</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={newUseCase} 
+                            onChange={(e) => setNewUseCase(e.target.value)} 
+                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" 
+                            placeholder="Ej: Ideal para regalo empresarial"
+                          />
+                          <button type="button" onClick={addUseCase} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600">Añadir</button>
+                        </div>
+                        <ul className="mt-3 space-y-2">
+                          {form.useCases && form.useCases.map((useCase: string, index: number) => (
+                            <li key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+                              <span className="text-sm text-gray-800">{useCase}</span>
+                              <button type="button" onClick={() => removeUseCase(index)} className="p-1 text-gray-500 hover:text-red-600 rounded-full">
+                                <XMarkIcon className="h-4 w-4" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* --- FAQs --- */}
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Preguntas Frecuentes (FAQs)</label>
+                        <div className="space-y-4">
+                          {form.faqs && form.faqs.map((faq: { question: string; answer: string }, index: number) => (
+                            <div key={index} className="p-3 border rounded-lg bg-gray-50 relative">
+                              <button type="button" onClick={() => removeFaq(index)} className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 rounded-full">
+                                <XMarkIcon className="h-5 w-5" />
+                              </button>
+                              <div className="mb-2">
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Pregunta</label>
+                                <textarea 
+                                  value={faq.question} 
+                                  onChange={(e) => handleFaqChange(index, 'question', e.target.value)} 
+                                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm" 
+                                  rows={2}
+                                  placeholder="¿De qué material es la tapa?"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Respuesta</label>
+                                <textarea 
+                                  value={faq.answer} 
+                                  onChange={(e) => handleFaqChange(index, 'answer', e.target.value)} 
+                                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm" 
+                                  rows={3}
+                                  placeholder="Nuestras tapas son de cartón extra duro..."
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <button type="button" onClick={addFaq} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-pink-600 hover:text-pink-800">
+                          <PlusIcon className="h-4 w-4" />
+                          Añadir Pregunta
+                        </button>
                       </div>
                     </div>
 
@@ -1346,33 +1491,49 @@ const AdminIndex = () => {
 
                                 <td className="px-4 py-3">{p.destacado ? '✅' : '-'}</td>
 
-                                <td className="px-4 py-3 flex gap-2">
+                                                                <td className="px-4 py-3 flex gap-2">
 
-                                  <button
+                                                                  <button
 
-                                    onClick={() => handleEditClick(String(p._id))}
+                                                                    onClick={() => handleEditClick(String(p._id))}
 
-                                    className="px-3 py-1 rounded-xl bg-blue-600 text-white"
+                                                                    className="px-3 py-1 rounded-xl bg-blue-600 text-white"
 
-                                  >
+                                                                  >
 
-                                    Editar
+                                                                    Editar
 
-                                  </button>
+                                                                  </button>
 
-                                  <button
+                                                                  <button
 
-                                    onClick={() => handleDelete(String(p._id))}
+                                                                    onClick={() => handleDelete(String(p._id))}
 
-                                    className="px-3 py-1 rounded-xl bg-red-600 text-white"
+                                                                    className="px-3 py-1 rounded-xl bg-red-600 text-white"
 
-                                  >
+                                                                  >
 
-                                    Eliminar
+                                                                    Eliminar
 
-                                  </button>
+                                                                  </button>
 
-                                </td>
+                                                                  <button
+
+                                                                    onClick={() => handleRegenerateSEO(String(p._id))}
+
+                                                                    disabled={seoLoading[p._id]}
+
+                                                                    className="px-3 py-1 rounded-xl bg-purple-600 text-white disabled:bg-gray-400 text-xs"
+
+                                                                    title="Regenerar contenido SEO con IA"
+
+                                                                  >
+
+                                                                    {seoLoading[p._id] ? '...' : 'SEO IA'}
+
+                                                                  </button>
+
+                                                                </td>
 
                               </tr>
 

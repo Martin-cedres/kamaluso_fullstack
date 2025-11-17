@@ -1,39 +1,53 @@
-// /pages/api/generate-seo.ts
-
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import connectDB from '../../../lib/mongoose';
+import Product from '../../../models/Product';
+import Category from '../../../models/Category'; // Asegurarse de importar Category
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Solo aceptar método POST
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
-  const { nombre, descripcion, categoria } = req.body;
+  const { productId, nombre: bodyNombre, descripcion: bodyDescripcion, categoria: bodyCategoria } = req.body;
 
-  // Validar datos mínimos
-  if (!nombre || !descripcion) {
-    return res.status(400).json({ message: 'Nombre y descripción son requeridos' });
+  if (!productId && (!bodyNombre || !bodyDescripcion)) {
+    return res.status(400).json({ message: 'Se requiere "productId" o "nombre" y "descripcion".' });
   }
 
   try {
-    // Verificar API Key
+    await connectDB();
+
+    let nombre, descripcion, categoriaNombre;
+
+    if (productId) {
+      const product = await Product.findById(productId).populate('categoria');
+      if (!product) {
+        return res.status(404).json({ message: 'Producto no encontrado' });
+      }
+      nombre = product.nombre;
+      descripcion = product.descripcion;
+      // Asumimos que 'categoria' es un objeto poblado con un campo 'nombre'
+      categoriaNombre = product.categoria ? (product.categoria as any).nombre : 'General';
+    } else {
+      nombre = bodyNombre;
+      descripcion = bodyDescripcion;
+      categoriaNombre = bodyCategoria || 'General';
+    }
+
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) {
       return res.status(500).json({ message: 'Falta la variable GEMINI_API_KEY en el servidor.' });
     }
 
-    // Inicializar cliente de Gemini
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    // Nombre de la tienda
+    const modelPro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const storeName = "Papelería Personalizada Kamaluso";
 
-    // Lógica para detectar el tipo de producto y añadir instrucciones especiales
     let specializedInstructions = '';
     const lowerNombre = nombre.toLowerCase();
-    const lowerCategoria = categoria.toLowerCase();
+    const lowerCategoria = (categoriaNombre || '').toLowerCase();
 
     if (lowerNombre.includes('agenda') && lowerNombre.includes('2026')) {
       specializedInstructions = `
@@ -57,71 +71,113 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `;
     }
 
-    // PROMPT SEO OPTIMIZADO para atraer tanto clientes finales como empresas
     const prompt = `
-      Eres un experto en SEO para e-commerce y copywriting persuasivo, con base en Uruguay. Tu cliente es "${storeName}", un taller en San José que realiza envíos a todo el país.
+      Eres un experto senior en SEO para e-commerce y copywriting persuasivo, con base en Uruguay. Tu cliente es "${storeName}", un taller en San José que realiza envíos a todo el país.
       Tu misión es crear contenido que posicione en Google Uruguay y convierta visitas en ventas.
-
       **Principios Clave que DEBES seguir:**
       1. **Geo-localización Estratégica:** Menciona que nuestro taller se encuentra en "San José" y que realizamos "envíos a todo el país". Esto genera confianza y mejora el SEO local.
       2. **Intención de Búsqueda:** Piensa en POR QUÉ alguien buscaría este producto. ¿Es un regalo? ¿Una solución a un problema de organización? ¿Una herramienta para su marca? La 'descripcionExtensa' debe responder a esa intención.
-      3. **Estrategia de Keywords Mixta:** En 'seoKeywords', incluye una mezcla de keywords de alta competencia (ej: "papelería personalizada") y de nicho o "long-tail" (ej: "cuaderno con logo para eventos en Uruguay").
-
-      Mantén un tono natural, inspirador, profesional y alegre.
-      
       ${specializedInstructions}
-
       Producto:
       - Nombre: ${nombre}
       - Descripción actual: ${descripcion}
-      - Categoría: ${categoria || 'General'}
-
+      - Categoría: ${categoriaNombre}
       Genera un JSON válido (sin texto adicional antes ni después del JSON) con esta estructura. Es crucial que completes TODOS los campos del JSON.
       {
         "seoTitle": "Título SEO (máx. 60 caracteres). Fórmula: [Nombre del Producto] | [Categoría] | ${storeName}",
-        "seoDescription": "Meta descripción atractiva (máx. 155 caracteres). Incluye llamado a la acción y orientación local (Uruguay, regalos empresariales).",
+        "seoDescription": "Meta descripción atractiva (máx. 155 caracteres). Incluye llamado a la acción y orientación local (Uruguay, regalos empresariales). DEBE terminar con una llamada a la acción clara y enérgica como '¡Pide la tuya ahora!' o 'Descúbrela aquí'.",
         "descripcionBreve": "Resumen comercial de 1 o 2 frases que invite a comprar o regalar.",
         "puntosClave": ["Un array de 3 a 5 strings, donde cada string es un beneficio o característica clave."],
         "descripcionExtensa": "Descripción detallada en formato HTML compatible con texto enriquecido (<p>, <strong>, <ul>, <li>, <h3>). Resalta personalización, calidad y opciones para empresas (logo, regalos corporativos, etc.).",
-        "seoKeywords": ["Un array de 7 a 10 strings, donde cada string es una palabra clave relevante para SEO. Incluye términos como regalos empresariales, papelería personalizada Uruguay, agendas corporativas, branding, merchandising, San José."]
+        "seoKeywords": ["Un array de 10 strings. Debe incluir: 3 keywords de alta competencia (ej: 'agendas Uruguay'), 4 de 'long-tail' (ej: 'comprar agenda con tapa dura en Montevideo'), y 3 en formato de pregunta (ej: '¿cuál es la mejor agenda para estudiantes?')."],
+        "faqs": [
+          {
+            "question": "Genera una pregunta frecuente realista y útil sobre este producto.",
+            "answer": "Genera una respuesta clara, concisa y vendedora a esa pregunta."
+          },
+          {
+            "question": "Genera una segunda pregunta frecuente, diferente y complementaria.",
+            "answer": "Genera su correspondiente respuesta."
+          }
+        ],
+        "useCases": [
+          "Genera un caso de uso o idea creativa para este producto (ej: 'Perfecto para regalar en eventos corporativos').",
+          "Genera otro caso de uso para un tipo de cliente diferente (ej: 'Ideal para estudiantes que buscan organizarse').",
+          "Genera un tercer caso de uso que destaque su versatilidad."
+        ]
       }
     `;
 
-    // Configuración de reintentos
-    const MAX_RETRIES = 3;
-    let attempts = 0;
-    let geminiResponseText = '';
+    const isQuotaOrRateError = (err: any) => {
+      if (!err) return false;
+      const msg = String(err?.message || '').toLowerCase();
+      const status = err?.status || err?.code || null;
+      return status === 429 || status === 403 || status === 402 || msg.includes('quota') || msg.includes('limit') || msg.includes('rate') || msg.includes('insufficient');
+    };
 
-    while (attempts < MAX_RETRIES) {
-      try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        geminiResponseText = response.text();
-        break; // Éxito, salir del bucle
-      } catch (retryError: any) { // Usar 'any' para el tipo de error si no hay un tipo más específico
-        attempts++;
-        console.warn(`Intento ${attempts} fallido al llamar a Gemini. Reintentando...`, retryError.message);
-        if (attempts >= MAX_RETRIES) {
-          throw new Error(`Fallo al generar contenido con Gemini después de ${MAX_RETRIES} intentos: ${retryError.message}`);
+    const generateWithModelAndRetries = async (modelInstance: any, promptText: string, maxRetries = 3) => {
+      let attempts = 0;
+      let lastError: any = null;
+      while (attempts < maxRetries) {
+        try {
+          const result = await modelInstance.generateContent(promptText);
+          return (await result.response).text();
+        } catch (err: any) {
+          attempts++;
+          lastError = err;
+          console.warn(`Intento ${attempts} fallido para modelo. Mensaje:`, err?.message || err);
+          if (attempts >= maxRetries) break;
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempts - 1)));
         }
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1))); // Espera 1s, 2s, 4s...
+      }
+      throw lastError;
+    };
+
+    let geminiResponseText = '';
+    try {
+      geminiResponseText = await generateWithModelAndRetries(modelPro, prompt, 3);
+    } catch (errPro: any) {
+      console.warn('gemini-2.5-pro falló:', errPro?.message || errPro);
+      if (isQuotaOrRateError(errPro) || true) {
+        try {
+          geminiResponseText = await generateWithModelAndRetries(modelFlash, prompt, 3);
+        } catch (errFlash: any) {
+          console.error('gemini-2.5-flash también falló:', errFlash?.message || errFlash);
+          throw new Error(`Fallaron PRO y FLASH: ${errFlash?.message || errFlash}`);
+        }
+      } else {
+        throw errPro;
       }
     }
 
-    // Limpiar y parsear JSON con manejo robusto
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
     let generatedContent;
     try {
       generatedContent = JSON.parse(cleanedText);
     } catch (jsonParseError) {
       console.error('Error al parsear la respuesta JSON de Gemini. Respuesta cruda:', cleanedText);
-      throw new Error('La respuesta de Gemini no es un JSON válido. Por favor, inténtalo de nuevo.');
+      throw new Error('La respuesta de Gemini no es un JSON válido.');
     }
 
-    // Devolver contenido generado
+    // Si se proveyó un productId, actualizamos el producto en la BD
+    if (productId) {
+      await Product.findByIdAndUpdate(productId, {
+        seoTitle: generatedContent.seoTitle,
+        seoDescription: generatedContent.seoDescription,
+        descripcionBreve: generatedContent.descripcionBreve,
+        puntosClave: generatedContent.puntosClave,
+        descripcionExtensa: generatedContent.descripcionExtensa,
+        seoKeywords: generatedContent.seoKeywords,
+        faqs: generatedContent.faqs,
+        useCases: generatedContent.useCases,
+      });
+      return res.status(200).json({ message: `Producto "${nombre}" actualizado con éxito.` });
+    }
+
+    // Si no, devolvemos el contenido para que el script externo lo maneje
     res.status(200).json(generatedContent);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generando contenido SEO:', error);
     const message = error instanceof Error ? error.message : 'Error desconocido';
     res.status(500).json({ message: 'Error interno al generar el contenido', error: message });

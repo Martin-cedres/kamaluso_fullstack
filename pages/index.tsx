@@ -122,6 +122,12 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
             Agendas, libretas y cuadernos únicos. <br /> ✨ Envíos a todo
             Uruguay ✨
           </p>
+          <Link
+            href="/productos"
+            className="inline-block bg-pink-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-pink-600 transition-colors duration-300"
+          >
+            Ver Productos
+          </Link>
 
         </section>
 

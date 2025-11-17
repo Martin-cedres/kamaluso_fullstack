@@ -21,6 +21,8 @@ import mongoose from 'mongoose'
 
 import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
 import NewCoverDesignGallery, { DesignOption } from '../../../components/NewCoverDesignGallery';
+import FaqSection from '../../../components/FaqSection';
+import UseCasesSection from '../../../components/UseCasesSection';
 
 
 // This interface is for the props passed to the component
@@ -47,6 +49,8 @@ interface ProductProp {
   descripcionBreve?: string; // Nuevo campo
   puntosClave?: string[]; // Nuevo campo
   descripcionExtensa?: string; // Nuevo campo
+  faqs?: { question: string; answer: string; }[]; // Nuevo campo
+  useCases?: string[]; // Nuevo campo
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
@@ -763,6 +767,12 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 {product.puntosClave && product.puntosClave.length > 0 && (
                   <TabButton tabName="puntosClave" label="Puntos Clave" />
                 )}
+                {product.faqs && product.faqs.length > 0 && (
+                  <TabButton tabName="faqs" label="Preguntas Frecuentes" />
+                )}
+                {product.useCases && product.useCases.length > 0 && (
+                  <TabButton tabName="useCases" label="Casos de Uso" />
+                )}
                 <TabButton tabName="reseñas" label={`Reseñas (${reviewCount})`} />
               </nav>
             </div>
@@ -792,6 +802,12 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     <ReviewList reviews={reviews} />
                   </div>
                 </div>
+              )}
+              {activeTab === 'faqs' && (
+                <FaqSection faqs={product.faqs || []} />
+              )}
+              {activeTab === 'useCases' && (
+                <UseCasesSection useCases={product.useCases || []} />
               )}
             </div>
           </div>

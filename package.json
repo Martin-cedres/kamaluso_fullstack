@@ -11,11 +11,12 @@
     "format": "prettier --write . --ignore-path .gitignore",
     "test": "jest",
     "dev:martin": "dotenv -e .env.martin -- next dev",
-    "dev:com":   "dotenv -e .env.companero -- next dev",
+    "dev:com": "dotenv -e .env.companero -- next dev",
     "start:martin": "dotenv -e .env.martin -- node server.js",
-    "start:com":    "dotenv -e .env.companero -- node server.js"
+    "start:com": "dotenv -e .env.companero -- node server.js",
+    "dev:martin2": "dotenv -e .env.martin2 -- next dev",
+    "start:martin2": "dotenv -e .env.martin2 -- node server.js"
   },
-
   
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
@@ -79,8 +80,4 @@
     "ts-node": "^10.9.2",
     "typescript": "5.9.2"
   }
-
-
-
-
 }

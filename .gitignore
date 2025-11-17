@@ -38,3 +38,4 @@ coverage/
 
 .env*
 .vscode/settings.json
+chat_summary.txt
