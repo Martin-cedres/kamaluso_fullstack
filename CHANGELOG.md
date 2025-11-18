@@ -1,6 +1,30 @@
 # Historial de Cambios (CHANGELOG) - Kamaluso Fullstack
 
 Este documento registra las actualizaciones y nuevas funcionalidades implementadas en el proyecto Kamaluso Fullstack, con un enfoque en cómo afectan al usuario del panel de administración.
+---
+
+## 📅 Sesión: 18 de noviembre de 2025
+
+### 🗑️ Eliminación del Dashboard de Métricas
+
+*   **Descripción:** Se ha eliminado la página del **Dashboard de Métricas** (`/admin/dashboard`) debido a que su implementación completa no es una prioridad inmediata.
+*   **Detalles:** La página contenía datos de marcador de posición y su backend aún no había sido desarrollado. Se ha decidido posponer su implementación para enfocarse en otras funcionalidades más críticas.
+*   **Estado:** La página y sus componentes asociados han sido removidos del proyecto.
+
+### 🚀 Tarea Pendiente: Agente de Google Shopping con IA
+
+*   **Descripción:** Se ha identificado la necesidad de desarrollar un "Agente de Google Shopping" que utilice la IA de Gemini.
+*   **Objetivo:** Este agente clasificará automáticamente los productos según la taxonomía de Google y optimizará los títulos y descripciones para el feed de Google Shopping, generando un archivo `google-shopping-feed.xml` enriquecido.
+*   **Estado:** Pendiente de implementación.
+
+---
+
+## 📅 Sesión: 17 de noviembre de 2025
+
+### 📊 Fase 1: Creación del Dashboard de Métricas
+*   **Descripción:** Se ha creado la estructura inicial y el layout para el nuevo **Dashboard de Métricas** en la ruta `/admin/dashboard`.
+*   **Detalles:** La página incluye tarjetas de marcador de posición para las métricas clave que se medirán: Visitas Orgánicas, Uso de Herramientas de IA, Rendimiento del Blog y Conversiones.
+*   **Estado:** Este es el primer paso para construir el sistema de medición. El siguiente paso será conectar estos componentes a fuentes de datos reales (Google Analytics, base de datos interna).
 
 ---
 
@@ -48,10 +72,35 @@ Hemos creado una "línea de ensamblaje" inteligente para ayudarte a generar art�
     *   **¿Cómo usarlo?** Una vez que tengas tu borrador (ya sea generado por el Arquitecto o escrito por ti), haz clic en el botón **"✨ Optimizar con IA"**. La IA revisará tu texto, **insertará automáticamente enlaces internos a tus productos relevantes** (basándose en tu catálogo publicado en `www.papeleriapersonalizada.uy`) y pulirá el contenido para mejorar la legibilidad y el SEO.
     *   **Beneficio:** Asegura que tus artículos no solo atraigan tráfico, sino que también dirijan a los usuarios hacia tus productos, maximizando el potencial de ventas.
 
+#### 4. SEO Técnico: Datos Estructurados para Preguntas Frecuentes (FAQ)
+
+*   **Descripción:** Se ha implementado una arquitectura de datos estructurados (Schema.org) en todo el sitio para mejorar la comprensión del contenido por parte de los motores de búsqueda.
+    *   **Schema Base:** Todas las páginas ahora incluyen los schemas `Organization` y `WebSite` para identificar correctamente el negocio.
+    *   **Schema Específico:**
+        *   **Página de FAQs:** Utiliza el schema `FAQPage` para que las preguntas puedan aparecer como resultados enriquecidos.
+        *   **Páginas de Producto:** Utilizan un schema `@graph` que combina `Product` y `FAQPage` (si aplica), para una máxima riqueza de datos y visibilidad en Google.
+        *   **Artículos del Blog:** Utilizan el schema `BlogPosting` para ser identificados como contenido editorial.
+*   **Beneficio:** Aumenta drásticamente la visibilidad en Google, habilita la aparición de "resultados enriquecidos" (rich snippets) y establece una base de SEO técnico de primer nivel.
+
+#### 5. Generación Automática de Alt-Text para Imágenes con IA
+
+*   **Descripción:** Se ha integrado un asistente de IA que se activa al subir imágenes para productos o artículos de blog. La IA analiza visualmente la imagen y genera automáticamente un texto alternativo (`alt-text`) descriptivo y optimizado.
+*   **¿Cómo funciona?** Al subir una nueva imagen, el campo "Texto Alternativo" se rellenará automáticamente con una sugerencia de la IA. Podrás revisarla y ajustarla antes de guardar.
+*   **Beneficios Clave:**
+    *   **Mejora del SEO:** Ayuda a que tus imágenes se posicionen en los resultados de búsqueda de Google Images.
+    *   **Accesibilidad Web (a11y):** Asegura que tu sitio sea accesible para personas con discapacidad visual que utilizan lectores de pantalla.
+*   **Costo:** Esta funcionalidad utiliza la API de Gemini, manteniéndose dentro de la capa gratuita del servicio.
+
+#### ✅ Conclusión de la Sesión
+
+*   **Resumen:** Se ha completado con éxito la implementación de un conjunto integral de herramientas de IA (optimización de productos, creación de contenido, generación de alt-text) y una arquitectura avanzada de SEO técnico (Schema.org).
+
+
 ---
 
 ### 🛠️ Notas Técnicas Importantes
 
+*   **Modelos de IA:** La generación de texto se basa en `gemini-2.5-pro`/`flash`, mientras que el análisis de imágenes para el alt-text utiliza el modelo `gemini-2.5-pro-vision`. El sistema gestiona la selección del modelo automáticamente.
 *   **Resiliencia de la IA:** Todas las funcionalidades de IA están configuradas para usar el modelo `gemini-2.5-pro` (de mayor calidad) y, si este no está disponible (por ejemplo, por límites de cuota en la versión gratuita), automáticamente recurrirán al modelo `gemini-2.5-flash` para asegurar que el servicio no se interrumpa.
 *   **Configuración:** Para que las funcionalidades de IA operen, la variable de entorno `GEMINI_API_KEY` debe estar configurada en tu archivo `.env.local`.
 

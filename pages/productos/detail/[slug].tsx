@@ -457,6 +457,19 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     })),
   };
 
+  const faqSchema = product.faqs && product.faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: product.faqs.map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer
+      }
+    }))
+  } : null;
+
 
 
   return (
@@ -504,6 +517,13 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
           key="breadcrumb-jsonld"
         />
+        {faqSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+            key="faq-jsonld"
+          />
+        )}
       </Head>
 
       <div className="bg-white pt-24">
