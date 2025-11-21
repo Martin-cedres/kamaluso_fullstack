@@ -10,6 +10,9 @@ export interface IPost extends Document {
   tags?: string[]
   seoTitle?: string
   seoDescription?: string
+  // Campos para el flujo de revisión de la IA
+  proposedContent?: string; // Contenido sugerido por la IA, pendiente de aprobación
+  status: 'published' | 'pending_review'; // Estado del contenido
 }
 
 const postSchema: Schema<IPost> = new Schema(
@@ -23,6 +26,14 @@ const postSchema: Schema<IPost> = new Schema(
     tags: [{ type: String }],
     seoTitle: { type: String },
     seoDescription: { type: String },
+    // Campos para el flujo de revisión de la IA
+    proposedContent: { type: String },
+    status: {
+      type: String,
+      required: true,
+      enum: ['published', 'pending_review'],
+      default: 'published',
+    },
   },
   {
     timestamps: true, // This will add createdAt and updatedAt fields

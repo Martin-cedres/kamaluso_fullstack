@@ -6,5 +6,43 @@
     - Las palabras clave expandidas (relacionadas, long-tail, preguntas e intención de usuario) se inyectan en el prompt de Gemini.
     - Las instrucciones del prompt se ajustaron para que la IA utilice estas palabras clave expandidas de manera estratégica al generar `seoTitle`, `seoDescription`, `puntosClave`, `descripcionExtensa` y `seoKeywords`, complementando las instrucciones especializadas existentes para productos como agendas o libretas.
 
-**Pendiente:**
-- No hay tareas pendientes específicas de la planificación anterior. A la espera de nuevas instrucciones.
+### Tareas Pendientes para el Sistema de Topic Clusters (a 19 de noviembre de 2025)
+
+Las siguientes tareas son necesarias para que la nueva funcionalidad de "Fábrica de Clusters" y el enlazado interno automático funcionen de manera completa (saliendo del modo de simulación):
+
+1.  **API "Generar Estrategias de Cluster" (`/api/admin/clusters/generate-strategies.ts`):**
+    *   **Estado Actual:** Devuelve estrategias de ejemplo codificadas.
+    *   **Por Implementar:**
+        *   Obtener todo el contenido de posts y productos de la base de datos.
+        *   Construir el prompt avanzado para Gemini (actuando como Estratega SEO Senior).
+        *   Realizar la llamada real a la API de Gemini para generar las estrategias de cluster.
+        *   Parsear la respuesta JSON de Gemini y devolver las estrategias generadas.
+
+2.  **API "Construir este Cluster" (`/api/admin/clusters/build-cluster.ts`):**
+    *   **Estado Actual:** No implementada. El botón del frontend solo simula la construcción.
+    *   **Por Implementar:**
+        *   Crear el archivo de la API.
+        *   Recibir la estrategia elegida (título de la Página Pilar, IDs de posts y productos).
+        *   Llamar a la IA para que escriba el contenido completo de la nueva Página Pilar.
+        *   Guardar la nueva `PillarPage` en la base de datos con las asociaciones de cluster.
+
+3.  **API "Optimizar Enlazado" (`/api/admin/clusters/generate-links.ts`):**
+    *   **Estado Actual:** La llamada a Gemini está comentada y el guardado de los cambios en la BD está deshabilitado. Devuelve una respuesta simulada.
+    *   **Por Implementar:**
+        *   Descomentar y activar la llamada real a la API de Gemini.
+        *   Implementar la lógica para parsear la respuesta (`updates` array) de Gemini.
+        *   Implementar la lógica para iterar sobre los `updates` y guardar el `newContent` en los documentos correspondientes (`PillarPage`, `Post`, `Product`) en la base de datos.
+
+4.  **Actualizaciones de Frontend (`pages/admin/clusters.tsx` & `pages/admin/cluster-factory.tsx`):**
+    *   Asegurar que los componentes del frontend llamen a las APIs reales y actualicen su estado según sea necesario una vez que las APIs salgan del modo de simulación.
+
+El usuario no ve un botón para 'generar la página pilar con IA' porque el proceso es ligeramente diferente a lo que esperaba. La IA no crea la página pilar inicial, sino que optimiza su contenido y el enlazado interno una vez que la página pilar y su cluster han sido definidos.
+
+**Para generar contenido con IA para tus páginas pilares y clusters, sigue estos pasos:**
+
+1.  **Crea tu Página Pilar:** Ve a `/admin/pillar-pages` y crea una nueva página pilar con su título, tema y contenido inicial.
+2.  **Ve al Gestor de Topic Clusters:** Una vez creada, dirígete a `/admin/clusters`.
+3.  **Selecciona tu Página Pilar:** En el "Paso 1: Selecciona un Tema (Página Pilar)", elige la página pilar que acabas de crear en el menú desplegable.
+4.  **Construye y Guarda el Cluster:** En el "Paso 2: Construye y Guarda el Cluster", asocia los artículos del blog y los productos relevantes a tu página pilar marcando las casillas correspondientes. Luego, haz clic en el botón **'Construir y Guardar Cluster'**.
+5.  **Genera Sugerencias con IA:** Después de guardar el cluster, en el "Paso 3: Optimización con IA", verás un botón que dice **'Generar Sugerencias de Enlazado'**. Haz clic en él para que la IA analice el cluster y genere sugerencias de contenido y enlazado interno.
+6.  **Revisa y Publica:** Si la IA genera sugerencias, el botón en el "Paso 3" cambiará a **'Revisar Sugerencias Pendientes'**. Haz clic para ir a la página de revisión, donde podrás ver los cambios propuestos por la IA y aprobarlos para que se publiquen.

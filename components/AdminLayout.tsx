@@ -11,6 +11,9 @@ import {
   TagIcon,
   Bars3Icon,
   XMarkIcon,
+  BookOpenIcon,
+  CircleStackIcon,
+  BeakerIcon, // <-- Icono para la Fábrica
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -23,6 +26,11 @@ const navigation = [
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
   { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
   { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },
+  // --- Nuevos Enlaces ---
+  { name: 'Páginas Pilares', href: '/admin/pillar-pages', icon: BookOpenIcon },
+  { name: 'Gestor de Clusters', href: '/admin/clusters', icon: CircleStackIcon },
+  { name: 'Fábrica de Clusters', href: '/admin/cluster-factory', icon: BeakerIcon },
+  // --- Fin Nuevos Enlaces ---
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
 ]
 

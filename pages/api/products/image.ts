@@ -1,6 +1,7 @@
 // pages/api/products/image.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
+import os from 'os';
 import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la función refactorizada
 
 export const config = {
@@ -19,7 +20,7 @@ export default async function handler(
 
   // Usar formidable para parsear el formulario.
   // La función de S3 se encargará de la ruta temporal y su limpieza.
-  const form = formidable({ multiples: true });
+  const form = formidable({ multiples: true, uploadDir: os.tmpdir() });
 
   form.parse(req, async (err, fields, files: any) => {
     if (err) {
@@ -30,15 +31,12 @@ export default async function handler(
     try {
       const uploadedUrls: string[] = [];
 
-      // Unificar el manejo de archivos únicos y múltiples en un solo array
       const fileArray: formidable.File[] = [];
       if (files.images) {
-        // Si 'images' es un array, lo concatena, si no, lo mete en un array
         Array.isArray(files.images)
           ? fileArray.push(...files.images)
           : fileArray.push(files.images);
       }
-      // Añadir 'image' (imagen principal) si existe, al principio del array
       if (files.image) {
         fileArray.unshift(files.image);
       }
@@ -47,10 +45,14 @@ export default async function handler(
         return res.status(400).json({ error: 'No se subieron imágenes' });
       }
 
-      // Iterar y subir cada archivo usando la función centralizada
       for (const file of fileArray) {
-        // Asegurarse de que el archivo no está vacío y tiene un filepath
         if (file.size > 0 && file.filepath) {
+          console.log(`[DEBUG] Archivo temporal de Formidable:
+            Nombre original: ${file.originalFilename}
+            Ruta temporal: ${file.filepath}
+            Tamaño: ${file.size} bytes
+            Tipo MIME: ${file.mimetype}`);
+
           const url = await uploadFileToS3(file);
           uploadedUrls.push(url);
         }

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import connectDB from '../../../lib/mongoose';
 import Product from '../../../models/Product';
+import { generateWithFallback } from '../../../../lib/gemini-agent';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -21,15 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const products = await Product.find({}, 'nombre slug').lean();
     const productLinks = products.map(p => `{"nombre": "${p.nombre}", "url": "/productos/detail/${p.slug}"}`);
     const productContext = `[${productLinks.join(', ')}]`;
-
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-      throw new Error('Falta la variable GEMINI_API_KEY en el servidor.');
-    }
-
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const modelPro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-    const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const storeName = "Papelería Personalizada Kamaluso";
     
@@ -64,36 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     `;
 
-    const generateWithModelAndRetries = async (modelInstance: any, promptText: string, maxRetries = 3) => {
-      let attempts = 0;
-      let lastError: any = null;
-      while (attempts < maxRetries) {
-        try {
-          const result = await modelInstance.generateContent(promptText);
-          return (await result.response).text();
-        } catch (err: any) {
-          attempts++;
-          lastError = err;
-          console.warn(`Intento ${attempts} fallido para modelo. Mensaje:`, err?.message || err);
-          if (attempts >= maxRetries) break;
-          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempts - 1)));
-        }
-      }
-      throw lastError;
-    };
-
-    let geminiResponseText = '';
-    try {
-      geminiResponseText = await generateWithModelAndRetries(modelPro, prompt, 3);
-    } catch (errPro: any) {
-      console.warn('gemini-2.5-pro falló, intentando con flash:', errPro?.message || errPro);
-      try {
-        geminiResponseText = await generateWithModelAndRetries(modelFlash, prompt, 3);
-      } catch (errFlash: any) {
-        console.error('gemini-2.5-flash también falló:', errFlash?.message || errFlash);
-        throw new Error(`Fallaron PRO y FLASH: ${errFlash?.message || errFlash}`);
-      }
-    }
+    const geminiResponseText = await generateWithFallback(prompt);
 
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
     let generatedContent;

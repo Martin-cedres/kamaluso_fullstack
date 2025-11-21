@@ -441,6 +441,8 @@ const AdminIndex = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [availableCoverDesigns, setAvailableCoverDesigns] = useState<ICoverDesign[]>([]); // New state for cover designs
   const [isGenerating, setIsGenerating] = useState(false); // Estado para el botón de IA
+  const [generationStatus, setGenerationStatus] = useState(''); // Para mensajes de carga más detallados
+  const [trends, setTrends] = useState<{ trendsSummary: string; keywords: string[] } | null>(null); // ¡NUEVO ESTADO!
   const [quillKey, setQuillKey] = useState(0); // Key para forzar re-render de Quill
   const [editingProduct, setEditingProduct] = useState<any>(null); // Estado para el producto en edición
   const [seoLoading, setSeoLoading] = useState<{ [key: string]: boolean }>({});
@@ -567,6 +569,8 @@ const AdminIndex = () => {
     }
 
     setIsGenerating(true);
+    setTrends(null); // Limpiar tendencias previas
+    setGenerationStatus('Investigando tendencias...');
     try {
       const res = await fetch('/api/admin/generate-seo', {
         method: 'POST',
@@ -583,26 +587,35 @@ const AdminIndex = () => {
         throw new Error(errorData.error || errorData.message || 'Error en la API de generación');
       }
 
+      setGenerationStatus('Generando contenido con IA...');
       const data = await res.json();
+      
+      // La API ahora devuelve { generatedContent, trends }
+      const { generatedContent, trends: apiTrends } = data;
 
-      // Actualizar el formulario con los datos generados
       setForm((currentForm: any) => ({
         ...currentForm,
-        seoTitle: data.seoTitle,
-        seoDescription: data.seoDescription,
-        seoKeywords: Array.isArray(data.seoKeywords) ? data.seoKeywords.join(', ') : data.seoKeywords || '',
-        puntosClave: Array.isArray(data.puntosClave) ? data.puntosClave.join(', ') : data.puntosClave || '',
-        // Actualizar directamente el campo de descripción principal
-        descripcion: data.descripcionExtensa || currentForm.descripcion,
+        seoTitle: generatedContent.seoTitle,
+        seoDescription: generatedContent.seoDescription,
+        seoKeywords: Array.isArray(generatedContent.seoKeywords) ? generatedContent.seoKeywords.join(', ') : generatedContent.seoKeywords || '',
+        puntosClave: Array.isArray(generatedContent.puntosClave) ? generatedContent.puntosClave.join(', ') : generatedContent.puntosClave || '',
+        descripcion: generatedContent.descripcionExtensa || currentForm.descripcion,
+        // --- CAMPOS ADICIONALES ACTUALIZADOS ---
+        descripcionBreve: generatedContent.descripcionBreve || '',
+        faqs: generatedContent.faqs || [],
+        useCases: generatedContent.useCases || [],
       }));
+
+      setTrends(apiTrends); // Guardar las tendencias en el estado
       toast.success('Contenido SEO generado con éxito.');
-      setQuillKey(prevKey => prevKey + 1); // Forzar re-render de ReactQuill
+      setQuillKey(prevKey => prevKey + 1);
 
     } catch (error: any) {
       console.error('Error generando contenido con IA:', error);
       toast.error(error.message || 'No se pudo generar el contenido.');
     } finally {
       setIsGenerating(false);
+      setGenerationStatus('');
     }
   };
 
@@ -782,6 +795,7 @@ const AdminIndex = () => {
     setEditId(null);
     setShowForm(false);
     setEditingProduct(null); // Limpiar el producto en edición
+    setTrends(null); // ¡NUEVO! Limpiar tendencias al resetear
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1286,7 +1300,7 @@ const AdminIndex = () => {
                       disabled={isGenerating || !form.nombre}
                       className="inline-flex items-center gap-2 bg-purple-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isGenerating ? 'Generando...' : '✨ Generar con IA'}
+                      {isGenerating ? (generationStatus || 'Generando...') : '✨ Generar con IA'}
                     </button>
                   </div>
                   <div className="space-y-4">
@@ -1304,6 +1318,29 @@ const AdminIndex = () => {
                       <p className="text-xs text-gray-500 mt-1">Separar por comas.</p>
                     </div>
                   </div>
+
+                  {/* ¡NUEVO! Bloque para mostrar tendencias */}
+                  {trends && (
+                    <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg animate-fade-in">
+                      <h4 className="text-md font-semibold text-purple-800 mb-2">Intel de Búsqueda Utilizada</h4>
+                      <div className="text-sm text-purple-700 space-y-3">
+                        <div>
+                          <h5 className="font-semibold">Resumen de Tendencias:</h5>
+                          <p className="whitespace-pre-wrap font-mono text-xs p-2 bg-purple-100 rounded">{trends.trendsSummary}</p>
+                        </div>
+                        <div>
+                          <h5 className="font-semibold">Keywords Populares Encontradas:</h5>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {trends.keywords.map((kw, i) => (
+                              <span key={i} className="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs font-medium">
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* --- Imágenes --- */}

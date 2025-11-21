@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import connectDB from '../../../../lib/mongoose'; // Import connectDB
 import Product from '../../../../models/Product'; // Import Product model
+import { generateWithFallback } from '../../../../lib/gemini-agent';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -36,6 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }).join('\n');
 
     // --- Call internal generate-keywords API ---
+    // Note: This internal call is assumed to work as is.
     const keywordsRes = await fetch('http://localhost:3000/api/admin/seo/generate-keywords', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -49,85 +50,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const expandedKeywords = await keywordsRes.json();
     const { relatedKeywords, longTailKeywords, questions, userIntent } = expandedKeywords;
 
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-      throw new Error('Falta la variable GEMINI_API_KEY en el servidor.');
-    }
-
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const modelPro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-    const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const storeName = "Papelería Personalizada Kamaluso";
 
     const prompt = `
-      Eres un estratega de marketing de contenidos y experto en SEO para "${storeName}", un e-commerce en Uruguay.
-      Tu misión es generar ideas para artículos de blog que atraigan tráfico cualificado y posicionen la marca como líder de opinión.
+      Eres un Director de Estrategia de Contenidos para E-commerce de clase mundial, trabajando para "${storeName}", una tienda online en Uruguay. Tu única obsesión es el ROI (Retorno de Inversión).
+      Tu misión es generar ideas de artículos de blog que no solo atraigan tráfico masivo y cualificado, sino que lo conviertan en ventas. Cada idea debe ser una máquina de generar interés y demanda para los productos de la tienda.
 
       El tema general para el brainstorming es: "${theme}"
 
-      **Análisis de Palabras Clave Expandidas (generado por IA):**
+      **Inteligencia de Mercado (Análisis de Keywords por IA):**
       - Palabras Clave Relacionadas: ${relatedKeywords.join(', ')}
-      - Palabras Clave Long-Tail: ${longTailKeywords.join(', ')}
-      - Preguntas Frecuentes: ${questions.join(', ')}
+      - Palabras Clave Long-Tail (Alta Intención): ${longTailKeywords.join(', ')}
+      - Preguntas que hacen los Clientes: ${questions.join(', ')}
       - Intención de Usuario Principal: ${userIntent}
 
-      **Lista de Productos Disponibles en la Tienda (para inspiración):**
+      **Catálogo de Productos (Nuestras Armas de Venta):**
       ${productList}
 
-      **Instrucciones Clave:**
-      1.  Genera una lista de 10 ideas de artículos de blog.
-      2.  **Las ideas DEBEN estar directamente relacionadas o inspiradas en los productos de la lista proporcionada.**
-      3.  **Las ideas DEBEN incorporar las palabras clave expandidas y las preguntas frecuentes** para asegurar la relevancia SEO.
-      4.  Para cada idea, proporciona:
-          - "title": Un título atractivo y que genere curiosidad.
-          - "targetKeyword": La palabra clave principal que el artículo debería atacar para posicionar en Google Uruguay (elegida de las expandidas).
-          - "audience": El público objetivo específico para ese artículo (ej: 'Gerentes de Marketing', 'Estudiantes', 'Personas buscando regalos').
-          - "angle": Un breve ángulo o enfoque único para el artículo que lo diferencie de la competencia.
+      **Instrucciones de Estrategia de Contenidos:**
+      1.  **Genera 10 ideas de artículos.** Deben ser irresistibles para el público objetivo.
+      2.  **Piensa en el Embudo de Ventas Completo:** Distribuye las ideas para cubrir las 3 etapas del cliente:
+          - **TOFU (Top of Funnel):** 3-4 ideas. Atrae a un público amplio que tiene un problema pero no sabe la solución. (Ej: "Cómo organizar tu vida y reducir el estrés: 5 métodos probados").
+          - **MOFU (Middle of Funnel):** 3-4 ideas. Dirigido a gente que ya busca soluciones y compara. (Ej: "Bullet Journal vs. Agenda Tradicional: ¿Cuál es mejor para ti en 2026?").
+          - **BOFU (Bottom of Funnel):** 2-3 ideas. Para gente casi lista para comprar. Debe empujarlos a la conversión. (Ej: "Las 5 agendas personalizadas más originales de Uruguay para regalar en fin de año").
+      3.  **Conexión Producto-Contenido:** Cada idea DEBE resolver un problema que uno o más productos del catálogo solucionan brillantemente.
+      4.  **Formato de Salida:** Para cada idea, proporciona un objeto JSON con estos campos:
+          - "title": Un titular magnético, optimizado para clics y SEO.
+          - "targetKeyword": La palabra clave con mayor intención de compra o volumen de búsqueda (elegida de la inteligencia de mercado).
+          - "audience": El perfil de cliente exacto al que le hablamos.
+          - "salesAngle": **(El más importante)** Explica en una frase CÓMO este artículo generará una venta. ¿Qué producto se promocionará y cómo? (Ej: "El post posicionará nuestras agendas semanales como la herramienta ideal para profesionales ocupados, con un llamado a la acción directo a la categoría de agendas.").
 
       Devuelve el resultado como un array de objetos JSON dentro de un objeto JSON principal con la clave "ideas".
       Ejemplo de formato de salida:
       {
         "ideas": [
           {
-            "title": "5 Ideas de Regalos Corporativos que tus Clientes Recordarán Todo el Año",
+            "title": "5 Ideas de Regalos Corporativos en Uruguay que tus Clientes No Olvidarán",
             "targetKeyword": "regalos corporativos originales Uruguay",
-            "audience": "Gerentes de Marketing y Ventas",
-            "angle": "Enfocarse en el impacto a largo plazo y la recordación de marca, más allá del típico regalo de fin de año."
+            "audience": "Gerentes de Marketing, dueños de PyMEs",
+            "salesAngle": "Presentar las libretas personalizadas con logo como la opción premium, enlazando directamente al producto personalizable para empresas."
           }
         ]
       }
     `;
 
-    const generateWithModelAndRetries = async (modelInstance: any, promptText: string, maxRetries = 3) => {
-      let attempts = 0;
-      let lastError: any = null;
-      while (attempts < maxRetries) {
-        try {
-          const result = await modelInstance.generateContent(promptText);
-          return (await result.response).text();
-        } catch (err: any) {
-          attempts++;
-          lastError = err;
-          console.warn(`Intento ${attempts} fallido para modelo. Mensaje:`, err?.message || err);
-          if (attempts >= maxRetries) break;
-          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempts - 1)));
-        }
-      }
-      throw lastError;
-    };
-
-    let geminiResponseText = '';
-    try {
-      geminiResponseText = await generateWithModelAndRetries(modelPro, prompt, 3);
-    } catch (errPro: any) {
-      console.warn('gemini-2.5-pro falló, intentando con flash:', errPro?.message || errPro);
-      try {
-        geminiResponseText = await generateWithModelAndRetries(modelFlash, prompt, 3);
-      } catch (errFlash: any) {
-        console.error('gemini-2.5-flash también falló:', errFlash?.message || errFlash);
-        throw new Error(`Fallaron PRO y FLASH: ${errFlash?.message || errFlash}`);
-      }
-    }
+    const geminiResponseText = await generateWithFallback(prompt);
 
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const generatedResult = JSON.parse(cleanedText);

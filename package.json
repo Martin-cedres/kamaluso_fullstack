@@ -42,6 +42,7 @@
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
+    "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
     "react-medium-image-zoom": "^5.4.0",

@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenerativeAI, Part } from '@google/generative-ai';
+import { generateWithFallback } from '../../../lib/gemini-agent';
+import { Part } from '@google/generative-ai';
+
 
 /**
  * Convierte una URL de imagen a un objeto Part de Google Generative AI,
@@ -39,16 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ message: 'Se requieren `imageUrl` y `contextName`.' });
   }
 
-  const API_KEY = process.env.GEMINI_API_KEY;
-  if (!API_KEY) {
-    return res.status(500).json({ message: 'Falta la variable GEMINI_API_KEY en el servidor.' });
-  }
-
   try {
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    // Usamos el modelo con capacidades de visión, como se documentó en el CHANGELOG.
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' }); // Usamos el modelo más reciente y eficiente
-
     const imagePart = await urlToGoogleGenerativeAIPart(imageUrl);
 
     const contextText = context === 'blog'
@@ -68,11 +61,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Genera únicamente el texto del alt-text, sin comillas ni texto adicional.
     `;
 
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const altText = response.text().trim();
+    // Se llama al agente con un prompt multimodal (texto e imagen)
+    const altText = await generateWithFallback([prompt, imagePart]);
 
-    res.status(200).json({ altText });
+    res.status(200).json({ altText: altText.trim() });
   } catch (error: any) {
     console.error('Error generando alt-text con IA:', error);
     const message = error instanceof Error ? error.message : 'Error desconocido';

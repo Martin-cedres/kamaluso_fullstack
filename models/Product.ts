@@ -48,6 +48,10 @@ export interface IProduct extends Document {
   customizationGroups?: ICustomizationGroup[]; // Para opciones estáticas (Tipo de Tapa, etc.)
   coverDesignGroupNames?: string[]; // Para galerías de diseños dinámicas
   order?: number;
+
+  // Campos para el flujo de revisión de la IA
+  proposedContent?: string; // Staging para descripcionExtensa
+  contentStatus: 'published' | 'pending_review';
 }
 
 const productSchema: Schema<IProduct> = new Schema(
@@ -69,7 +73,7 @@ const productSchema: Schema<IProduct> = new Schema(
     seoKeywords: [{ type: String }],
     alt: { type: String },
     notes: { type: String },
-    status: { type: String, default: 'activo' },
+    status: { type: String, default: 'activo' }, // Status del producto (activo/inactivo)
     destacado: { type: Boolean, default: false },
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
@@ -95,6 +99,14 @@ const productSchema: Schema<IProduct> = new Schema(
         },
       },
     ],
+    // Campos para el flujo de revisión de la IA
+    proposedContent: { type: String },
+    contentStatus: {
+      type: String,
+      required: true,
+      enum: ['published', 'pending_review'],
+      default: 'published',
+    },
   },
   {
     timestamps: true, // Handles createdAt and updatedAt

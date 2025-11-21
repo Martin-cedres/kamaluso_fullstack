@@ -170,6 +170,7 @@ export default async function handler(
           alt: 1,
           notes: 1,
           status: 1,
+          contentStatus: 1, // <--- AÑADIR ESTE CAMPO
           destacado: 1,
           imageUrl: 1,
           images: 1,

@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import connectDB from '../../../lib/mongoose';
 import Product from '../../../models/Product';
 import Category from '../../../models/Category'; // Asegurarse de importar Category
+import { getSearchTrends } from '../../../lib/keyword-research';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -27,7 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       nombre = product.nombre;
       descripcion = product.descripcion;
-      // Asumimos que 'categoria' es un objeto poblado con un campo 'nombre'
       categoriaNombre = product.categoria ? (product.categoria as any).nombre : 'General';
     } else {
       nombre = bodyNombre;
@@ -35,14 +35,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       categoriaNombre = bodyCategoria || 'General';
     }
 
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-      return res.status(500).json({ message: 'Falta la variable GEMINI_API_KEY en el servidor.' });
-    }
+    // ¡NUEVO PASO! Se realiza la investigación de tendencias.
+    const trends = await getSearchTrends(nombre, categoriaNombre);
 
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const modelPro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-    const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Usar el agente inteligente de Gemini que gestiona la rotación de claves y el fallback de modelos.
+    const { generateWithFallback } = await import('../../../lib/gemini-agent');
+
     const storeName = "Papelería Personalizada Kamaluso";
 
     let specializedInstructions = '';
@@ -71,85 +69,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `;
     }
 
+    // ¡NUEVO! Sección del prompt con las tendencias encontradas.
+    const trendsPromptSection = `
+      **Intel de Búsqueda en Tiempo Real:** He investigado las tendencias de búsqueda actuales en Uruguay para un producto como este. Esto es lo que encontré:
+      - **Resumen de Tendencias:** ${trends.trendsSummary}
+      - **Keywords Populares:** ${trends.keywords.join(', ')}
+      
+      **Misión Crítica:** Usa esta información de tendencias como tu guía principal para decidir el enfoque del contenido y las palabras clave a utilizar. El campo 'seoKeywords' debe inspirarse fuertemente en esta lista.
+    `;
+
     const prompt = `
-      Eres un experto senior en SEO para e-commerce y copywriting persuasivo, con base en Uruguay. Tu cliente es "${storeName}", un taller en San José que realiza envíos a todo el país.
-      Tu misión es crear contenido que posicione en Google Uruguay y convierta visitas en ventas.
-      **Principios Clave que DEBES seguir:**
-      1. **Geo-localización Estratégica:** Menciona que nuestro taller se encuentra en "San José" y que realizamos "envíos a todo el país". Esto genera confianza y mejora el SEO local.
-      2. **Intención de Búsqueda:** Piensa en POR QUÉ alguien buscaría este producto. ¿Es un regalo? ¿Una solución a un problema de organización? ¿Una herramienta para su marca? La 'descripcionExtensa' debe responder a esa intención.
+      Eres un experto de clase mundial en SEO para e-commerce y un copywriter de respuesta directa obsesionado con las ventas. Tu base de operaciones es Uruguay y tu cliente es "${storeName}".
+      Tu única misión es crear contenido de producto que domine absolutamente los rankings de Google Uruguay para sus keywords objetivo y que convierta el máximo porcentaje de visitantes en compradores. Cada palabra debe tener un propósito: rankear o vender.
+
+      **Tus Principios Inquebrantables:**
+      1.  **Obsesión por el #1 en Google:** El contenido debe estar perfectamente optimizado. La keyword principal debe aparecer en el 'seoTitle', al inicio del 'seoDescription' y en el primer párrafo de la 'descripcionExtensa'.
+      2.  **Copywriting Persuasivo (Framework AIDA):** La 'descripcionExtensa' debe seguir la estructura AIDA:
+          - **Atención:** Un titular o primera frase que enganche al lector de inmediato.
+          - **Interés:** Despertar la curiosidad destacando los aspectos únicos o más fascinantes del producto.
+          - **Deseo:** Transformar el interés en deseo. Pinta una imagen mental vívida de cómo el producto mejora la vida del cliente. Enfócate en los beneficios emocionales (ej: la satisfacción de la organización, la alegría de dar un regalo único) no solo en las características.
+          - **Acción:** Un llamado a la acción claro, precedido por un "Llamado al Valor" (ej: "Empieza a organizar tu éxito hoy. ¡Pide tu agenda ahora!").
+      3.  **Inteligencia de Búsqueda en Tiempo Real:** He investigado las tendencias de búsqueda actuales en Uruguay para este producto. Esta es tu inteligencia de mercado. Úsala como guía principal para tu estrategia de keywords.
+          - **Resumen de Tendencias:** ${trends.trendsSummary}
+          - **Keywords Populares:** ${trends.keywords.join(', ')}
+      4.  **Geo-localización y Confianza:** Menciona sutilmente que el taller está en "San José" y se realizan "envíos a todo el país" para generar confianza y mejorar el SEO local.
+
       ${specializedInstructions}
-      Producto:
+      
+      **Producto a Optimizar:**
       - Nombre: ${nombre}
-      - Descripción actual: ${descripcion}
+      - Descripción actual (usar como contexto, no para copiar): ${descripcion}
       - Categoría: ${categoriaNombre}
-      Genera un JSON válido (sin texto adicional antes ni después del JSON) con esta estructura. Es crucial que completes TODOS los campos del JSON.
+
+      Genera un JSON válido (sin texto adicional antes ni después del JSON) con la siguiente estructura. Rellena TODOS los campos con contenido de altísima calidad.
+
       {
-        "seoTitle": "Título SEO (máx. 60 caracteres). Fórmula: [Nombre del Producto] | [Categoría] | ${storeName}",
-        "seoDescription": "Meta descripción atractiva (máx. 155 caracteres). Incluye llamado a la acción y orientación local (Uruguay, regalos empresariales). DEBE terminar con una llamada a la acción clara y enérgica como '¡Pide la tuya ahora!' o 'Descúbrela aquí'.",
-        "descripcionBreve": "Resumen comercial de 1 o 2 frases que invite a comprar o regalar.",
-        "puntosClave": ["Un array de 3 a 5 strings, donde cada string es un beneficio o característica clave."],
-        "descripcionExtensa": "Descripción detallada en formato HTML compatible con texto enriquecido (<p>, <strong>, <ul>, <li>, <h3>). Resalta personalización, calidad y opciones para empresas (logo, regalos corporativos, etc.).",
-        "seoKeywords": ["Un array de 10 strings. Debe incluir: 3 keywords de alta competencia (ej: 'agendas Uruguay'), 4 de 'long-tail' (ej: 'comprar agenda con tapa dura en Montevideo'), y 3 en formato de pregunta (ej: '¿cuál es la mejor agenda para estudiantes?')."],
+        "seoTitle": "Título SEO (máx. 60 chars). Debe ser magnético para clics. Fórmula: [Keyword Principal] | [Beneficio Clave] | ${storeName}",
+        "seoDescription": "Meta descripción (máx. 155 chars). Usa la keyword principal al inicio. Debe ser una mini-página de ventas que provoque curiosidad y termine con un llamado a la acción fuerte.",
+        "descripcionBreve": "Un 'elevator pitch' de 1-2 frases. Debe generar un impacto inmediato y comunicar el valor principal del producto.",
+        "puntosClave": ["Un array de 3 a 5 strings. Cada string debe ser un BENEFICIO directo y cuantificable (ej: 'Planifica tu año entero, sin olvidar nada' en vez de 'Vista anual')."],
+        "descripcionExtensa": "Descripción detallada en HTML, aplicando el framework AIDA como se te indicó. Usa <h3> para subtítulos que resalten beneficios. Usa <strong> para palabras clave importantes.",
+        "seoKeywords": ["Un array de 10-15 strings, basado en la inteligencia de mercado provista. Incluye una mezcla de keywords de alta competencia, 'long-tail' y preguntas que un cliente potencial haría."],
         "faqs": [
           {
-            "question": "Genera una pregunta frecuente realista y útil sobre este producto.",
-            "answer": "Genera una respuesta clara, concisa y vendedora a esa pregunta."
+            "question": "Genera una pregunta frecuente que un cliente indeciso haría antes de comprar.",
+            "answer": "Genera una respuesta que elimine esa fricción, refuerce la confianza y empuje sutilmente hacia la venta."
           },
           {
-            "question": "Genera una segunda pregunta frecuente, diferente y complementaria.",
-            "answer": "Genera su correspondiente respuesta."
+            "question": "Genera una segunda pregunta frecuente sobre la personalización o el envío.",
+            "answer": "Genera una respuesta clara, útil y que transmita un excelente servicio al cliente."
           }
         ],
         "useCases": [
-          "Genera un caso de uso o idea creativa para este producto (ej: 'Perfecto para regalar en eventos corporativos').",
-          "Genera otro caso de uso para un tipo de cliente diferente (ej: 'Ideal para estudiantes que buscan organizarse').",
-          "Genera un tercer caso de uso que destaque su versatilidad."
+          "Genera un caso de uso que lo posicione como el regalo perfecto para una ocasión específica.",
+          "Genera otro caso de uso para un nicho de cliente específico (ej: 'El planner definitivo para emprendedoras en Uruguay').",
+          "Genera un tercer caso de uso que demuestre su versatilidad y justifique su valor."
         ]
       }
     `;
-
-    const isQuotaOrRateError = (err: any) => {
-      if (!err) return false;
-      const msg = String(err?.message || '').toLowerCase();
-      const status = err?.status || err?.code || null;
-      return status === 429 || status === 403 || status === 402 || msg.includes('quota') || msg.includes('limit') || msg.includes('rate') || msg.includes('insufficient');
-    };
-
-    const generateWithModelAndRetries = async (modelInstance: any, promptText: string, maxRetries = 3) => {
-      let attempts = 0;
-      let lastError: any = null;
-      while (attempts < maxRetries) {
-        try {
-          const result = await modelInstance.generateContent(promptText);
-          return (await result.response).text();
-        } catch (err: any) {
-          attempts++;
-          lastError = err;
-          console.warn(`Intento ${attempts} fallido para modelo. Mensaje:`, err?.message || err);
-          if (attempts >= maxRetries) break;
-          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempts - 1)));
-        }
-      }
-      throw lastError;
-    };
-
-    let geminiResponseText = '';
-    try {
-      geminiResponseText = await generateWithModelAndRetries(modelPro, prompt, 3);
-    } catch (errPro: any) {
-      console.warn('gemini-2.5-pro falló:', errPro?.message || errPro);
-      if (isQuotaOrRateError(errPro) || true) {
-        try {
-          geminiResponseText = await generateWithModelAndRetries(modelFlash, prompt, 3);
-        } catch (errFlash: any) {
-          console.error('gemini-2.5-flash también falló:', errFlash?.message || errFlash);
-          throw new Error(`Fallaron PRO y FLASH: ${errFlash?.message || errFlash}`);
-        }
-      } else {
-        throw errPro;
-      }
-    }
-
+    
+    const geminiResponseText = await generateWithFallback(prompt);
+    
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
     let generatedContent;
     try {
@@ -158,6 +138,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Error al parsear la respuesta JSON de Gemini. Respuesta cruda:', cleanedText);
       throw new Error('La respuesta de Gemini no es un JSON válido.');
     }
+
+    const responsePayload = {
+      generatedContent,
+      trends, // Devolvemos las tendencias para el frontend.
+    };
 
     // Si se proveyó un productId, actualizamos el producto en la BD
     if (productId) {
@@ -171,11 +156,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         faqs: generatedContent.faqs,
         useCases: generatedContent.useCases,
       });
-      return res.status(200).json({ message: `Producto "${nombre}" actualizado con éxito.` });
+      // Devolvemos solo un mensaje de éxito pero podríamos devolver el payload si el front lo necesitara
+      return res.status(200).json({ message: `Producto "${nombre}" actualizado con éxito.`, trends });
     }
 
-    // Si no, devolvemos el contenido para que el script externo lo maneje
-    res.status(200).json(generatedContent);
+    // Si no, devolvemos el contenido y las tendencias para que el script externo/frontend lo maneje
+    res.status(200).json(responsePayload);
 
   } catch (error: any) {
     console.error('Error generando contenido SEO:', error);

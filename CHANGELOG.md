@@ -3,6 +3,162 @@
 Este documento registra las actualizaciones y nuevas funcionalidades implementadas en el proyecto Kamaluso Fullstack, con un enfoque en cómo afectan al usuario del panel de administración.
 ---
 
+## 📅 Sesión: 20 de noviembre de 2025
+
+### 🚀 Funcionalidad: Sistema de "Revisión y Aprobación" para Topic Clusters
+
+*   **Descripción:** Se ha implementado un flujo de trabajo de validación humana para la potente herramienta de enlazado interno de Topic Clusters. En lugar de que la IA publique cambios de contenido directamente, ahora genera "sugerencias" que un administrador puede revisar, aprobar y publicar, combinando la velocidad de la automatización con el control de calidad humano.
+*   **Cambios Clave (Backend):**
+    1.  **Modelos Actualizados:** Se añadieron los campos `proposedContent` y `status` (o `contentStatus`) a los modelos `PillarPage`, `Post` y `Product` para almacenar las sugerencias de la IA y su estado.
+    2.  **API de Sugerencias (`generate-links`):** Se refactorizó la API para que, en lugar de sobreescribir el contenido, guarde las sugerencias en `proposedContent` y actualice el estado a `pending_review`.
+    3.  **Nuevas APIs de Soporte:** Se crearon dos nuevos endpoints:
+        *   `GET /api/admin/clusters/review-data`: Para obtener todos los documentos de un cluster con cambios pendientes.
+        *   `POST /api/admin/clusters/approve-changes`: Para publicar las sugerencias, mover el contenido a la versión final y disparar la revalidación de las páginas públicas.
+*   **Cambios Clave (Frontend):**
+    1.  **Nueva Dependencia:** Se instaló `react-diff-viewer-continued` para mostrar comparativas visuales del contenido.
+    2.  **Gestor de Clusters Mejorado (`/admin/clusters`):** La página ahora detecta si un cluster tiene cambios pendientes y muestra un botón **"Revisar Cambios"** en lugar de "Generar Sugerencias".
+    3.  **Nueva Página de Revisión (`/admin/clusters/review/[id]`):** Se creó una página dinámica donde el administrador puede ver una comparativa lado a lado del contenido original y el sugerido por la IA.
+    4.  **Flujo de Aprobación:** La página de revisión incluye un botón **"Aprobar y Publicar Cambios"** que, al ser presionado, ejecuta el proceso de publicación en el backend y redirige al usuario.
+*   **Beneficio Inmediato:** Control total sobre el contenido SEO. Previene que la IA publique errores o enlaces no deseados, asegurando que solo los cambios de la más alta calidad lleguen al sitio en vivo, lo cual es fundamental para una estrategia SEO robusta y confiable.
+
+###  архитектурная перестройка (Architectural Overhaul): Cliente de IA Centralizado y Resiliente
+
+*   **Descripción:** Se ha realizado una refactorización completa de cómo el proyecto se comunica con la API de Google Gemini. Se eliminó la lógica duplicada y la gestión manual de claves de todos los endpoints de la API y se centralizó en un único "cliente inteligente" (`lib/gemini-client.ts`).
+*   **Cambios Clave:**
+    1.  **Nueva Configuración de Claves:** Se abandonó el sistema de claves indexadas (`GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`, etc.). Ahora, la configuración en `.env.local` es más semántica y potente:
+        *   `GEMINI_PRO_API_KEYS`: Una **lista separada por comas** de claves para los modelos de alta gama (ej. `gemini-3.0-pro`, `gemini-2.5-pro`).
+        *   `GEMINI_FLASH_API_KEYS`: Una **lista separada por comas** de claves para los modelos de respaldo (ej. `gemini-2.5-flash`).
+    2.  **Lógica Centralizada:** Toda la lógica de priorización de modelos, reintentos, rotación de claves y fallback ahora reside exclusivamente en `lib/gemini-client.ts`.
+    3.  **Simplificación de Endpoints:** Todos los archivos en `pages/api/admin/` que utilizan IA han sido refactorizados para usar una única función (`generateWithFallback`), haciéndolos más limpios, consistentes y fáciles de mantener.
+*   **Beneficios Inmediatos:**
+    *   **Mayor Resiliencia:** El sistema ahora puede soportar fallos en múltiples claves de API sin interrumpir el servicio.
+    *   **Uso Optimizado:** Se prioriza el uso de los modelos más potentes (Pro) y solo se recurre a los modelos más económicos (Flash) como último recurso.
+    *   **Mantenibilidad:** Añadir nuevas funcionalidades de IA es ahora mucho más sencillo, ya que no requieren lógica de cliente personalizada.
+*   **Archivos Afectados:**
+    *   `lib/gemini-client.ts` (reescrito)
+    *   `lib/gemini-agent.ts` (simplificado)
+    *   `.env.local` (nuevo formato de variables)
+    *   `AI_README.md` (documentación actualizada)
+    *   `pages/api/admin/clusters/generate-links.ts`
+    *   `pages/api/admin/generate-seo.ts`
+    *   `pages/api/admin/generate-blog-post.ts`
+    *   `pages/api/admin/generate-alt-text.ts`
+    *   `pages/api/admin/blog/optimize-post.ts`
+    *   `pages/api/admin/blog/generate-outline.ts`
+    *   `pages/api/admin/blog/generate-ideas.ts`
+
+---
+
+## 📅 Sesión: 19 de noviembre de 2025
+
+### 🚀 Implementación: Sistema de Topic Clusters con IA (v1 - Simulado)
+
+*   **Descripción:** Se ha implementado la arquitectura completa para una estrategia de "Topic Clusters". Esto permite al usuario definir un contenido principal ("Página Pilar") y agrupar ("clusterizar") contenido de soporte (artículos y productos) alrededor de él. El objetivo final es automatizar el enlazado interno para señalar una fuerte autoridad temática a Google.
+*   **Componentes Implementados:**
+    1.  **Gestión de Páginas Pilares:**
+        *   **Backend:** Se creó un nuevo modelo de base de datos (`models/PillarPage.ts`) y una API CRUD completa (`pages/api/admin/pillar-pages/`).
+        *   **Frontend:** Se desarrolló una nueva interfaz de administración en `/admin/pillar-pages` para crear, editar y eliminar estas páginas.
+    2.  **Gestor de Clusters:**
+        *   **Frontend:** Se desarrolló una nueva interfaz de administración en `/admin/clusters`. Esta página permite al usuario seleccionar una Página Pilar y asociarle fácilmente artículos de blog y productos mediante casillas de verificación.
+        *   **Backend:** Se creó la API (`pages/api/admin/clusters/update.ts`) para guardar estas asociaciones.
+    3.  **Orquestador de Enlazado con IA:**
+        *   **Frontend:** Se añadió un botón "🤖 Optimizar Enlazado" en el Gestor de Clusters.
+        *   **Backend:** Se creó la API de orquestación (`pages/api/admin/clusters/generate-links.ts`) que prepara todo el contenido del cluster y lo formatea en un prompt avanzado para la IA.
+*   **Estado Actual:** La funcionalidad está completa en **"Modo de Simulación"**. La llamada final a la IA y el guardado del contenido modificado están desactivados por seguridad. El sistema simula el éxito de la operación para permitir la prueba del flujo completo.
+
+### ✅ Cómo Probar la Nueva Funcionalidad (Flujo de Usuario)
+
+Para verificar que todo el sistema funciona como se espera, sigue estos pasos en tu panel de administración:
+
+1.  **Crea una Página Pilar:**
+    *  
+    
+    *   Haz clic en "Crear Nueva Página Pilar".
+    *   Rellena los campos, por ejemplo:
+        *   **Título:** `La Guía Definitiva de Agendas Personalizadas 2026`
+        *   **Tema del Cluster:** `Agendas 2026`
+        *   **Contenido:** Añade un texto de ejemplo.
+    *   Guarda la página. Deberías verla aparecer en la lista.
+
+2.  **Crea un Cluster:**
+    *   Ve a la nueva sección **"Gestor de Topic Clusters"**.
+    *   En el desplegable "Selecciona un Tema", elige el que acabas de crear (`Agendas 2026`).
+
+3.  **Asocia Contenido al Cluster:**
+    *   Al seleccionar el tema, aparecerán a la derecha dos columnas: "Artículos del Blog" y "Productos".
+    *   Marca las casillas de varios artículos y productos que quieras asociar a tu Página Pilar. Verás que el contador de "seleccionados" se actualiza.
+
+4.  **Guarda la Asociación:**
+    *   Haz clic en el botón **"Guardar Cambios en Cluster..."**.
+    *   Deberías recibir una notificación de "¡Cluster guardado con éxito!". Si recargas la página y vuelves a seleccionar el mismo tema, las casillas que marcaste deberían seguir marcadas.
+
+5.  **Prueba la Simulación de la IA:**
+    *   Con el cluster todavía seleccionado, haz clic en el nuevo botón morado: **"🤖 Optimizar Enlazado"**.
+    *   El botón se desactivará y mostrará "Optimizando...".
+    *   Tras unos segundos, deberías recibir una notificación de "¡Simulación de optimización de enlaces completada con éxito!". Esto confirma que todo el flujo, desde el botón hasta la API de simulación, funciona correctamente.
+
+*   **Paso Final Pendiente:** Activar la llamada real a la IA en el backend para que el paso 5 modifique el contenido real.
+
+### 🚀 Propuesta de Nueva Funcionalidad: Sistema de Topic Clusters con IA
+
+*   **Descripción:** Se ha propuesto una nueva funcionalidad estratégica para implementar un sistema de "Topic Clusters". Esta es una técnica de SEO avanzado que consiste en crear una "Página Pilar" (un artículo largo y completo sobre un tema general) y enlazarla desde múltiples "Artículos Cluster" (artículos de blog más específicos). El objetivo es demostrar una profunda autoridad temática a Google, mejorando drásticamente el ranking de la página pilar para keywords competitivas.
+*   **Plan de Acción Propuesto:**
+    1.  **Crear el Contenido "Página Pilar":** Desarrollar un nuevo tipo de contenido en el sistema para las páginas pilares, con su propia gestión en el panel de administración.
+    2.  **Crear un Gestor de Clusters:** Implementar una nueva interfaz en `/admin/clusters` para crear clusters temáticos, asignarles una página pilar y asociar los artículos de blog y productos que funcionarán como contenido cluster.
+    3.  **Automatizar el Enlazado Interno con IA:** Crear una nueva herramienta de IA que, una vez definido un cluster, sea capaz de analizar todo el contenido y colocar de forma automática y contextual los enlaces internos desde los artículos cluster hacia la página pilar (y viceversa), asegurando una arquitectura de enlaces perfecta para el SEO.
+*   **Estado:** Pendiente de aprobación por parte del usuario para comenzar con el Paso 1.
+
+### 🐞 Corrección Crítica: Actualización de Modelos Gemini a 2.5
+
+*   **Descripción:** Se corrigió un error de compatibilidad con la API de Gemini que resultaba en un `404 Not Found`. Los nombres de los modelos de IA fueron actualizados de `gemini-1.5-flash` y `gemini-1.5-pro` a `gemini-2.5-flash` y `gemini-2.5-pro` respectivamente.
+*   **Archivos Afectados:**
+    *   `pages/api/admin/generate-seo.ts`
+    *   `pages/api/admin/generate-alt-text.ts`
+*   **Beneficio:** Asegura la correcta comunicación con la API de Gemini, permitiendo que todas las funcionalidades de generación de contenido con IA operen sin errores.
+
+### ✨ Mejora: Actualización Completa de Campos SEO con IA
+
+*   **Descripción:** La función "Generar con IA" en el formulario de edición de productos ahora rellena **todos** los campos de contenido generados por la inteligencia artificial.
+*   **Archivos Afectados:** `pages/admin/index.tsx` (función `handleGenerateContent`)
+*   **Campos Actualizados Adicionalmente:** `descripcionBreve`, `faqs`, y `useCases`.
+*   **Beneficio:** Optimización del flujo de trabajo al garantizar que todo el contenido generado por la IA (títulos, descripciones, keywords, puntos clave, descripción breve, FAQs y casos de uso) se aplique automáticamente al formulario del producto, reduciendo la edición manual.
+
+---
+
+## 📅 Sesión: 19 de noviembre de 2025
+
+### 🔍 Análisis del Sistema de Generación SEO con IA
+
+Se realizó un análisis exhaustivo de la arquitectura actual para la generación de contenido SEO, con los siguientes hallazgos:
+
+*   **Sistema Actual:** La implementación se divide en dos endpoints de API principales, demostrando una arquitectura limpia y modular.
+    *   `pages/api/admin/generate-alt-text.ts`:
+        *   **Implementación:** Excelente y robusta. Utiliza correctamente el modelo multimodal (`gemini-1.5-flash-latest`) para analizar visualmente las imágenes.
+        *   **Proceso:** Descarga la imagen desde su URL, la convierte a base64 y la envía a la IA junto con un prompt de alta calidad, muy específico y contextualizado para "Kamaluso".
+        *   **Calificación:** Sigue las mejores prácticas para la generación de `alt-text` con IA.
+    *   `pages/api/admin/generate-seo.ts`:
+        *   **Implementación:** De nivel profesional. Es resiliente y sofisticada.
+        *   **Características Destacadas:**
+            1.  **Prompts Dinámicos:** Adapta las instrucciones enviadas a la IA según la categoría del producto (ej. "agendas 2026" vs "libretas"), lo que resulta en un contenido mucho más específico y efectivo.
+            2.  **Resiliencia (Fallback):** Intenta usar el modelo más potente (`gemini-2.5-pro`) y, si falla, recurre automáticamente a un modelo más rápido (`gemini-2.5-flash`) para garantizar que el servicio no se interrumpa. Incluye reintentos con espera exponencial.
+        *   **Calificación:** Una implementación avanzada que asegura alta disponibilidad y calidad del contenido.
+
+*   **Conclusión del Análisis:** Ambos sistemas están muy bien implementados, son funcionales y superan las expectativas. No solo generan contenido, sino que lo hacen de una manera inteligente, específica y robusta. El agente **no realiza búsquedas activas en internet**, sino que se basa en el conocimiento del modelo y la información del producto, con la excepción de la descarga de imágenes para el `alt-text`.
+
+### 🚀 Propuesta de Mejora: SEO Basado en Tendencias en Tiempo Real
+
+Para evolucionar el sistema y hacerlo aún más potente, se propuso un plan para que el agente investigue las tendencias de búsqueda actuales antes de generar el contenido.
+
+*   **Objetivo:** Pasar de un modelo de conocimiento estático a uno dinámico que utilice datos de búsqueda en tiempo real para generar un SEO más efectivo y competitivo.
+*   **Plan de Acción Propuesto:**
+    1.  **Crear una Función de Investigación:** Desarrollar una nueva función `getSearchTrends()` que utilice herramientas de búsqueda (`google_web_search`) para encontrar keywords y temas populares en Uruguay para un producto o categoría determinada.
+    2.  **Integrar en la API:** Modificar `pages/api/admin/generate-seo.ts` para que llame a esta nueva función antes de construir el prompt.
+    3.  **Enriquecer el Prompt:** Inyectar las tendencias y keywords encontradas en el prompt enviado a Gemini, dándole a la IA un contexto en tiempo real para su tarea de redacción.
+    4.  **Implementar Caché (Recomendado):** Añadir una capa de caché para almacenar los resultados de las tendencias durante unas horas y así evitar búsquedas repetitivas y mejorar la velocidad.
+*   **Estado:** Pendiente de aprobación por parte dl usuario.
+
+---
+
 ## 📅 Sesión: 18 de noviembre de 2025
 
 ### 🗑️ Eliminación del Dashboard de Métricas
@@ -14,7 +170,7 @@ Este documento registra las actualizaciones y nuevas funcionalidades implementad
 ### 🚀 Tarea Pendiente: Agente de Google Shopping con IA
 
 *   **Descripción:** Se ha identificado la necesidad de desarrollar un "Agente de Google Shopping" que utilice la IA de Gemini.
-*   **Objetivo:** Este agente clasificará automáticamente los productos según la taxonomía de Google y optimizará los títulos y descripciones para el feed de Google Shopping, generando un archivo `google-shopping-feed.xml` enriquecido.
+*   **Objetivo:** Este agente clasificará automáticamente los productos según la taxonomía de Google y optimizará los títulos y descripciones para el feed de Google Shopping, generando un un archivo `google-shopping-feed.xml` enriquecido.
 *   **Estado:** Pendiente de implementación.
 
 ---

@@ -10,6 +10,7 @@ type InitialData = {
   content: string;
   seoTitle: string;
   tags: string[];
+  salesAngle?: string;
 };
 
 export default function AdminBlogCreate() {
@@ -53,9 +54,8 @@ export default function AdminBlogCreate() {
           // Preparamos los datos para el formulario con el esquema recibido
           setInitialData({
             title: ideaDetails.title,
-            content: outlineHtml,
-            seoTitle: ideaDetails.title,
             tags: [ideaDetails.targetKeyword],
+            salesAngle: ideaDetails.angle, // ¡NUEVO! Pasamos el ángulo de venta
           });
 
           toast.success('Esquema generado con éxito.', { id: 'outline-toast' });
@@ -69,6 +69,7 @@ export default function AdminBlogCreate() {
             content: `<p>Error al generar el esquema. Por favor, desarrolla el artículo aquí.</p>`,
             seoTitle: ideaDetails.title,
             tags: [ideaDetails.targetKeyword],
+            salesAngle: ideaDetails.angle, // ¡NUEVO! Pasamos el ángulo de venta incluso si falla
           });
         } finally {
           setIsLoading(false);

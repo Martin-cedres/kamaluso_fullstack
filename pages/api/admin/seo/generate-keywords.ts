@@ -1,7 +1,6 @@
-
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getKeywordSuggestions } from '../../../../lib/keyword-research';
+import { getGeminiClient, rotateGeminiKey, getCurrentGeminiKeyIndex } from '../../../../lib/gemini-client'; // Nueva importación
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -18,17 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 1. Obtener sugerencias de búsqueda reales de Google
     const googleKeywords = await getKeywordSuggestions(seedKeyword);
 
-    const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) {
-      throw new Error('Falta la variable GEMINI_API_KEY en el servidor.');
-    }
-
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const modelPro = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-    const modelFlash = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const storeName = "Papelería Personalizada Kamaluso";
-
-    // 2. Inyectar las sugerencias de Google en el prompt de la IA
     const prompt = `
       Eres un experto en SEO y marketing digital para "${storeName}", un e-commerce de papelería personalizada en Uruguay.
       Tu misión es expandir una palabra clave inicial en un conjunto de términos de búsqueda relevantes para posicionar productos y artículos de blog.
@@ -55,44 +44,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     `;
 
-    const generateWithModelAndRetries = async (modelInstance: any, promptText: string, maxRetries = 3) => {
+    const generateWithGeminiRotation = async (modelName: string, promptText: string, maxRetries: number = 5) => {
       let attempts = 0;
-      let lastError: any = null;
       while (attempts < maxRetries) {
         try {
-          const result = await modelInstance.generateContent(promptText);
+          const client = getGeminiClient();
+          if (!client) {
+            throw new Error('No Gemini API client available. Check your .env.local configuration.');
+          }
+          const model = client.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(promptText);
           return (await result.response).text();
-        } catch (err: any) {
-          attempts++;
-          lastError = err;
-          console.warn(`Intento ${attempts} fallido para modelo. Mensaje:`, err?.message || err);
-          if (attempts >= maxRetries) break;
-          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempts - 1)));
+        } catch (error: any) {
+          const msg = error.message || "";
+          const currentKeyIdx = getCurrentGeminiKeyIndex();
+          console.error(
+            `⚠️ Intento ${attempts + 1}/${maxRetries} fallido para la API de Gemini con la clave en el índice ${currentKeyIdx}:`,
+            msg
+          );
+
+          const shouldRotate = msg.includes("quota") || msg.includes("limit") || msg.includes("exceeded") || msg.includes("Unauthorized") || msg.includes("Authentication") || msg.includes("Key invalid");
+
+          if (shouldRotate && attempts < maxRetries - 1) {
+            rotateGeminiKey();
+            console.warn(`⚡ Rotando a la siguiente API Key de Gemini (índice actual: ${getCurrentGeminiKeyIndex()}). Reintentando...`);
+            attempts++;
+          } else {
+            throw new Error(`Error fatal en la llamada a la API de Gemini después de ${attempts + 1} intentos: ${msg}`);
+          }
         }
       }
-      throw lastError;
+      throw new Error('Unexpected error: generateWithGeminiRotation logic failed without proper error handling.');
     };
 
     let geminiResponseText = '';
-    try {
-      geminiResponseText = await generateWithModelAndRetries(modelPro, prompt, 3);
-    } catch (errPro: any) {
-      console.warn('gemini-2.5-pro falló, intentando con flash:', errPro?.message || errPro);
-      try {
-        geminiResponseText = await generateWithModelAndRetries(modelFlash, prompt, 3);
-      } catch (errFlash: any) {
-        console.error('gemini-2.5-flash también falló:', errFlash?.message || errFlash);
-        throw new Error(`Fallaron PRO y FLASH: ${errFlash?.message || errFlash}`);
-      }
-    }
-
+    // Intenta con "gemini-2.5-pro", si falla, el reintento de la función ya rotará y lo intentará con la misma u otra clave
+    geminiResponseText = await generateWithGeminiRotation("gemini-2.5-pro", prompt);
+    
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const generatedResult = JSON.parse(cleanedText);
+    let generatedResult;
+    try {
+      generatedResult = JSON.parse(cleanedText);
+    } catch (jsonParseError) {
+      console.error('Error al parsear la respuesta JSON de Gemini. Respuesta cruda:', cleanedText);
+      throw new Error('La respuesta de Gemini no es un JSON válido.');
+    }
 
     res.status(200).json(generatedResult);
 
   } catch (error: any) {
     console.error('\n❌ Ocurrió un error generando palabras clave:', error);
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    const message = error instanceof Error ? error.message : 'Error desconocido';
+    res.status(500).json({ message: 'Error interno del servidor', error: message });
   }
 }

@@ -17,6 +17,7 @@ interface PostFormProps {
     coverImage?: string
     seoTitle?: string
     seoDescription?: string
+    salesAngle?: string; // ¡NUEVO!
   }
   onSubmit: (data: FormData) => void
   isEditMode?: boolean
@@ -38,6 +39,7 @@ const BlogForm = ({
   )
   const [seoTitle, setSeoTitle] = useState(initialData?.seoTitle || '')
   const [seoDescription, setSeoDescription] = useState(initialData?.seoDescription || '')
+  const [salesAngle, setSalesAngle] = useState(initialData?.salesAngle || ''); // ¡NUEVO!
 
   // State for AI generation
   const [topic, setTopic] = useState('');
@@ -64,6 +66,7 @@ const BlogForm = ({
       setPreview(initialData.coverImage || null);
       setSeoTitle(initialData.seoTitle || '');
       setSeoDescription(initialData.seoDescription || '');
+      setSalesAngle(initialData.salesAngle || ''); // ¡NUEVO!
     }
   }, [initialData]);
 
@@ -134,10 +137,17 @@ const BlogForm = ({
     const toastId = toast.loading('Optimizando con Especialista SEO...');
 
     try {
+      // Extraemos la primera etiqueta como la palabra clave principal
+      const targetKeyword = tags.split(',')[0].trim();
+
       const res = await fetch('/api/admin/blog/optimize-post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ 
+          content,
+          salesAngle,
+          targetKeyword,
+        }),
       });
 
       if (!res.ok) {

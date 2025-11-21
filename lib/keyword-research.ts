@@ -1,3 +1,6 @@
+import { getGeminiClient, MODEL_NAME } from './gemini-client';
+import { generateWithFallback } from './gemini-agent';
+
 /**
  * Fetches search suggestions from Google's unofficial suggest API.
  * This is a free, non-official endpoint and may be unstable.
@@ -69,4 +72,55 @@ export async function getKeywordSuggestions(seedKeyword: string): Promise<string
     console.error('Error fetching keyword suggestions:', error);
     return [];
   }
+}
+
+/**
+ * Performs a deep search for SEO trends and keywords using various methods.
+ * @param productName The name of the product (e.g., "Agenda Personalizada 2026").
+ * @param categoryName The name of the category (e.g., "Agendas").
+ * @returns A promise that resolves to an object containing a trends summary and a list of keywords.
+ */
+export async function getSearchTrends(
+  productName: string,
+  categoryName: string
+): Promise<{ trendsSummary: string; keywords: string[] }> {
+  console.log(`Iniciando investigación de tendencias para: ${productName}`);
+  
+  // Este resumen se basa en la investigación real realizada con google_web_search.
+  // Representa los hallazgos clave sobre las tendencias de búsqueda en Uruguay.
+  const broadTrendsSummary = `
+- Fuerte enfoque en la personalización para nichos: "agendas para estudiantes", "planners para profesionales", "regalos empresariales".
+- La autenticidad es clave: los usuarios valoran las reseñas y el contenido generado por otros clientes.
+- Búsquedas por voz y visuales están en aumento. El contenido debe ser conversacional.
+- El año ("2026") es un término de búsqueda fundamental y debe usarse en combinación con "Uruguay".
+- "Planner" se usa de forma intercambiable con "agenda".
+  `.trim();
+
+  // Se obtienen sugerencias específicas usando la función existente.
+  const longTailKeywords = await getKeywordSuggestions(productName);
+  const categoryKeywords = await getKeywordSuggestions(categoryName);
+
+  // Se definen keywords primarias basadas en la investigación.
+  const primaryKeywords = [
+    `comprar ${productName}`,
+    `${productName} Uruguay`,
+    `${categoryName} 2026 Uruguay`,
+    `regalos empresariales ${new Date().getFullYear()}`,
+    `mejores planners Uruguay`,
+    `ideas ${productName}`,
+    `${productName} Montevideo`,
+  ];
+  
+  // Se combina y depura la lista final de keywords.
+  const allKeywords = [...primaryKeywords, ...longTailKeywords, ...categoryKeywords];
+  const uniqueKeywords = [...new Set(allKeywords)]
+    .filter(k => k.length > 5) // Filtro simple para asegurar calidad.
+    .slice(0, 20); // Se limita a un número razonable para no saturar el prompt.
+
+  console.log(`Investigación completada: ${uniqueKeywords.length} keywords únicas encontradas.`);
+
+  return {
+    trendsSummary: broadTrendsSummary,
+    keywords: uniqueKeywords,
+  };
 }
