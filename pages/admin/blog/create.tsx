@@ -54,6 +54,8 @@ export default function AdminBlogCreate() {
           // Preparamos los datos para el formulario con el esquema recibido
           setInitialData({
             title: ideaDetails.title,
+            content: outlineHtml, // Asignar el esquema al contenido
+            seoTitle: ideaDetails.title, // Usar el título como SEO title inicial
             tags: [ideaDetails.targetKeyword],
             salesAngle: ideaDetails.angle, // ¡NUEVO! Pasamos el ángulo de venta
           });

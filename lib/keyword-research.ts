@@ -1,4 +1,3 @@
-import { getGeminiClient, MODEL_NAME } from './gemini-client';
 import { generateWithFallback } from './gemini-agent';
 
 /**

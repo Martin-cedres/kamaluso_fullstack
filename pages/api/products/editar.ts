@@ -52,10 +52,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         })
     }
 
-    console.log('productId:', productId)
-    console.log('fields:', fields)
-    console.log('files:', files)
-
     try {
       const client = await clientPromise
       const db = client.db('kamaluso');
@@ -112,14 +108,49 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Nuevos campos de descripción
       if (fields.descripcionBreve) updateDoc.descripcionBreve = String(fields.descripcionBreve);
       if (fields.descripcionExtensa) updateDoc.descripcionExtensa = String(fields.descripcionExtensa);
-      if (typeof fields.puntosClave === 'string') {
-        updateDoc.puntosClave = fields.puntosClave.split(',').map(s => s.trim());
+
+      // Parsear puntosClave (puede venir como JSON string array o como string separado por comas)
+      if (fields.puntosClave) {
+        const rawPuntos = String(fields.puntosClave);
+        try {
+          // Intentar parsear como JSON primero
+          const parsed = JSON.parse(rawPuntos);
+          if (Array.isArray(parsed)) {
+            updateDoc.puntosClave = parsed;
+          } else {
+            // Si es JSON pero no array (raro), fallback a split
+            updateDoc.puntosClave = rawPuntos.split(',').map(s => s.trim()).filter(s => s);
+          }
+        } catch (e) {
+          // Si falla el parseo JSON, asumir que es string separado por comas
+          updateDoc.puntosClave = rawPuntos.split(',').map(s => s.trim()).filter(s => s);
+        }
       }
 
-      // Campo de precio base (numérico)
-      if (fields.basePrice) {
-        updateDoc.basePrice = parseFloat(String(fields.basePrice)) || 0
+      // Parsear FAQs (JSON string)
+      if (fields.faqs) {
+        try {
+          const parsedFaqs = JSON.parse(String(fields.faqs));
+          if (Array.isArray(parsedFaqs)) {
+            updateDoc.faqs = parsedFaqs;
+          }
+        } catch (e) {
+          console.error("Error parsing FAQs:", e);
+        }
       }
+
+      // Parsear Use Cases (JSON string)
+      if (fields.useCases) {
+        try {
+          const parsedUseCases = JSON.parse(String(fields.useCases));
+          if (Array.isArray(parsedUseCases)) {
+            updateDoc.useCases = parsedUseCases;
+          }
+        } catch (e) {
+          console.error("Error parsing Use Cases:", e);
+        }
+      }
+
       // Campo de precio base (numérico)
       if (fields.basePrice) {
         updateDoc.basePrice = parseFloat(String(fields.basePrice)) || 0
@@ -129,7 +160,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (fields.customizationGroups) {
         try {
           const groups = JSON.parse(fields.customizationGroups as string);
-          
+
           // Asegurarse de que las URLs de las imágenes de los diseños de tapa sean completas
           groups.forEach((group: any) => {
             if (group.name && group.name.startsWith('Diseño de Tapa') && group.options) {
@@ -164,8 +195,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
             if (!isNaN(groupIndex) && !isNaN(optionIndex)) {
               if (!updateDoc.customizationGroups) {
-                  const product = await db.collection('products').findOne({ _id: new ObjectId(productId) });
-                  updateDoc.customizationGroups = product?.customizationGroups || [];
+                const product = await db.collection('products').findOne({ _id: new ObjectId(productId) });
+                updateDoc.customizationGroups = product?.customizationGroups || [];
               }
               if (updateDoc.customizationGroups[groupIndex]?.options[optionIndex]) {
                 updateDoc.customizationGroups[groupIndex].options[optionIndex].image = url;
@@ -248,13 +279,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
       }
 
-      console.log('updateDoc:', updateDoc)
-
       const result = await db
         .collection('products')
         .updateOne({ _id: new ObjectId(productId) }, { $set: updateDoc })
-
-      console.log('result:', result)
 
       // Revalidar las páginas afectadas
       const updatedProduct = await db.collection('products').findOne({ _id: new ObjectId(productId) });

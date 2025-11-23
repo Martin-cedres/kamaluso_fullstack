@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getKeywordSuggestions } from '../../../../lib/keyword-research';
-import { getGeminiClient, rotateGeminiKey, getCurrentGeminiKeyIndex } from '../../../../lib/gemini-client'; // Nueva importación
+import { generateContentSmart } from '../../../../lib/gemini-client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -44,43 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     `;
 
-    const generateWithGeminiRotation = async (modelName: string, promptText: string, maxRetries: number = 5) => {
-      let attempts = 0;
-      while (attempts < maxRetries) {
-        try {
-          const client = getGeminiClient();
-          if (!client) {
-            throw new Error('No Gemini API client available. Check your .env.local configuration.');
-          }
-          const model = client.getGenerativeModel({ model: modelName });
-          const result = await model.generateContent(promptText);
-          return (await result.response).text();
-        } catch (error: any) {
-          const msg = error.message || "";
-          const currentKeyIdx = getCurrentGeminiKeyIndex();
-          console.error(
-            `⚠️ Intento ${attempts + 1}/${maxRetries} fallido para la API de Gemini con la clave en el índice ${currentKeyIdx}:`,
-            msg
-          );
+    const geminiResponseText = await generateContentSmart(prompt);
 
-          const shouldRotate = msg.includes("quota") || msg.includes("limit") || msg.includes("exceeded") || msg.includes("Unauthorized") || msg.includes("Authentication") || msg.includes("Key invalid");
-
-          if (shouldRotate && attempts < maxRetries - 1) {
-            rotateGeminiKey();
-            console.warn(`⚡ Rotando a la siguiente API Key de Gemini (índice actual: ${getCurrentGeminiKeyIndex()}). Reintentando...`);
-            attempts++;
-          } else {
-            throw new Error(`Error fatal en la llamada a la API de Gemini después de ${attempts + 1} intentos: ${msg}`);
-          }
-        }
-      }
-      throw new Error('Unexpected error: generateWithGeminiRotation logic failed without proper error handling.');
-    };
-
-    let geminiResponseText = '';
-    // Intenta con "gemini-2.5-pro", si falla, el reintento de la función ya rotará y lo intentará con la misma u otra clave
-    geminiResponseText = await generateWithGeminiRotation("gemini-2.5-pro", prompt);
-    
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
     let generatedResult;
     try {

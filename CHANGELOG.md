@@ -1,6 +1,33 @@
 # Historial de Cambios (CHANGELOG) - Kamaluso Fullstack
 
-Este documento registra las actualizaciones y nuevas funcionalidades implementadas en el proyecto Kamaluso Fullstack, con un enfoque en cómo afectan al usuario del panel de administración.
+---
+
+## 📅 Sesión: 22 de noviembre de 2025
+
+### 🚀 Implementación: Sistema de Páginas Pilares (Topic Clusters) con IA
+
+*   **Descripción:** Se ha implementado un flujo de trabajo completo para la creación automatizada de "Páginas Pilares" optimizadas para SEO, impulsadas por Inteligencia Artificial. Este sistema permite generar contenido estratégico para posicionar temas clave en Google y aumentar las ventas.
+*   **Componentes Implementados:**
+    1.  **APIs de Generación de Estrategias (`/api/admin/clusters/generate-strategies.ts`):**
+        *   La IA analiza un tema central y una descripción proporcionados, junto con el contenido existente (productos y posts), para sugerir un título de página pilar, meta-descripción SEO, posts y productos relevantes para enlazar, y títulos para nuevo contenido que fortalezca el clúster.
+    2.  **APIs de Construcción de Páginas Pilares (`/api/admin/clusters/build-cluster.ts`):**
+        *   La IA escribe el contenido HTML completo de la página pilar (mínimo 1500 palabras), integrando naturalmente enlaces a los productos y posts asociados, basándose en la estrategia generada previamente.
+    3.  **Actualización del Controlador de Contenido (`pages/api/blog/[slug].ts`):**
+        *   Ahora es capaz de diferenciar entre una publicación de blog (`Post`) y una Página Pilar (`PillarPage`), devolviendo el contenido correcto y sus relaciones (posts y productos asociados) al frontend.
+    4.  **Actualización de la Página de Visualización (`pages/blog/[slug].tsx`):**
+        *   La página de contenido general ha sido adaptada para renderizar de forma nativa tanto Posts como Pillar Pages, mostrando secciones dedicadas para los posts y productos que forman parte del clúster de la Página Pilar.
+    5.  **Interfaz de Administración Renovada (`pages/admin/cluster-factory.tsx`):**
+        *   La "Fábrica de Topic Clusters" ha sido completamente reconstruida para conectar con las nuevas APIs de IA, permitiendo a los administradores generar estrategias y construir páginas pilares de forma intuitiva, con estados de carga y notificaciones de éxito (incluyendo un enlace directo a la página creada).
+
+### 🐞 Corrección: Autenticación en APIs de IA
+
+*   **Descripción:** Se corrigió el método de autenticación en las nuevas APIs relacionadas con la IA (`/api/admin/clusters/generate-strategies.ts` y `/api/admin/clusters/build-cluster.ts`). Anteriormente utilizaban `getSession`, lo que podía causar errores internos del servidor. Ahora utilizan `getToken`, alineándose con las convenciones de autenticación del proyecto y garantizando un acceso seguro y funcional.
+
+### 🔧 Ajuste Técnico: Estabilización de Modelos Gemini
+
+*   **Descripción:** Se ha ajustado la configuración del cliente de IA para utilizar exclusivamente **`gemini-2.5-pro`** como modelo principal.
+*   **Motivo:** Se detectaron inestabilidades y errores de API al intentar utilizar `gemini-3.0-pro` con las claves actuales. Este cambio asegura la disponibilidad inmediata del servicio y elimina los errores 500 en las generaciones de IA.
+
 ---
 
 ## 📅 Sesión: 20 de noviembre de 2025

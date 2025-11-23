@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel, Part } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel, Part, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // --- CONFIGURACIÓN DE CLAVES Y MODELOS ---
 
@@ -7,7 +7,7 @@ const proApiKeys: string[] = (process.env.GEMINI_PRO_API_KEYS || "").split(",").
 const flashApiKeys: string[] = (process.env.GEMINI_FLASH_API_KEYS || "").split(",").filter(k => k.trim());
 
 // Prioridad de modelos a utilizar. Los modelos Pro más recientes son multimodales.
-const PRO_MODELS = ["gemini-3.0-pro", "gemini-2.5-pro"]; 
+const PRO_MODELS = ["gemini-2.5-pro"];
 const FLASH_MODEL = "gemini-2.5-flash"; // Flash también es multimodal
 
 // --- GESTIÓN DE ESTADO ---
@@ -44,25 +44,45 @@ function getClient(type: 'pro' | 'flash', index: number): GoogleGenerativeAI {
 async function tryGenerate(modelName: string, prompt: string | (string | Part)[], type: 'pro' | 'flash', keyIndex: number): Promise<string | null> {
   try {
     const client = getClient(type, keyIndex);
-    const model: GenerativeModel = client.getGenerativeModel({ model: modelName });
-    
+    const model: GenerativeModel = client.getGenerativeModel({
+      model: modelName,
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+      ],
+    });
+
     console.log(`🚀 Intentando generar con modelo: ${modelName} (Clave ${type.toUpperCase()}[${keyIndex}])`);
-    
+
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    
+
     console.log(`✅ Éxito con modelo: ${modelName} (Clave ${type.toUpperCase()}[${keyIndex}])`);
     return text;
 
   } catch (error: any) {
     const msg = error.message?.toLowerCase() || "";
-    
+
     // Identificar si el error es por cuota/límite para decidir si rotar la clave
     if (msg.includes("quota") || msg.includes("limit") || msg.includes("exceeded") || msg.includes("api key not valid")) {
       console.warn(`⚠️ Error de cuota/límite con ${modelName} (Clave ${type.toUpperCase()}[${keyIndex}]). Rotando...`);
       return null; // Indica que se debe intentar con la siguiente clave
     }
-    
+
     // Si el error es diferente (ej. contenido bloqueado), lo lanzamos para no seguir intentando
     console.error(`❌ Error no recuperable con ${modelName} (Clave ${type.toUpperCase()}[${keyIndex}]):`, error.message);
     throw error;
@@ -83,11 +103,11 @@ export async function generateContentSmart(prompt: string | (string | Part)[]): 
     for (const modelName of PRO_MODELS) {
       for (let i = 0; i < proApiKeys.length; i++) {
         const result = await tryGenerate(modelName, prompt, 'pro', currentProKeyIndex);
-        
+
         if (result !== null) {
           return result; // Éxito, devolvemos el resultado
         }
-        
+
         // Rotar clave PRO para el siguiente intento
         currentProKeyIndex = (currentProKeyIndex + 1) % proApiKeys.length;
       }
@@ -100,7 +120,7 @@ export async function generateContentSmart(prompt: string | (string | Part)[]): 
   if (flashApiKeys.length > 0) {
     for (let i = 0; i < flashApiKeys.length; i++) {
       const result = await tryGenerate(FLASH_MODEL, prompt, 'flash', currentFlashKeyIndex);
-      
+
       if (result !== null) {
         return result; // Éxito, devolvemos el resultado
       }

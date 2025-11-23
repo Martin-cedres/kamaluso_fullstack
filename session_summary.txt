@@ -6,43 +6,49 @@
     - Las palabras clave expandidas (relacionadas, long-tail, preguntas e intención de usuario) se inyectan en el prompt de Gemini.
     - Las instrucciones del prompt se ajustaron para que la IA utilice estas palabras clave expandidas de manera estratégica al generar `seoTitle`, `seoDescription`, `puntosClave`, `descripcionExtensa` y `seoKeywords`, complementando las instrucciones especializadas existentes para productos como agendas o libretas.
 
-### Tareas Pendientes para el Sistema de Topic Clusters (a 19 de noviembre de 2025)
+### Implementación del Sistema de Topic Clusters (23 de noviembre de 2025)
 
-Las siguientes tareas son necesarias para que la nueva funcionalidad de "Fábrica de Clusters" y el enlazado interno automático funcionen de manera completa (saliendo del modo de simulación):
+Se completaron los pasos 1, 2 y 3 para habilitar la funcionalidad completa de "Fábrica de Clusters" y enlazado interno automático:
 
 1.  **API "Generar Estrategias de Cluster" (`/api/admin/clusters/generate-strategies.ts`):**
-    *   **Estado Actual:** Devuelve estrategias de ejemplo codificadas.
-    *   **Por Implementar:**
-        *   Obtener todo el contenido de posts y productos de la base de datos.
-        *   Construir el prompt avanzado para Gemini (actuando como Estratega SEO Senior).
-        *   Realizar la llamada real a la API de Gemini para generar las estrategias de cluster.
-        *   Parsear la respuesta JSON de Gemini y devolver las estrategias generadas.
+    - **Estado:** Implementado y conectado a la BD.
+    - **Funcionalidad:** Ahora consulta productos y posts reales de la base de datos y utiliza Gemini para proponer 3 estrategias de contenido distintas, cada una con título, descripción y selección de contenido del cluster.
 
 2.  **API "Construir este Cluster" (`/api/admin/clusters/build-cluster.ts`):**
-    *   **Estado Actual:** No implementada. El botón del frontend solo simula la construcción.
-    *   **Por Implementar:**
-        *   Crear el archivo de la API.
-        *   Recibir la estrategia elegida (título de la Página Pilar, IDs de posts y productos).
-        *   Llamar a la IA para que escriba el contenido completo de la nueva Página Pilar.
-        *   Guardar la nueva `PillarPage` en la base de datos con las asociaciones de cluster.
+    - **Estado:** Implementado (Nueva API).
+    - **Funcionalidad:** Recibe una estrategia seleccionada y utiliza Gemini para generar el contenido HTML completo de la Página Pilar. Crea el documento `PillarPage` en la base de datos y guarda las asociaciones con los posts y productos del cluster.
 
 3.  **API "Optimizar Enlazado" (`/api/admin/clusters/generate-links.ts`):**
-    *   **Estado Actual:** La llamada a Gemini está comentada y el guardado de los cambios en la BD está deshabilitado. Devuelve una respuesta simulada.
-    *   **Por Implementar:**
-        *   Descomentar y activar la llamada real a la API de Gemini.
-        *   Implementar la lógica para parsear la respuesta (`updates` array) de Gemini.
-        *   Implementar la lógica para iterar sobre los `updates` y guardar el `newContent` en los documentos correspondientes (`PillarPage`, `Post`, `Product`) en la base de datos.
+    - **Estado:** Verificado y Activo.
+    - **Funcionalidad:** Analiza semánticamente la Página Pilar y los contenidos del cluster. Genera sugerencias de enlaces internos (contextuales) y actualiza el campo `proposedContent` de los documentos involucrados, dejándolos listos para revisión en el panel de administración.
 
-4.  **Actualizaciones de Frontend (`pages/admin/clusters.tsx` & `pages/admin/cluster-factory.tsx`):**
-    *   Asegurar que los componentes del frontend llamen a las APIs reales y actualicen su estado según sea necesario una vez que las APIs salgan del modo de simulación.
+### Estrategia de Crecimiento Agresivo (Spy Mode & Sales Psychologist)
 
-El usuario no ve un botón para 'generar la página pilar con IA' porque el proceso es ligeramente diferente a lo que esperaba. La IA no crea la página pilar inicial, sino que optimiza su contenido y el enlazado interno una vez que la página pilar y su cluster han sido definidos.
+Se implementaron dos nuevas herramientas enfocadas en ventas y competencia:
 
-**Para generar contenido con IA para tus páginas pilares y clusters, sigue estos pasos:**
+1.  **Modo Espía (`/admin/competitor-analysis`):**
+    - Permite ingresar la URL de un producto de la competencia.
+    - **NUEVO (Modo Comparación):** Ahora permite seleccionar un producto propio para realizar una comparación "Cara a Cara".
+    - La IA analiza el HTML, extrae keywords, debilidades de la oferta y genera una "Estrategia de Contraataque" específica para Kamaluso. En modo comparación, declara un ganador y explica por qué.
 
-1.  **Crea tu Página Pilar:** Ve a `/admin/pillar-pages` y crea una nueva página pilar con su título, tema y contenido inicial.
-2.  **Ve al Gestor de Topic Clusters:** Una vez creada, dirígete a `/admin/clusters`.
-3.  **Selecciona tu Página Pilar:** En el "Paso 1: Selecciona un Tema (Página Pilar)", elige la página pilar que acabas de crear en el menú desplegable.
-4.  **Construye y Guarda el Cluster:** En el "Paso 2: Construye y Guarda el Cluster", asocia los artículos del blog y los productos relevantes a tu página pilar marcando las casillas correspondientes. Luego, haz clic en el botón **'Construir y Guardar Cluster'**.
-5.  **Genera Sugerencias con IA:** Después de guardar el cluster, en el "Paso 3: Optimización con IA", verás un botón que dice **'Generar Sugerencias de Enlazado'**. Haz clic en él para que la IA analice el cluster y genere sugerencias de contenido y enlazado interno.
-6.  **Revisa y Publica:** Si la IA genera sugerencias, el botón en el "Paso 3" cambiará a **'Revisar Sugerencias Pendientes'**. Haz clic para ir a la página de revisión, donde podrás ver los cambios propuestos por la IA y aprobarlos para que se publiquen.
+2.  **Psicólogo de Ventas (Integrado en Generador SEO):**
+    - Se fusionó la lógica de CRO (Optimización de Conversión) directamente en el generador de contenido de productos (`generate-seo.ts`).
+    - Ahora, al generar contenido con IA, el sistema actúa con una doble personalidad: Experto SEO + Psicólogo de Ventas, aplicando principios de persuasión (Cialdini), escasez y prueba social en el copy generado.
+
+**Próximos Pasos:**
+- Verificar la integración en el frontend (`pages/admin/clusters.tsx` y `pages/admin/cluster-factory.tsx`) para asegurar que consumen correctamente las nuevas respuestas de las APIs.
+
+### Frontend de Páginas Pilares y Depuración (23 de noviembre de 2025 - Continuación)
+
+1.  **Vista Pública de Páginas Pilares (`/pages/pillar/[slug].tsx`):**
+    - **Estado:** Implementado y Verificado.
+    - **Funcionalidad:** Se creó la plantilla pública para visualizar las Páginas Pilares. Incluye:
+        - Diseño "Premium" con cabecera distintiva.
+        - Barra lateral inteligente que muestra automáticamente los productos y artículos del cluster.
+        - Manejo robusto de imágenes de productos (fallback a galería o icono si falta la imagen principal).
+        - Tarjetas de producto interactivas con efectos hover.
+
+2.  **Depuración y Estabilización:**
+    - **Creación Manual:** Se corrigió el error 500 en `/api/admin/pillar-pages/crear` añadiendo validación de contenido y manejo de colisiones de slug (sufijos automáticos).
+    - **Fábrica de Clusters:** Se corrigió la estructura del payload enviado desde el frontend y el manejo de acentos en la generación de slugs.
+    - **Frontend:** Se solucionaron errores de sintaxis y el problema de `Invalid <Link>` en las notificaciones toast.

@@ -13,7 +13,8 @@ import {
   XMarkIcon,
   BookOpenIcon,
   CircleStackIcon,
-  BeakerIcon, // <-- Icono para la Fábrica
+  BeakerIcon,
+  EyeIcon, // <-- Icono para Modo Espía
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Páginas Pilares', href: '/admin/pillar-pages', icon: BookOpenIcon },
   { name: 'Gestor de Clusters', href: '/admin/clusters', icon: CircleStackIcon },
   { name: 'Fábrica de Clusters', href: '/admin/cluster-factory', icon: BeakerIcon },
+  { name: 'Modo Espía', href: '/admin/competitor-analysis', icon: EyeIcon },
   // --- Fin Nuevos Enlaces ---
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
 ]
@@ -89,13 +91,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <Link
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center px-6 py-3 text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors duration-200 ${
-                  router.pathname === item.href ||
+                className={`flex items-center px-6 py-3 text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-colors duration-200 ${router.pathname === item.href ||
                   (item.href !== '/admin' &&
                     router.pathname.startsWith(item.href))
-                    ? 'bg-pink-50 text-pink-600 border-r-4 border-pink-500'
-                    : ''
-                }`}
+                  ? 'bg-pink-50 text-pink-600 border-r-4 border-pink-500'
+                  : ''
+                  }`}
               >
                 <item.icon className="h-6 w-6 mr-3" />
                 <span>{item.name}</span>
@@ -124,9 +125,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       {/* Mobile sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-md z-40 transform transition-transform duration-300 ease-in-out md:hidden ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-md z-40 transform transition-transform duration-300 ease-in-out md:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <SidebarContent />
       </aside>

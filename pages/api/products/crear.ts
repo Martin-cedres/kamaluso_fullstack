@@ -46,7 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // --- Lógica de Categorías Refactorizada ---
       let finalCategoriaSlug = '';
       let finalSubCategoriaSlugs: string[] = [];
-      
+
       const leafCategorySlugFromForm = getFieldValue(fields.subCategoria) || getFieldValue(fields.categoria);
 
       if (leafCategorySlugFromForm) {
@@ -105,11 +105,24 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
       imagesUrls.unshift(imageUrl);
 
+      // --- Parseo de Campos Complejos (Igual que en editar.ts) ---
+
       let customizationGroups = [];
       try {
         const groupsString = fields.customizationGroups as string;
         if (groupsString) {
           customizationGroups = JSON.parse(groupsString);
+
+          // Asegurarse de que las URLs de las imágenes de los diseños de tapa sean completas (si vinieran pre-cargadas)
+          customizationGroups.forEach((group: any) => {
+            if (group.name && group.name.startsWith('Diseño de Tapa') && group.options) {
+              group.options.forEach((option: any) => {
+                if (option.image && !option.image.startsWith('http')) {
+                  option.image = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/processed/${option.image}`;
+                }
+              });
+            }
+          });
         }
       } catch (e) {
         console.error("Error parsing customizationGroups", e);
@@ -128,10 +141,56 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             const groupIndex = parseInt(indices.substring(1, indices.indexOf('o')));
             const optionIndex = parseInt(indices.substring(indices.indexOf('o') + 1));
 
-            if (!isNaN(groupIndex) && !isNaN(optionIndex) && customizationGroups[groupIndex]?.options[optionIndex]) {
+            if (!isNaN(groupIndex) && !isNaN(optionIndex)) {
+              // Asegurar que existe la estructura antes de asignar
+              if (!customizationGroups[groupIndex]) customizationGroups[groupIndex] = { options: [] };
+              if (!customizationGroups[groupIndex].options[optionIndex]) customizationGroups[groupIndex].options[optionIndex] = {};
+
               customizationGroups[groupIndex].options[optionIndex].image = url;
             }
           }
+        }
+      }
+
+      // Parsear puntosClave (Robusto: JSON o String)
+      let puntosClave = [];
+      if (fields.puntosClave) {
+        const rawPuntos = String(fields.puntosClave);
+        try {
+          const parsed = JSON.parse(rawPuntos);
+          if (Array.isArray(parsed)) {
+            puntosClave = parsed;
+          } else {
+            puntosClave = rawPuntos.split(',').map(s => s.trim()).filter(s => s);
+          }
+        } catch (e) {
+          puntosClave = rawPuntos.split(',').map(s => s.trim()).filter(s => s);
+        }
+      }
+
+      // Parsear FAQs
+      let faqs = [];
+      if (fields.faqs) {
+        try {
+          const parsedFaqs = JSON.parse(String(fields.faqs));
+          if (Array.isArray(parsedFaqs)) {
+            faqs = parsedFaqs;
+          }
+        } catch (e) {
+          console.error("Error parsing FAQs:", e);
+        }
+      }
+
+      // Parsear Use Cases
+      let useCases = [];
+      if (fields.useCases) {
+        try {
+          const parsedUseCases = JSON.parse(String(fields.useCases));
+          if (Array.isArray(parsedUseCases)) {
+            useCases = parsedUseCases;
+          }
+        } catch (e) {
+          console.error("Error parsing Use Cases:", e);
         }
       }
 
@@ -143,12 +202,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         basePrice: parseFloat(String(fields.basePrice || '0')) || 0,
         categoria: finalCategoriaSlug,
         subCategoria: finalSubCategoriaSlugs,
+
+        // SEO Fields
         seoTitle: String(fields.seoTitle || ''),
         seoDescription: String(fields.seoDescription || ''),
         seoKeywords:
           typeof fields.seoKeywords === 'string'
             ? fields.seoKeywords.split(',').map((s) => s.trim())
             : [],
+
         alt: String(fields.alt || ''),
         notes: String(fields.notes || ''),
         status: String(fields.status || 'activo'),
@@ -158,11 +220,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           fields.showCoverType === 'true' || fields.showCoverType === true || false,
         imageUrl,
         images: imagesUrls,
-        customizationGroups: customizationGroups, // Guardar el array con las URLs de imagen
+        customizationGroups: customizationGroups,
         creadoEn: new Date(),
+
+        // AI Content Fields
         descripcionBreve: String(fields.descripcionBreve || ''),
-        puntosClave: typeof fields.puntosClave === 'string' ? fields.puntosClave.split(',').map(s => s.trim()) : [],
         descripcionExtensa: String(fields.descripcionExtensa || ''),
+        puntosClave: puntosClave,
+        faqs: faqs,
+        useCases: useCases,
       };
 
       const result = await db.collection('products').insertOne(productoDoc);

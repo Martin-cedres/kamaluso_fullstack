@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { connectDB } from '../../../../lib/mongoose';
+import connectDB from '../../../../lib/mongoose';
 import PillarPage from '../../../../models/PillarPage';
 import { generateWithFallback } from '../../../../lib/gemini-agent';
 

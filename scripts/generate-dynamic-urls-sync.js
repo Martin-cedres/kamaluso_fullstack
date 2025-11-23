@@ -26,12 +26,17 @@ const postSchema = new mongoose.Schema({
   slug: String,
 })
 
+const pillarPageSchema = new mongoose.Schema({
+  slug: String,
+})
+
 // --- Modelos ---
 const Product =
   mongoose.models.Product || mongoose.model('Product', productSchema)
 const Category =
   mongoose.models.Category || mongoose.model('Category', categorySchema)
 const Post = mongoose.models.Post || mongoose.model('Post', postSchema)
+const PillarPage = mongoose.models.PillarPage || mongoose.model('PillarPage', pillarPageSchema)
 
 async function getDynamicUrlsSync() {
   let connection
@@ -60,7 +65,15 @@ async function getDynamicUrlsSync() {
       }
     })
 
-    // 3. URLs de Categorías y Subcategorías
+    // 3. URLs de Pillar Pages
+    const pillarPages = await PillarPage.find({}, 'slug').lean()
+    pillarPages.forEach((page) => {
+      if (page.slug) {
+        urlSet.add(`/pillar/${page.slug}`)
+      }
+    })
+
+    // 4. URLs de Categorías y Subcategorías
     const categories = await Category.find({}, 'slug parent').lean()
     const categoryMap = new Map(categories.map((cat) => [cat._id.toString(), cat.slug]))
 

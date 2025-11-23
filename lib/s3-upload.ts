@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import formidable from 'formidable';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,4 +37,29 @@ export const uploadFileToS3 = async (file: formidable.File) => {
 
   // URL pública del archivo subido
   return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
+};
+
+export const deleteFileFromS3 = async (fileUrl: string) => {
+  if (!fileUrl) throw new Error("URL de archivo inválida para eliminar de S3.");
+
+  const bucketName = process.env.AWS_BUCKET_NAME!;
+  const region = process.env.AWS_REGION!;
+
+  // Extraer la clave S3 de la URL
+  // Asume el formato: https://<bucket-name>.s3.<region>.amazonaws.com/uploads/...
+  const s3Prefix = `https://${bucketName}.s3.${region}.amazonaws.com/`;
+  if (!fileUrl.startsWith(s3Prefix)) {
+    // Si la URL no tiene el prefijo S3 esperado, puede ser una imagen local o un placeholder,
+    // en cuyo caso no intentamos eliminarla de S3.
+    console.warn(`Attempted to delete a non-S3 URL from S3: ${fileUrl}`);
+    return;
+  }
+  const s3Key = fileUrl.substring(s3Prefix.length);
+
+  await s3.send(
+    new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: s3Key,
+    })
+  );
 };

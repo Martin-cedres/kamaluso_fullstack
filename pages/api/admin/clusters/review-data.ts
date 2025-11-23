@@ -4,14 +4,7 @@ import PillarPage, { IPillarPage } from '../../../../models/PillarPage';
 import Post, { IPost } from '../../../../models/Post';
 import Product, { IProduct } from '../../../../models/Product';
 
-// Definimos una interfaz unificada para los datos de revisión
-export interface IReviewItem {
-  id: string;
-  type: 'PillarPage' | 'Post' | 'Product';
-  title: string;
-  originalContent: string;
-  proposedContent: string;
-}
+import { IReviewItem } from '../../../../types/cluster';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

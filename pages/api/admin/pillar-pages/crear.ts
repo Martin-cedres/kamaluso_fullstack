@@ -16,17 +16,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Título, tema y slug son requeridos.' });
     }
 
-    // Verificar si el slug ya existe
-    const existingPage = await PillarPage.findOne({ slug });
-    if (existingPage) {
-      return res.status(409).json({ message: 'El slug ya existe. Por favor, elige otro título.' });
+    // Verificar si el slug ya existe y hacerlo único si es necesario
+    let uniqueSlug = slug;
+    let counter = 1;
+    while (await PillarPage.findOne({ slug: uniqueSlug })) {
+      uniqueSlug = `${slug}-${counter}`;
+      counter++;
     }
 
     const newPillarPage = new PillarPage({
       title,
       topic,
-      slug,
-      content: content || '', // Ensure content is not undefined
+      slug: uniqueSlug,
+      content: content || '<p>Contenido pendiente de generación...</p>', // Placeholder para pasar validación de Mongoose
       seoTitle: seoTitle || '', // Ensure seoTitle is not undefined
       seoDescription: seoDescription || '', // Ensure seoDescription is not undefined
       status: 'published', // Always published on manual creation
@@ -39,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(201).json(newPillarPage);
   } catch (error: any) {
     console.error('Error al crear la página pilar:', error);
-    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+    console.error('Stack:', error.stack);
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message, stack: error.stack });
   }
 }

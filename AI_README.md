@@ -6,7 +6,7 @@ Este documento detalla la arquitectura del cliente de IA de Google Gemini en el 
 
 Toda la lógica de comunicación con la API de Gemini está centralizada en `lib/gemini-client.ts`. Este cliente inteligente gestiona automáticamente:
 
-- **Priorización de Modelos:** Intenta usar los modelos más potentes y capaces (`gemini-3.0-pro`, `gemini-2.5-pro`) primero.
+- **Priorización de Modelos:** Utiliza el modelo más potente y estable disponible (`gemini-2.5-pro`) como primera opción.
 - **Fallback Automático:** Si todos los intentos con los modelos "Pro" fallan debido a errores de cuota o límite, el sistema automáticamente pasa a usar los modelos "Flash" (`gemini-2.5-flash`) como respaldo.
 - **Rotación de Claves:** El sistema rota automáticamente entre las claves de API disponibles para cada nivel (Pro y Flash) cuando detecta un error de cuota, maximizando el uso y la disponibilidad.
 

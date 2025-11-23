@@ -38,6 +38,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // ¡NUEVO PASO! Se realiza la investigación de tendencias.
     const trends = await getSearchTrends(nombre, categoriaNombre);
 
+    // ¡NUEVO PASO! Análisis de Competencia
+    const { analyzeCompetitors } = await import('../../../lib/competitor-research');
+    const competitorAnalysis = await analyzeCompetitors(nombre, categoriaNombre);
+
     // Usar el agente inteligente de Gemini que gestiona la rotación de claves y el fallback de modelos.
     const { generateWithFallback } = await import('../../../lib/gemini-agent');
 
@@ -79,57 +83,70 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `;
 
     const prompt = `
-      Eres un experto de clase mundial en SEO para e-commerce y un copywriter de respuesta directa obsesionado con las ventas. Tu base de operaciones es Uruguay y tu cliente es "${storeName}".
-      Tu única misión es crear contenido de producto que domine absolutamente los rankings de Google Uruguay para sus keywords objetivo y que convierta el máximo porcentaje de visitantes en compradores. Cada palabra debe tener un propósito: rankear o vender.
+      Eres el Director de Marketing Digital y Estratega SEO de "Kamaluso", la papelería personalizada líder en Uruguay.
+      PERO TAMBIÉN eres un **Psicólogo de Ventas experto** (estilo Robert Cialdini + David Ogilvy).
 
-      **Tus Principios Inquebrantables:**
-      1.  **Obsesión por el #1 en Google:** El contenido debe estar perfectamente optimizado. La keyword principal debe aparecer en el 'seoTitle', al inicio del 'seoDescription' y en el primer párrafo de la 'descripcionExtensa'.
-      2.  **Copywriting Persuasivo (Framework AIDA):** La 'descripcionExtensa' debe seguir la estructura AIDA:
-          - **Atención:** Un titular o primera frase que enganche al lector de inmediato.
-          - **Interés:** Despertar la curiosidad destacando los aspectos únicos o más fascinantes del producto.
-          - **Deseo:** Transformar el interés en deseo. Pinta una imagen mental vívida de cómo el producto mejora la vida del cliente. Enfócate en los beneficios emocionales (ej: la satisfacción de la organización, la alegría de dar un regalo único) no solo en las características.
-          - **Acción:** Un llamado a la acción claro, precedido por un "Llamado al Valor" (ej: "Empieza a organizar tu éxito hoy. ¡Pide tu agenda ahora!").
-      3.  **Inteligencia de Búsqueda en Tiempo Real:** He investigado las tendencias de búsqueda actuales en Uruguay para este producto. Esta es tu inteligencia de mercado. Úsala como guía principal para tu estrategia de keywords.
-          - **Resumen de Tendencias:** ${trends.trendsSummary}
-          - **Keywords Populares:** ${trends.keywords.join(', ')}
-      4.  **Geo-localización y Confianza:** Menciona sutilmente que el taller está en "San José" y se realizan "envíos a todo el país" para generar confianza y mejorar el SEO local.
+      **TU DOBLE MISIÓN:**
+      1.  **SEO (La Ciencia):** Rankear #1 en Google Uruguay para "${nombre}".
+      2.  **CRO (El Arte):** Convertir visitantes en compradores obsesionados usando persuasión psicológica.
+
+      **TUS HERRAMIENTAS PSICOLÓGICAS (ÚSALAS):**
+      - **Prueba Social Implícita:** "Únete a las miles de personas organizadas..."
+      - **Escasez/Urgencia (Sutil):** "Ediciones limitadas hechas a mano..."
+      - **Autoridad:** "Diseñado por expertos en productividad..."
+      - **Pertenencia:** "Para quienes se toman sus sueños en serio..."
+      - **Justificación Lógica:** El cerebro compra por emoción pero justifica con lógica. Dales ambas.
+
+      **INTELIGENCIA DE MERCADO (TENDENCIAS):**
+      - **Resumen:** ${trends.trendsSummary}
+      - **Keywords Hot:** ${trends.keywords.join(', ')}
+
+      **INTELIGENCIA DE COMPETENCIA (TU VENTAJA):**
+      ${competitorAnalysis}
+      *Instrucción:* Ataca sus debilidades. Si ellos son "baratos", tú eres "inversión duradera". Si son "lentos", tú eres "envío flash".
 
       ${specializedInstructions}
-      
-      **Producto a Optimizar:**
+
+      **DATOS DEL PRODUCTO:**
       - Nombre: ${nombre}
-      - Descripción actual (usar como contexto, no para copiar): ${descripcion}
+      - Contexto base: ${descripcion}
       - Categoría: ${categoriaNombre}
 
-      Genera un JSON válido (sin texto adicional antes ni después del JSON) con la siguiente estructura. Rellena TODOS los campos con contenido de altísima calidad.
+      **FORMATO DE SALIDA (JSON PURO):**
+      Genera un JSON válido con esta estructura exacta.
 
       {
-        "seoTitle": "Título SEO (máx. 60 chars). Debe ser magnético para clics. Fórmula: [Keyword Principal] | [Beneficio Clave] | ${storeName}",
-        "seoDescription": "Meta descripción (máx. 155 chars). Usa la keyword principal al inicio. Debe ser una mini-página de ventas que provoque curiosidad y termine con un llamado a la acción fuerte.",
-        "descripcionBreve": "Un 'elevator pitch' de 1-2 frases. Debe generar un impacto inmediato y comunicar el valor principal del producto.",
-        "puntosClave": ["Un array de 3 a 5 strings. Cada string debe ser un BENEFICIO directo y cuantificable (ej: 'Planifica tu año entero, sin olvidar nada' en vez de 'Vista anual')."],
-        "descripcionExtensa": "Descripción detallada en HTML, aplicando el framework AIDA como se te indicó. Usa <h3> para subtítulos que resalten beneficios. Usa <strong> para palabras clave importantes.",
-        "seoKeywords": ["Un array de 10-15 strings, basado en la inteligencia de mercado provista. Incluye una mezcla de keywords de alta competencia, 'long-tail' y preguntas que un cliente potencial haría."],
+        "seoTitle": "Título SEO (máx 60 chars). Fórmula: [Keyword Principal] + [Beneficio Emocional] | Kamaluso. Ej: 'Agenda 2026: Domina tu Tiempo con Estilo | Kamaluso'",
+        "seoDescription": "Meta descripción (máx 155 chars). Debe ser un 'mini-anuncio' persuasivo. Usa verbos de acción y toca un punto de dolor.",
+        "descripcionBreve": "Elevator pitch de 2 líneas. Enfócate en la TRANSFORMACIÓN que vive el cliente al usar el producto.",
+        "puntosClave": [
+          "Beneficio Psicológico 1 (ej: 'Siente la paz mental de tener todo bajo control')",
+          "Beneficio Funcional 1 (ej: 'Papel de 100g que ama tu pluma')",
+          "Beneficio de Estatus/Identidad (ej: 'El cuaderno que te distingue en la reunión')",
+          "Beneficio de Urgencia/Exclusividad"
+        ],
+        "descripcionExtensa": "HTML puro. Escribe una CARTA DE VENTAS, no una descripción técnica. \n\n<p><strong>Gancho Emocional:</strong> Empieza con una pregunta o afirmación que toque una fibra sensible sobre organización o creatividad.</p>\n\n<h3>La Solución que Estabas Buscando</h3>\n<p>Presenta el producto como el héroe que resuelve ese problema.</p>\n\n<h3>Por qué te vas a Enamorar (Detalles)</h3>\n<p>Describe las características físicas pero tradúcelas a sensaciones (tacto, vista, durabilidad).</p>\n\n<h3>Más que una simple ${categoriaNombre}</h3>\n<p>Apela a la identidad del comprador (emprendedora, artista, estudiante de honor).</p>\n\n<p><strong>Tu Garantía de Felicidad:</strong> Menciona la calidad garantizada y la atención personalizada.</p>\n\n<p><strong>Llamada a la Acción (Cierre):</strong> ¡No esperes a que se agoten! Tu mejor versión empieza hoy.</p>",
+        "seoKeywords": ["Array de 12-15 keywords. Mezcla: Keyword Principal, Long-tail, Preguntas y Keywords de Tendencia."],
         "faqs": [
           {
-            "question": "Genera una pregunta frecuente que un cliente indeciso haría antes de comprar.",
-            "answer": "Genera una respuesta que elimine esa fricción, refuerce la confianza y empuje sutilmente hacia la venta."
+            "question": "Una pregunta que elimine una objeción de compra (ej: ¿El papel traspasa?)",
+            "answer": "Respuesta honesta y tranquilizadora que resalte la calidad."
           },
           {
-            "question": "Genera una segunda pregunta frecuente sobre la personalización o el envío.",
-            "answer": "Genera una respuesta clara, útil y que transmita un excelente servicio al cliente."
+            "question": "Pregunta sobre personalización o envíos (fricción logística)",
+            "answer": "Respuesta clara que venda la comodidad y rapidez del servicio."
           }
         ],
         "useCases": [
-          "Genera un caso de uso que lo posicione como el regalo perfecto para una ocasión específica.",
-          "Genera otro caso de uso para un nicho de cliente específico (ej: 'El planner definitivo para emprendedoras en Uruguay').",
-          "Genera un tercer caso de uso que demuestre su versatilidad y justifique su valor."
+          "Caso de uso aspiracional 1",
+          "Caso de uso aspiracional 2",
+          "Caso de uso práctico 3"
         ]
       }
     `;
-    
+
     const geminiResponseText = await generateWithFallback(prompt);
-    
+
     const cleanedText = geminiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
     let generatedContent;
     try {
@@ -146,7 +163,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Si se proveyó un productId, actualizamos el producto en la BD
     if (productId) {
-      await Product.findByIdAndUpdate(productId, {
+      console.log('Guardando contenido generado en BD:', Object.keys(generatedContent));
+
+      const updatedProduct = await Product.findByIdAndUpdate(productId, {
         seoTitle: generatedContent.seoTitle,
         seoDescription: generatedContent.seoDescription,
         descripcionBreve: generatedContent.descripcionBreve,
@@ -155,7 +174,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         seoKeywords: generatedContent.seoKeywords,
         faqs: generatedContent.faqs,
         useCases: generatedContent.useCases,
-      });
+      }, { new: true }); // { new: true } devuelve el documento actualizado
+
+      // Revalidar la página del producto para que los cambios se reflejen de inmediato
+      if (updatedProduct && updatedProduct.slug) {
+        try {
+          await res.revalidate(`/productos/detail/${updatedProduct.slug}`);
+          console.log(`Página revalidada: /productos/detail/${updatedProduct.slug}`);
+        } catch (revalError) {
+          console.error('Error al revalidar la página:', revalError);
+          // No fallamos la request si la revalidación falla, pero lo logueamos
+        }
+      }
       // Devolvemos solo un mensaje de éxito pero podríamos devolver el payload si el front lo necesitara
       return res.status(200).json({ message: `Producto "${nombre}" actualizado con éxito.`, trends });
     }

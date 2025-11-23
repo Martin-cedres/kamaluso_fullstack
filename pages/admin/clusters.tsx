@@ -14,7 +14,7 @@ interface ILocalPost extends IPost {
   status: 'published' | 'pending_review';
 }
 interface ILocalProduct extends IProduct {
-  contentStatus?: 'published' | 'pending_review';
+  contentStatus: 'published' | 'pending_review';
 }
 
 const EmptyState = () => (
@@ -237,7 +237,7 @@ const ClusterManager = () => {
             <select id="pillar-select" value={selectedPillarId} onChange={handlePillarChange} className="w-full max-w-lg p-3 border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-pink-500 text-lg">
               <option value="" disabled>Elige un tema para gestionar...</option>
               {pillarPages.map(page => (
-                <option key={page._id} value={page._id}>{page.topic} ({page.title})</option>
+                <option key={String(page._id)} value={String(page._id)}>{page.topic} ({page.title})</option>
               ))}
             </select>
           </div>
@@ -253,8 +253,8 @@ const ClusterManager = () => {
                     <h3 className="font-bold text-lg mb-4">Artículos del Blog ({selectedPosts.size} seleccionados)</h3>
                     <div className="h-96 overflow-y-auto space-y-3 pr-2">
                       {allPosts.map(post => (
-                        <label key={post._id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
-                          <input type="checkbox" checked={selectedPosts.has(post._id)} onChange={() => handlePostToggle(post._id)} className="h-5 w-5 rounded text-pink-600 focus:ring-pink-500"/>
+                        <label key={String(post._id)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
+                          <input type="checkbox" checked={selectedPosts.has(String(post._id))} onChange={() => handlePostToggle(String(post._id))} className="h-5 w-5 rounded text-pink-600 focus:ring-pink-500"/>
                           <span className="text-sm font-medium text-gray-800">{post.title}</span>
                         </label>
                       ))}
@@ -264,8 +264,8 @@ const ClusterManager = () => {
                     <h3 className="font-bold text-lg mb-4">Productos ({selectedProducts.size} seleccionados)</h3>
                     <div className="h-96 overflow-y-auto space-y-3 pr-2">
                       {allProducts.map(product => (
-                        <label key={product._id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
-                          <input type="checkbox" checked={selectedProducts.has(product._id)} onChange={() => handleProductToggle(product._id)} className="h-5 w-5 rounded text-pink-600 focus:ring-pink-500"/>
+                        <label key={String(product._id)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition">
+                          <input type="checkbox" checked={selectedProducts.has(String(product._id))} onChange={() => handleProductToggle(String(product._id))} className="h-5 w-5 rounded text-pink-600 focus:ring-pink-500"/>
                           <span className="text-sm font-medium text-gray-800">{product.nombre}</span>
                         </label>
                       ))}

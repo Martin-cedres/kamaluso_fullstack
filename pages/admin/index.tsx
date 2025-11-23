@@ -232,15 +232,15 @@ const AdminIndex = () => {
     notes: '',
     destacado: false,
     tipoDeProducto: 'Interactivo',
-        claveDeGrupo: '',
-        customizationGroups: [],
-        descripcionBreve: '',
-        puntosClave: '', // Se manejará como string separado por comas en el formulario
-        faqs: [],
-        useCases: [],
-      })
+    claveDeGrupo: '',
+    customizationGroups: [],
+    descripcionBreve: '',
+    puntosClave: '', // Se manejará como string separado por comas en el formulario
+    faqs: [],
+    useCases: [],
+  })
 
-// ... (a lot of code) ...
+  // ... (a lot of code) ...
 
   // Handlers para el nuevo UI de personalización
   const handleCustomizationChange = (groupIndex: number, optionIndex: number, field: string, value: string) => {
@@ -302,7 +302,7 @@ const AdminIndex = () => {
       setIsGroupModalOpen(true);
       return;
     }
-    
+
     let newGroup;
 
     if (groupType === 'TipoTapa') {
@@ -589,7 +589,7 @@ const AdminIndex = () => {
 
       setGenerationStatus('Generando contenido con IA...');
       const data = await res.json();
-      
+
       // La API ahora devuelve { generatedContent, trends }
       const { generatedContent, trends: apiTrends } = data;
 
@@ -809,20 +809,36 @@ const AdminIndex = () => {
       // Handle form fields, excluding complex objects
       Object.keys(form).forEach((key) => {
         if (key === 'seoKeywords') {
-          const keywords = form.seoKeywords.split(',').map((kw: string) => kw.trim()).filter((kw: string) => kw);
-          // Append each keyword separately
-          keywords.forEach((keyword: string, index: number) => {
-            formData.append(`seoKeywords[${index}]`, keyword);
-          });
-        } else if (key !== 'customizationGroups' && key !== 'categoria' && key !== 'subCategoria') {
-          formData.append(key, form[key]);
-        }
-      });
+          // Enviar como string directo, el backend lo espera así (separado por comas)
+          // Si es array, lo unimos. Si es string, lo enviamos tal cual.
+          const keywordsToSend = Array.isArray(form.seoKeywords)
+            ? form.seoKeywords.join(',')
+            : form.seoKeywords;
 
-      // Handle customizationGroups separately by stringifying it
-      formData.append('customizationGroups', JSON.stringify(form.customizationGroups));
-      formData.append('faqs', JSON.stringify(form.faqs));
-      formData.append('useCases', JSON.stringify(form.useCases));
+          formData.append('seoKeywords', keywordsToSend);
+        } else if (key !== 'customizationGroups' && key !== 'categoria' && key !== 'subCategoria' && key !== 'faqs' && key !== 'useCases' && key !== 'puntosClave' && key !== 'descripcionBreve') {
+          // Excluir los que manejamos manualmente abajo para evitar duplicados
+          // Asegurar que puntosClave se envíe como array de strings
+          if (form.puntosClave) {
+            // Si es string (del input separado por comas), lo convertimos a array
+            const puntosArray = typeof form.puntosClave === 'string'
+              ? form.puntosClave.split(',').map((p: string) => p.trim()).filter((p: string) => p)
+              : form.puntosClave;
+
+            // Enviamos cada punto clave individualmente para que el backend lo reciba como array
+            // O si el backend espera un JSON stringificado, ajustamos aquí.
+            // Basado en generate-seo.ts, el backend espera un array en el modelo.
+            // FormData con misma key crea un array en el servidor si se usa multer/formidable correctamente,
+            // pero para mayor seguridad con Next.js API routes, a veces es mejor enviar JSON stringificado si el backend lo parsea.
+            // Revisando api/products/editar, usa formidable.
+            // Vamos a enviar como JSON stringificado para evitar problemas de parsing de arrays en FormData
+            formData.append('puntosClave', JSON.stringify(puntosArray));
+          }
+
+          if (image) formData.append('image', image)
+          images.forEach((f, i) => formData.append(`images[${i}]`, f))
+        }
+      })
 
       // Append option images
       Object.keys(optionImages).forEach(key => {
@@ -835,9 +851,6 @@ const AdminIndex = () => {
       if (selectedSubCategoria) {
         formData.append('subCategoria', selectedSubCategoria)
       }
-
-      if (image) formData.append('image', image)
-      images.forEach((f, i) => formData.append(`images[${i}]`, f))
 
       setProgress(30)
       const url = editId ? '/api/products/editar' : '/api/products/crear'
@@ -1091,11 +1104,11 @@ const AdminIndex = () => {
                       <div className="mt-6">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Casos de Uso</label>
                         <div className="flex items-center gap-2">
-                          <input 
-                            type="text" 
-                            value={newUseCase} 
-                            onChange={(e) => setNewUseCase(e.target.value)} 
-                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500" 
+                          <input
+                            type="text"
+                            value={newUseCase}
+                            onChange={(e) => setNewUseCase(e.target.value)}
+                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
                             placeholder="Ej: Ideal para regalo empresarial"
                           />
                           <button type="button" onClick={addUseCase} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600">Añadir</button>
@@ -1123,20 +1136,20 @@ const AdminIndex = () => {
                               </button>
                               <div className="mb-2">
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Pregunta</label>
-                                <textarea 
-                                  value={faq.question} 
-                                  onChange={(e) => handleFaqChange(index, 'question', e.target.value)} 
-                                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm" 
+                                <textarea
+                                  value={faq.question}
+                                  onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm"
                                   rows={2}
                                   placeholder="¿De qué material es la tapa?"
                                 />
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Respuesta</label>
-                                <textarea 
-                                  value={faq.answer} 
-                                  onChange={(e) => handleFaqChange(index, 'answer', e.target.value)} 
-                                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm" 
+                                <textarea
+                                  value={faq.answer}
+                                  onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm"
                                   rows={3}
                                   placeholder="Nuestras tapas son de cartón extra duro..."
                                 />
@@ -1198,7 +1211,7 @@ const AdminIndex = () => {
                                     <div className="w-10 flex-shrink-0">
                                       <label title="Seleccionar imagen" className="cursor-pointer p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full inline-flex items-center justify-center">
                                         <PhotoIcon className="h-5 w-5" />
-                                        <input type="file" accept="image/*" onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)} className="sr-only"/>
+                                        <input type="file" accept="image/*" onChange={(e) => handleOptionImageChange(groupIndex, optionIndex, e.target.files ? e.target.files[0] : null)} className="sr-only" />
                                       </label>
                                     </div>
                                     {getOptionImagePreview(groupIndex, optionIndex) && <Image src={getOptionImagePreview(groupIndex, optionIndex)!} alt={`preview`} width={32} height={32} className="object-cover rounded-md" />}
@@ -1215,7 +1228,7 @@ const AdminIndex = () => {
 
                               {/* Group Footer (Dependencies) */}
                               <div className="pt-3 mt-3 border-t border-gray-200">
-                                 <button type="button" onClick={() => setDependencyState({ groupIndex, visible: true })} className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-700 font-medium">
+                                <button type="button" onClick={() => setDependencyState({ groupIndex, visible: true })} className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-blue-700 font-medium">
                                   <LinkIcon className="h-4 w-4" />
                                   Definir dependencia
                                 </button>
@@ -1230,7 +1243,7 @@ const AdminIndex = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     {/* Add Group Buttons */}
                     <div className="mt-4 pt-4 border-t border-gray-300">
                       <h4 className="text-sm font-semibold text-gray-600 mb-2">Añadir Grupos Predefinidos</h4>
@@ -1352,7 +1365,7 @@ const AdminIndex = () => {
                       <div className="mt-1 flex items-center">
                         <label className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50">
                           <span>Seleccionar archivo</span>
-                          <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} className="sr-only"/>
+                          <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} className="sr-only" />
                         </label>
                         <span className="ml-3 text-sm text-gray-500">{image ? image.name : 'Ningún archivo seleccionado'}</span>
                       </div>
@@ -1368,7 +1381,7 @@ const AdminIndex = () => {
                       <div className="mt-1 flex items-center">
                         <label className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50">
                           <span>Seleccionar archivos</span>
-                          <input type="file" accept="image/*" multiple onChange={(e) => setImages(e.target.files ? Array.from(e.target.files) : [])} className="sr-only"/>
+                          <input type="file" accept="image/*" multiple onChange={(e) => setImages(e.target.files ? Array.from(e.target.files) : [])} className="sr-only" />
                         </label>
                         <span className="ml-3 text-sm text-gray-500">{images.length > 0 ? `${images.length} archivos seleccionados` : 'Ningún archivo seleccionado'}</span>
                       </div>
@@ -1410,188 +1423,188 @@ const AdminIndex = () => {
         </div>
       )}
 
-            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
 
-              <div className="px-4 md:px-6 py-4 border-b">
+        <div className="px-4 md:px-6 py-4 border-b">
 
-                <h3 className="text-lg font-semibold">Productos</h3>
+          <h3 className="text-lg font-semibold">Productos</h3>
 
-              </div>
+        </div>
 
-              <DragDropContext onDragEnd={handleProductDragEnd}>
+        <DragDropContext onDragEnd={handleProductDragEnd}>
 
-                <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm">
 
-                  <thead className="bg-gray-100 text-left text-gray-700">
+            <thead className="bg-gray-100 text-left text-gray-700">
 
-                    <tr>
+              <tr>
 
-                      <th className="px-4 py-3"></th> {/* Handle for drag */}
+                <th className="px-4 py-3"></th> {/* Handle for drag */}
 
-                      <th className="px-4 py-3">Imagen</th>
+                <th className="px-4 py-3">Imagen</th>
 
-                      <th className="px-4 py-3">Nombre</th>
+                <th className="px-4 py-3">Nombre</th>
 
-                      <th className="px-4 py-3">Precio</th>
+                <th className="px-4 py-3">Precio</th>
 
-                      <th className="px-4 py-3">Estado</th>
+                <th className="px-4 py-3">Estado</th>
 
-                      <th className="px-4 py-3">Categoría</th>
+                <th className="px-4 py-3">Categoría</th>
 
-                      <th className="px-4 py-3">Subcategoría</th>
+                <th className="px-4 py-3">Subcategoría</th>
 
-                      <th className="px-4 py-3">Destacado</th>
+                <th className="px-4 py-3">Destacado</th>
 
-                      <th className="px-4 py-3">Acciones</th>
+                <th className="px-4 py-3">Acciones</th>
 
-                    </tr>
+              </tr>
 
-                  </thead>
+            </thead>
 
-                  <Droppable droppableId="products-table-body">
+            <Droppable droppableId="products-table-body">
 
-                    {(provided) => (
+              {(provided) => (
 
-                      <tbody
+                <tbody
 
-                        {...provided.droppableProps}
+                  {...provided.droppableProps}
 
-                        ref={provided.innerRef}
+                  ref={provided.innerRef}
 
-                        className="bg-white divide-y divide-gray-200"
+                  className="bg-white divide-y divide-gray-200"
 
-                      >
+                >
 
-                        {productos.map((p, index) => (
+                  {productos.map((p, index) => (
 
-                          <Draggable key={String(p._id)} draggableId={String(p._id)} index={index}>
+                    <Draggable key={String(p._id)} draggableId={String(p._id)} index={index}>
 
-                            {(provided) => (
+                      {(provided) => (
 
-                              <tr
+                        <tr
 
-                                ref={provided.innerRef}
+                          ref={provided.innerRef}
 
-                                {...provided.draggableProps}
+                          {...provided.draggableProps}
 
-                                {...provided.dragHandleProps}
+                          {...provided.dragHandleProps}
 
-                                className="odd:bg-white even:bg-gray-50 border-b"
+                          className="odd:bg-white even:bg-gray-50 border-b"
 
-                              >
+                        >
 
-                                <td className="px-2 py-3 cursor-grab">
+                          <td className="px-2 py-3 cursor-grab">
 
-                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
 
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6h16.5" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6h16.5" />
 
-                                  </svg>
+                            </svg>
 
-                                </td>
+                          </td>
 
-                                <td className="px-4 py-3">
+                          <td className="px-4 py-3">
 
-                                  <Image
+                            <Image
 
-                                    src={p.imageUrl}
+                              src={p.imageUrl}
 
-                                    alt={p.alt || p.nombre}
+                              alt={p.alt || p.nombre}
 
-                                    width={64}
+                              width={64}
 
-                                    height={64}
+                              height={64}
 
-                                    className="object-cover rounded-xl"
+                              className="object-cover rounded-xl"
 
-                                  />
+                            />
 
-                                </td>
+                          </td>
 
-                                <td className="px-4 py-3">{p.nombre}</td>
+                          <td className="px-4 py-3">{p.nombre}</td>
 
-                                <td className="px-4 py-3">{getDisplayPrice(p)}</td>
+                          <td className="px-4 py-3">{getDisplayPrice(p)}</td>
 
-                                <td className="px-4 py-3">{p.status}</td>
+                          <td className="px-4 py-3">{p.status}</td>
 
-                                <td className="px-4 py-3">{p.categoria}</td>
+                          <td className="px-4 py-3">{p.categoria}</td>
 
-                                <td className="px-4 py-3">
+                          <td className="px-4 py-3">
 
-                                  {Array.isArray(p.subCategoria)
+                            {Array.isArray(p.subCategoria)
 
-                                    ? p.subCategoria.join(', ')
+                              ? p.subCategoria.join(', ')
 
-                                    : p.subCategoria || '-'}
+                              : p.subCategoria || '-'}
 
-                                </td>
+                          </td>
 
-                                <td className="px-4 py-3">{p.destacado ? '✅' : '-'}</td>
+                          <td className="px-4 py-3">{p.destacado ? '✅' : '-'}</td>
 
-                                                                <td className="px-4 py-3 flex gap-2">
+                          <td className="px-4 py-3 flex gap-2">
 
-                                                                  <button
+                            <button
 
-                                                                    onClick={() => handleEditClick(String(p._id))}
+                              onClick={() => handleEditClick(String(p._id))}
 
-                                                                    className="px-3 py-1 rounded-xl bg-blue-600 text-white"
+                              className="px-3 py-1 rounded-xl bg-blue-600 text-white"
 
-                                                                  >
+                            >
 
-                                                                    Editar
+                              Editar
 
-                                                                  </button>
+                            </button>
 
-                                                                  <button
+                            <button
 
-                                                                    onClick={() => handleDelete(String(p._id))}
+                              onClick={() => handleDelete(String(p._id))}
 
-                                                                    className="px-3 py-1 rounded-xl bg-red-600 text-white"
+                              className="px-3 py-1 rounded-xl bg-red-600 text-white"
 
-                                                                  >
+                            >
 
-                                                                    Eliminar
+                              Eliminar
 
-                                                                  </button>
+                            </button>
 
-                                                                  <button
+                            <button
 
-                                                                    onClick={() => handleRegenerateSEO(String(p._id))}
+                              onClick={() => handleRegenerateSEO(String(p._id))}
 
-                                                                    disabled={seoLoading[p._id]}
+                              disabled={seoLoading[p._id]}
 
-                                                                    className="px-3 py-1 rounded-xl bg-purple-600 text-white disabled:bg-gray-400 text-xs"
+                              className="px-3 py-1 rounded-xl bg-purple-600 text-white disabled:bg-gray-400 text-xs"
 
-                                                                    title="Regenerar contenido SEO con IA"
+                              title="Regenerar contenido SEO con IA"
 
-                                                                  >
+                            >
 
-                                                                    {seoLoading[p._id] ? '...' : 'SEO IA'}
+                              {seoLoading[p._id] ? '...' : 'SEO IA'}
 
-                                                                  </button>
+                            </button>
 
-                                                                </td>
+                          </td>
 
-                              </tr>
+                        </tr>
 
-                            )}
+                      )}
 
-                          </Draggable>
+                    </Draggable>
 
-                        ))}
-                        {provided.placeholder}
+                  ))}
+                  {provided.placeholder}
 
-                      </tbody>
+                </tbody>
 
-                    )}
+              )}
 
-                  </Droppable>
+            </Droppable>
 
-                </table>
+          </table>
 
-              </DragDropContext>
+        </DragDropContext>
 
-            </div>
+      </div>
     </AdminLayout>
   )
 }

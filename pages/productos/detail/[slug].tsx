@@ -102,11 +102,15 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const [activeImage, setActiveImage] = useState(product?.imageUrl || '/placeholder.png');
   const [isAnimating, setIsAnimating] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
-  const thumbnailCarouselRef = useRef<HTMLDivElement>(null);
-  const [showThumbnailLeftArrow, setShowThumbnailLeftArrow] = useState(false);
-  const [showThumbnailRightArrow, setShowThumbnailRightArrow] = useState(false);
+  const desktopCarouselRef = useRef<HTMLDivElement>(null);
+  const mobileCarouselRef = useRef<HTMLDivElement>(null);
+
+  const [showDesktopLeftArrow, setShowDesktopLeftArrow] = useState(false);
+  const [showDesktopRightArrow, setShowDesktopRightArrow] = useState(false);
+  const [showMobileLeftArrow, setShowMobileLeftArrow] = useState(false);
+  const [showMobileRightArrow, setShowMobileRightArrow] = useState(false);
   const [activeTab, setActiveTab] = useState('descripcion');
-  const coverGalleryRef = useRef<HTMLDivElement>(null);
+
   const [tapaSeleccionada, setTapaSeleccionada] = useState<any>(null);
 
   useEffect(() => {
@@ -116,35 +120,23 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const TabButton = ({ tabName, label }: { tabName: string; label: string }) => (
     <button
       onClick={() => setActiveTab(tabName)}
-      className={`px-4 py-2 text-sm sm:text-base font-semibold transition-colors duration-300 whitespace-nowrap ${
-        activeTab === tabName
-          ? 'border-b-2 border-pink-500 text-pink-600'
-          : 'text-gray-500 hover:text-gray-800'
-      }`}
+      className={`px-4 py-2 text-sm sm:text-base font-semibold transition-colors duration-300 whitespace-nowrap ${activeTab === tabName
+        ? 'border-b-2 border-pink-500 text-pink-600'
+        : 'text-gray-500 hover:text-gray-800'
+        }`}
     >
       {label}
     </button>
   );
 
 
-  const checkForThumbnailScroll = useCallback(() => {
-    const container = thumbnailCarouselRef.current;
-    if (container) {
-      const { scrollLeft, scrollWidth, clientWidth } = container;
-      console.log('Checking thumbnail scroll:', { scrollLeft, scrollWidth, clientWidth });
-      setShowThumbnailLeftArrow(scrollLeft > 0);
-      setShowThumbnailRightArrow(scrollLeft < scrollWidth - clientWidth - 1); // -1 for precision issues
-    }
-  }, []);
-
-  const scrollThumbnails = (direction: 'left' | 'right') => {
-    console.log('Scrolling thumbnails:', direction);
-    const container = thumbnailCarouselRef.current;
+  const scrollThumbnails = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+    const container = ref.current;
     if (container) {
       const scrollAmount = container.clientWidth * 0.8;
-      container.scrollBy({ 
-        left: direction === 'left' ? -scrollAmount : scrollAmount, 
-        behavior: 'smooth' 
+      container.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
       });
     }
   };
@@ -156,14 +148,14 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const displayGroups = useMemo(() => {
     if (!product?.customizationGroups) return [];
     // Filter out the main cover design group (handled by activeCoverDesignGroups) and the now-hidden 'Tipo de Tapa' group
-    return product.customizationGroups.filter(g => 
+    return product.customizationGroups.filter(g =>
       g.name !== 'Diseño de Tapa' && g.name !== 'Tipo de Tapa'
     );
   }, [product?.customizationGroups]);
 
   const orderedCustomizationGroups = useMemo(() => {
     const allVisibleGroups = [...activeCoverDesignGroups, ...displayGroups];
-    
+
     const getSortKey = (groupName: string) => {
       if (groupName.startsWith('Diseño de Tapa')) return 'Diseño de Tapa';
       return groupName;
@@ -194,32 +186,40 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   }, [product?.imageUrl, product?.images]);
 
   useEffect(() => {
-    const container = thumbnailCarouselRef.current;
-    if (container) {
-      const handleScrollCheck = () => {
-        const { scrollLeft, scrollWidth, clientWidth } = container;
-        setShowThumbnailLeftArrow(scrollLeft > 0);
-        setShowThumbnailRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
-      };
+    const checkScroll = (
+      element: HTMLDivElement | null,
+      setLeft: (v: boolean) => void,
+      setRight: (v: boolean) => void
+    ) => {
+      if (!element) return;
+      const { scrollLeft, scrollWidth, clientWidth } = element;
+      setLeft(scrollLeft > 0);
+      setRight(scrollLeft < scrollWidth - clientWidth - 1);
+    };
 
-      // Check immediately
-      handleScrollCheck();
+    const handleScrollCheck = () => {
+      checkScroll(desktopCarouselRef.current, setShowDesktopLeftArrow, setShowDesktopRightArrow);
+      checkScroll(mobileCarouselRef.current, setShowMobileLeftArrow, setShowMobileRightArrow);
+    };
 
-      // Check after a short delay for images to load
-      const timeoutId = setTimeout(handleScrollCheck, 150);
+    // Check immediately and after delay
+    handleScrollCheck();
+    const timeoutId = setTimeout(handleScrollCheck, 150);
 
-      // Add event listeners
-      container.addEventListener('scroll', handleScrollCheck);
-      window.addEventListener('resize', handleScrollCheck);
+    const desktopEl = desktopCarouselRef.current;
+    const mobileEl = mobileCarouselRef.current;
 
-      // Cleanup
-      return () => {
-        clearTimeout(timeoutId);
-        container.removeEventListener('scroll', handleScrollCheck);
-        window.removeEventListener('resize', handleScrollCheck);
-      };
-    }
-  }, [allProductImages]); // Depend only on allProductImages
+    if (desktopEl) desktopEl.addEventListener('scroll', handleScrollCheck);
+    if (mobileEl) mobileEl.addEventListener('scroll', handleScrollCheck);
+    window.addEventListener('resize', handleScrollCheck);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (desktopEl) desktopEl.removeEventListener('scroll', handleScrollCheck);
+      if (mobileEl) mobileEl.removeEventListener('scroll', handleScrollCheck);
+      window.removeEventListener('resize', handleScrollCheck);
+    };
+  }, [allProductImages]);
 
   useEffect(() => {
     if (product) {
@@ -227,107 +227,80 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     }
   }, [product, allProductImages]);
 
-    const handleImageChange = useCallback((newImage: string) => {
+  const handleImageChange = useCallback((newImage: string) => {
+    if (newImage !== activeImage) {
+      setActiveImage(newImage);
+      setIsAnimating(true);
+    }
+  }, [activeImage]);
 
-      if (newImage !== activeImage) {
-
-        setActiveImage(newImage);
-
-        setIsAnimating(true);
-
-      }
-
-    }, [activeImage]);
-
-  
-
-    const handleCoverDesignSelect = useCallback((groupName: string, option: DesignOption) => {
-
-      if (option.image) {
-
-        handleImageChange(option.image);
-
-      }
-
-      
-
-      setSelections(prev => {
-
-        const newSelections = { ...prev };
-
-        // Deseleccionar cualquier otra opción de diseño de tapa
-
-        Object.keys(newSelections).forEach(key => {
-
-          if (key.startsWith('Diseño de Tapa')) {
-
-            delete newSelections[key];
-
-          }
-
-        });
-
-        // Establecer la nueva selección
-
-        newSelections[groupName] = option.name;
-
-        return newSelections;
-
-      });
-
-    }, [handleImageChange]);
-
+  // Auto-scroll thumbnails when active image changes
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      if (!coverGalleryRef.current?.contains(document.activeElement)) return;
+    const index = allProductImages.findIndex(img => img === activeImage);
+    if (index !== -1) {
+      // Try to find desktop thumbnail
+      const desktopThumbnail = document.getElementById(`thumbnail-desktop-${index}`);
+      if (desktopThumbnail) {
+        desktopThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+      // Try to find mobile thumbnail (we'll add IDs to mobile too)
+      const mobileThumbnail = document.getElementById(`thumbnail-mobile-${index}`);
+      if (mobileThumbnail) {
+        mobileThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeImage, allProductImages]);
 
-      e.preventDefault();
 
-      const coverGroup = orderedCustomizationGroups.find(g => g.name.startsWith('Diseño de Tapa'));
-      if (!coverGroup || !coverGroup.options) return;
 
-      setSelections(prevSelections => {
-        const selectedName = prevSelections[coverGroup.name];
-        const currentIndex = coverGroup.options.findIndex(opt => opt.name === selectedName);
-        
-        let nextIndex;
-        if (e.key === 'ArrowRight') {
-          nextIndex = currentIndex >= 0 ? (currentIndex + 1) % coverGroup.options.length : 0;
-        } else { // ArrowLeft
-          nextIndex = currentIndex > 0 ? currentIndex - 1 : coverGroup.options.length - 1;
+  const handleCoverDesignSelect = useCallback((groupName: string, option: DesignOption) => {
+
+    if (option.image) {
+
+      handleImageChange(option.image);
+
+    }
+
+
+
+    setSelections(prev => {
+
+      const newSelections = { ...prev };
+
+      // Deseleccionar cualquier otra opción de diseño de tapa
+
+      Object.keys(newSelections).forEach(key => {
+
+        if (key.startsWith('Diseño de Tapa')) {
+
+          delete newSelections[key];
+
         }
 
-        const nextOption = coverGroup.options[nextIndex];
-        if (nextOption) {
-          if (nextOption.image) {
-            handleImageChange(nextOption.image);
-          }
-          const newSelections = { ...prevSelections };
-          Object.keys(newSelections).forEach(key => {
-            if (key.startsWith('Diseño de Tapa')) {
-              delete newSelections[key];
-            }
-          });
-          newSelections[coverGroup.name] = nextOption.name;
-          return newSelections;
-        }
-        return prevSelections;
       });
-    };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [orderedCustomizationGroups, handleImageChange]);
+      // Establecer la nueva selección
+
+      newSelections[groupName] = option.name;
+
+      return newSelections;
+
+    });
+
+  }, [handleImageChange]);
+
+
 
 
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      if (!thumbnailCarouselRef.current?.contains(document.activeElement)) return;
+
+      const isDesktopFocused = desktopCarouselRef.current?.contains(document.activeElement);
+      const isMobileFocused = mobileCarouselRef.current?.contains(document.activeElement);
+
+      if (!isDesktopFocused && !isMobileFocused) return;
 
       e.preventDefault();
 
@@ -401,16 +374,16 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
   const handleAddToCart = () => {
     if (!product) return;
-  
+
     // Validar que todas las personalizaciones requeridas estén seleccionadas
     const requiredGroups = product.customizationGroups?.filter(g => g.required) || [];
     const missingSelections = requiredGroups.filter(g => !selections[g.name]);
-  
+
     if (missingSelections.length > 0) {
       toast.error(`Por favor, selecciona una opción para: ${missingSelections.map(g => g.name).join(', ')}`);
       return;
     }
-  
+
     const cartItem = {
       _id: product._id,
       nombre: product.nombre,
@@ -419,7 +392,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       selections: selections,
       categoria: product.categoria,
     };
-  
+
     addToCart(cartItem);
     toast.success(`${product.nombre} fue agregado al carrito!`);
   };
@@ -548,142 +521,160 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           {/* Columna Izquierda Pegajosa (Imagen + Miniaturas) */}
           <div className="md:sticky top-28 self-start">
             <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4 group mx-auto">
-                <Image
-                  key={activeImage}
-                  src={activeImage}
-                  alt={product.alt || product.nombre}
-                  fill
-                  sizes="(max-width: 768px) 90vw, 50vw"
-                  style={{ objectFit: 'cover' }}
-                  className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
-                  priority
-                  onLoadingComplete={() => setIsAnimating(false)}
-                />
-                {allProductImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
-                      aria-label="Imagen anterior"
-                    >
-                      <ChevronLeftIcon className="h-6 w-6" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
-                      aria-label="Siguiente imagen"
-                    >
-                      <ChevronRightIcon className="h-6 w-6" />
-                    </button>
-                  </>
-                )}
-              </div>
+              <Image
+                key={activeImage}
+                src={activeImage}
+                alt={product.alt || product.nombre}
+                fill
+                sizes="(max-width: 768px) 90vw, 50vw"
+                style={{ objectFit: 'cover' }}
+                className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
+                priority
+                onLoadingComplete={() => setIsAnimating(false)}
+              />
+              {allProductImages.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                    aria-label="Imagen anterior"
+                  >
+                    <ChevronLeftIcon className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                    aria-label="Siguiente imagen"
+                  >
+                    <ChevronRightIcon className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+            </div>
 
             {/* Miniaturas para Escritorio */}
-              {allProductImages.length > 1 && (
-                <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto mt-4">
-                  {showThumbnailLeftArrow && (
-                    <button onClick={() => scrollThumbnails('left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
-                      <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
-                    </button>
-                  )}
-                  <div ref={thumbnailCarouselRef} tabIndex={0} className="flex flex-nowrap gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-4">
-                    {allProductImages.map((img, index) => (
-                      <div
-                        key={index}
-                        className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-200 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 ring-offset-2' : 'hover:opacity-80'}`}
-                        onClick={() => handleImageChange(img)}
-                      >
-                        <Image
-                          src={img}
-                          alt={`Thumbnail ${index + 1}`}
-                          fill
-                          sizes="80px"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {showThumbnailRightArrow && (
-                    <button onClick={() => scrollThumbnails('right')} className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
-                      <ChevronRightIcon className="h-6 w-6 text-gray-700" />
-                    </button>
-                  )}
+            {allProductImages.length > 1 && (
+              <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto mt-4 group/thumbnails">
+
+                {/* Gradient Masks */}
+                <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
+                <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopRightArrow ? 'opacity-100' : 'opacity-0'}`} />
+
+                {/* Left Arrow */}
+                <button
+                  onClick={() => scrollThumbnails(desktopCarouselRef, 'left')}
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopLeftArrow ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'}`}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+
+                <div
+                  ref={desktopCarouselRef}
+                  tabIndex={0}
+                  className="flex flex-nowrap gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1 w-full scroll-smooth focus:outline-none"
+                >
+                  {allProductImages.map((img, index) => (
+                    <div
+                      key={index}
+                      id={`thumbnail-desktop-${index}`}
+                      className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none transform ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 hover:scale-105 opacity-70'}`}
+                      onClick={() => handleImageChange(img)}
+                    >
+                      <Image
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        fill
+                        sizes="80px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              )}
+
+                {/* Right Arrow */}
+                <button
+                  onClick={() => scrollThumbnails(desktopCarouselRef, 'right')}
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopRightArrow ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Columna Derecha con Scroll */}
           <div className="min-w-0 space-y-8">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
-              <div className="flex items-center">
-                <StarRating rating={parseFloat(averageRating)} />
-                <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
-              </div>
-              <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
+            <div className="flex items-center">
+              <StarRating rating={parseFloat(averageRating)} />
+              <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
+            </div>
+            <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
 
-              {product.descripcionBreve && (
-                <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
-              )}
+            {product.descripcionBreve && (
+              <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
+            )}
 
-              {/* --- Grupos de Personalización --- */}
-              <div ref={addToCartRef} className="space-y-6">
-                {orderedCustomizationGroups.map((group, index) => {
-                  const groupNumber = index + 1;
-                  const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
+            {/* --- Grupos de Personalización --- */}
+            <div ref={addToCartRef} className="space-y-6">
+              {orderedCustomizationGroups.map((group, index) => {
+                const groupNumber = index + 1;
+                const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
 
-                  if (isCoverDesignGroup) {
-                    const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
-                    return (
-                      <div ref={coverGalleryRef} key={group.name}>
-                        <NewCoverDesignGallery
-                          groupName={`${groupNumber}. ${groupTitle}`}
-                          options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
-                          onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
-                          selectedOptionName={selections[group.name]}
+                if (isCoverDesignGroup) {
+                  const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
+                  return (
+                    <div key={group.name}>
+                      <NewCoverDesignGallery
+                        groupName={`${groupNumber}. ${groupTitle}`}
+                        options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
+                        onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
+                        selectedOptionName={selections[group.name]}
+                      />
+                    </div>
+                  );
+                } else {
+                  const groupTitle = customGroupTitles[group.name] || group.name;
+                  return (
+                    <div key={group.name}>
+                      <h3 className="font-bold text-lg text-gray-800 mb-2">{groupNumber}. {groupTitle}{group.required && <span className="text-red-500 ml-1">*</span>}</h3>
+                      {group.type === 'text' ? (
+                        <input
+                          type="text"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
+                          placeholder="Escribe aquí..."
+                          value={selections[group.name] || ''}
+                          onChange={(e) => handleSelectionChange(group.name, e.target.value)}
                         />
-                      </div>
-                    );
-                  } else {
-                    const groupTitle = customGroupTitles[group.name] || group.name;
-                    return (
-                      <div key={group.name}>
-                        <h3 className="font-bold text-lg text-gray-800 mb-2">{groupNumber}. {groupTitle}{group.required && <span className="text-red-500 ml-1">*</span>}</h3>
-                        {group.type === 'text' ? (
-                          <input
-                            type="text"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
-                            placeholder="Escribe aquí..."
-                            value={selections[group.name] || ''}
-                            onChange={(e) => handleSelectionChange(group.name, e.target.value)}
-                          />
-                        ) : (
-                          <div className="flex flex-wrap gap-3">
-                            {(group.options || []).map((option) => (
-                              <button
-                                key={option.name}
-                                onClick={() => handleSelectionChange(group.name, option.name)}
-                                className={`px-6 py-3 rounded-lg border text-base font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                              >
-                                {option.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                })}
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          {(group.options || []).map((option) => (
+                            <button
+                              key={option.name}
+                              onClick={() => handleSelectionChange(group.name, option.name)}
+                              className={`px-6 py-3 rounded-lg border text-base font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                            >
+                              {option.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              })}
 
 
-              </div>
+            </div>
 
-              {/* --- Botones de Acción --- */}
-              <div className="hidden md:flex flex-col sm:flex-row gap-4 mt-8">
-                <button onClick={handleAddToCart} className="w-full sm:w-auto bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition flex-grow">
-                  Agregar al carrito
-                </button>
-              </div>
+            {/* --- Botones de Acción --- */}
+            <div className="hidden md:flex flex-col sm:flex-row gap-4 mt-8">
+              <button onClick={handleAddToCart} className="w-full sm:w-auto bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition flex-grow">
+                Agregar al carrito
+              </button>
+            </div>
           </div>
         </div>
 
@@ -721,21 +712,30 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             {/* Miniaturas para Móvil */}
             {allProductImages.length > 1 && (
               <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto">
-                {showThumbnailLeftArrow && (
-                  <button onClick={() => scrollThumbnails('left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
-                    <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
+                {/* Gradient Masks */}
+                <div className={`absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showMobileLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
+                <div className={`absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showMobileRightArrow ? 'opacity-100' : 'opacity-0'}`} />
+
+                {showMobileLeftArrow && (
+                  <button onClick={() => scrollThumbnails(mobileCarouselRef, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1.5 z-20 shadow-md border border-gray-100">
+                    <ChevronLeftIcon className="h-5 w-5 text-gray-700" />
                   </button>
                 )}
-                <div ref={thumbnailCarouselRef} tabIndex={0} className="flex flex-nowrap gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-4">
+                <div ref={mobileCarouselRef} tabIndex={0} className="flex flex-nowrap gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-4 w-full scroll-smooth focus:outline-none">
                   {allProductImages.map((img, index) => (
-                    <div key={index} className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-200 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 ring-offset-2' : 'hover:opacity-80'}`} onClick={() => handleImageChange(img)}>
+                    <div
+                      key={index}
+                      id={`thumbnail-mobile-${index}`}
+                      className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 opacity-80'}`}
+                      onClick={() => handleImageChange(img)}
+                    >
                       <Image src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
                     </div>
                   ))}
                 </div>
-                {showThumbnailRightArrow && (
-                  <button onClick={() => scrollThumbnails('right')} className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 z-10 shadow-md hover:bg-white">
-                    <ChevronRightIcon className="h-6 w-6 text-gray-700" />
+                {showMobileRightArrow && (
+                  <button onClick={() => scrollThumbnails(mobileCarouselRef, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1.5 z-20 shadow-md border border-gray-100">
+                    <ChevronRightIcon className="h-5 w-5 text-gray-700" />
                   </button>
                 )}
               </div>
@@ -760,7 +760,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 if (isCoverDesignGroup) {
                   const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
                   return (
-                    <div ref={coverGalleryRef} key={group.name}>
+                    <div key={group.name}>
                       <NewCoverDesignGallery groupName={`${groupNumber}. ${groupTitle}`} options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))} onSelectOption={(option) => handleCoverDesignSelect(group.name, option)} selectedOptionName={selections[group.name]} />
                     </div>
                   );
@@ -835,56 +835,56 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
         {relatedProducts.length > 0 && (
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <section className="mt-16">
-            <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {relatedProducts.map((p) => (
-                <Link key={p._id} href={`/productos/detail/${p.slug}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
-                  <div className="relative w-full aspect-square">
-                    <Image
-                      src={p.images?.[0] || p.imageUrl || '/placeholder.png'}
-                      alt={p.nombre}
-                      fill
-                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
-                      style={{ objectFit: 'cover' }}
-                      className="group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">{p.nombre}</h3>
-                    {getCardDisplayPrice(p) && <p className="text-pink-500 font-semibold mt-2">$U {getCardDisplayPrice(p)}</p>}
-                  </div>
-                  <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
-                    Ver más
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
+            <section className="mt-16">
+              <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {relatedProducts.map((p) => (
+                  <Link key={p._id} href={`/productos/detail/${p.slug}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
+                    <div className="relative w-full aspect-square">
+                      <Image
+                        src={p.images?.[0] || p.imageUrl || '/placeholder.png'}
+                        alt={p.nombre}
+                        fill
+                        sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
+                        style={{ objectFit: 'cover' }}
+                        className="group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col flex-grow">
+                      <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">{p.nombre}</h3>
+                      {getCardDisplayPrice(p) && <p className="text-pink-500 font-semibold mt-2">$U {getCardDisplayPrice(p)}</p>}
+                    </div>
+                    <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
+                      Ver más
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
           </div>
         )}
       </div>
 
       {/* --- Botón de Compra Pegajoso para Móviles --- */}
-      
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
-          <div className="flex justify-between items-center gap-4">
-            {/* Precio a la izquierda */}
-            <div className="text-left flex-1">
-              <p className="text-xs text-gray-500 -mb-1">Total</p>
-              <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
-            </div>
-            {/* Botón de Añadir a la derecha (principal) */}
-            <button 
-              onClick={handleAddToCart} 
-              className="bg-pink-500 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition text-lg whitespace-nowrap"
-            >
-              Agregar al carrito
-            </button>
 
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
+        <div className="flex justify-between items-center gap-4">
+          {/* Precio a la izquierda */}
+          <div className="text-left flex-1">
+            <p className="text-xs text-gray-500 -mb-1">Total</p>
+            <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
           </div>
+          {/* Botón de Añadir a la derecha (principal) */}
+          <button
+            onClick={handleAddToCart}
+            className="bg-pink-500 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition text-lg whitespace-nowrap"
+          >
+            Agregar al carrito
+          </button>
+
         </div>
-      
+      </div>
+
 
       {/* --- Botón Flotante de WhatsApp para Móviles --- */}
       <a
@@ -923,7 +923,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (mongoose.Types.ObjectId.isValid(slug)) {
     await connectDB();
     const productById = await Product.findById(slug).lean();
-    
+
     // If a product is found with this ID, and it has a category slug, redirect to the new URL structure
     if (productById && productById.categoria && productById.slug) {
       const newUrl = `/productos/${productById.categoria}/${productById.slug}`;
@@ -1041,7 +1041,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         mainCategory: JSON.parse(JSON.stringify(mainCategory)),
         subCategory: JSON.parse(JSON.stringify(subCategory)),
       },
-      // revalidate: 3600, // Revalidate once per hour
+      revalidate: 60, // Revalidar cada 60 segundos
     }
   } catch (error) {
     console.error(`Error fetching product details for slug: ${slug}`, error)

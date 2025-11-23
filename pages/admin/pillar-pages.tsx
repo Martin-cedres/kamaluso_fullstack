@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { IPillarPage } from '../../models/PillarPage'; // Importar la interfaz
+import { IPillarPage, IPillarPageDTO } from '../../models/PillarPage'; // Importar las interfaces
 
 // Componente de Formulario para la Página Pilar
 const PillarPageForm = ({ onSubmit, initialData, onCancel, onGenerateAIContent, isGeneratingAIContent, setIsGeneratingAIContent }: {
   onSubmit: (data: any) => void;
-  initialData?: IPillarPage | null;
+  initialData?: IPillarPageDTO | null;
   onCancel: () => void;
   onGenerateAIContent: (data: { id?: string; topic: string; title: string }) => Promise<void>;
   isGeneratingAIContent: boolean;
@@ -41,7 +41,7 @@ const PillarPageForm = ({ onSubmit, initialData, onCancel, onGenerateAIContent, 
     if (initialData?.proposedContent && !initialData.content && !formData.content) {
       setFormData(f => ({ ...f, content: initialData.proposedContent }));
     }
-  }, [formData.title, initialData, initialData?.proposedContent]);
+  }, [formData.title, initialData, initialData?.proposedContent, formData.content]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -61,7 +61,7 @@ const PillarPageForm = ({ onSubmit, initialData, onCancel, onGenerateAIContent, 
     setIsGeneratingAIContent(true);
     try {
       await onGenerateAIContent({
-        id: initialData?._id, // Puede que aún no tenga ID si es nuevo
+        id: initialData?._id as string | undefined, // Puede que aún no tenga ID si es nuevo
         topic: formData.topic,
         title: formData.title,
       });
@@ -160,10 +160,10 @@ const PillarPageForm = ({ onSubmit, initialData, onCancel, onGenerateAIContent, 
 
 // Componente Principal de la Página
 const AdminPillarPages = () => {
-  const [pillarPages, setPillarPages] = useState<IPillarPage[]>([]);
+  const [pillarPages, setPillarPages] = useState<IPillarPageDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingPage, setEditingPage] = useState<IPillarPage | null>(null);
+  const [editingPage, setEditingPage] = useState<IPillarPageDTO | null>(null);
   const [isGeneratingAIContent, setIsGeneratingAIContent] = useState(false);
 
   const fetchPillarPages = useCallback(async () => {
@@ -272,7 +272,7 @@ const AdminPillarPages = () => {
   };
 
 
-  const handleEdit = (page: IPillarPage) => {
+  const handleEdit = (page: IPillarPageDTO) => {
     setEditingPage(page);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });

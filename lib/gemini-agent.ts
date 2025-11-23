@@ -1,5 +1,6 @@
 // lib/gemini-agent.ts
 import { generateContentSmart } from "./gemini-client";
+import { Part } from "@google/generative-ai";
 
 /**
  * Genera contenido de texto utilizando el cliente inteligente de Gemini.
@@ -9,7 +10,7 @@ import { generateContentSmart } from "./gemini-client";
  * @param prompt El prompt de texto para enviar al modelo de IA.
  * @returns Una promesa que se resuelve con el texto generado.
  */
-export async function generateWithFallback(prompt: string): Promise<string> {
+export async function generateWithFallback(prompt: string | (string | Part)[]): Promise<string> {
   try {
     // Delegar directamente al cliente inteligente. Él se encargará de todo.
     const result = await generateContentSmart(prompt);

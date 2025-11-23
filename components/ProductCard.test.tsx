@@ -53,7 +53,7 @@ describe('Componente: ProductCard', () => {
 
   it('debería tener los enlaces correctos a la página de detalle del producto', () => {
     render(<ProductCard product={mockProduct} />);
-    const expectedUrl = '/productos/detail/test-product';
+    const expectedUrl = `/productos/detail/${mockProduct.slug}`;
 
     // El componente tiene 3 enlaces que apuntan a la misma URL
     const links = screen.getAllByRole('link');

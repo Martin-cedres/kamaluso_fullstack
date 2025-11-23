@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import AdminLayout from '../../../../components/AdminLayout';
 import toast from 'react-hot-toast';
 import ReactDiffViewer from 'react-diff-viewer-continued';
-import { IReviewItem } from '../api/admin/clusters/review-data';
+import { IReviewItem } from '../../../../types/cluster';
 
 const ReviewClusterChanges = () => {
   const router = useRouter();
