@@ -29,7 +29,7 @@ export const uploadFileToS3 = async (file: formidable.File) => {
       Key: s3Key,
       Body: fileBuffer,
       ContentType: file.mimetype || "application/octet-stream",
-      ACL: "public-read", // 🔑 Hacer público
+      // ACL removido - la Bucket Policy maneja el acceso público
     })
   );
 

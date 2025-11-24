@@ -58,6 +58,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       const updateDoc: any = {};
 
+      console.log('--- DEBUG EDITAR PRODUCTO ---');
+      console.log('Fields recibidos:', JSON.stringify(fields, null, 2));
+      console.log('ID recibido:', productId);
+
       // --- Nueva Lógica de Categorías ---
       let leafCategorySlugFromForm: string;
       const subCategoriaFromForm = getFieldValue(fields.subCategoria);
@@ -98,7 +102,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (fields.nombre) updateDoc.nombre = String(fields.nombre);
       if (fields.slug) updateDoc.slug = String(fields.slug);
       if (fields.claveDeGrupo) updateDoc.claveDeGrupo = String(fields.claveDeGrupo);
-      if (fields.descripcion) updateDoc.descripcion = fields.descripcion as string;
+
+      // FIX: Use getFieldValue for description to handle potential array from formidable
+      if (fields.descripcion) updateDoc.descripcion = getFieldValue(fields.descripcion);
+
       if (fields.seoTitle) updateDoc.seoTitle = String(fields.seoTitle);
       if (fields.seoDescription) updateDoc.seoDescription = String(fields.seoDescription);
       if (fields.alt) updateDoc.alt = String(fields.alt);
@@ -279,9 +286,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
       }
 
+      console.log('UpdateDoc final:', JSON.stringify(updateDoc, null, 2));
+
       const result = await db
         .collection('products')
         .updateOne({ _id: new ObjectId(productId) }, { $set: updateDoc })
+
+      console.log('Resultado updateOne:', result);
 
       // Revalidar las páginas afectadas
       const updatedProduct = await db.collection('products').findOne({ _id: new ObjectId(productId) });
@@ -305,5 +316,4 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   })
 }
 
-// Exportación corregida
 export default withAuth(handler)

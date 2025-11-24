@@ -81,7 +81,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-md fixed w-full z-50">
+    <nav className="bg-white shadow-md fixed w-full z-50 transition-all duration-300" style={{ top: 'var(--topbar-height, 0px)' }}>
       <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16">
         <Link href="/" className="flex items-center" onClick={closeAllMenus}>
           <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" unoptimized />
@@ -93,9 +93,9 @@ export default function Navbar() {
             Inicio
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          
+
           {/* Mega Menu Container */}
-          <div 
+          <div
             className="relative"
             onMouseEnter={handleMenuEnter}
             onMouseLeave={handleMenuLeave}
@@ -104,10 +104,10 @@ export default function Navbar() {
               <span>Productos</span>
               <span className="transform transition-transform duration-200" style={{ transform: openDropdown === 'productos' ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </button>
-            
+
             {openDropdown === 'productos' && !loading && (
-              <MegaMenu 
-                categories={categories} 
+              <MegaMenu
+                categories={categories}
                 closeAllMenus={closeAllMenus}
                 handleMouseEnter={handleMenuEnter}
                 handleMouseLeave={handleMenuLeave}

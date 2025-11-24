@@ -15,6 +15,7 @@ import {
   CircleStackIcon,
   BeakerIcon,
   EyeIcon, // <-- Icono para Modo Espía
+  MegaphoneIcon,
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -34,6 +35,7 @@ const navigation = [
   { name: 'Modo Espía', href: '/admin/competitor-analysis', icon: EyeIcon },
   // --- Fin Nuevos Enlaces ---
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
+  { name: 'Banner de Anuncios', href: '/admin/settings', icon: MegaphoneIcon },
 ]
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {

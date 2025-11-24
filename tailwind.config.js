@@ -19,16 +19,18 @@ module.exports = {
         moradoClaro: '#6C63FF',
         rosa: '#E84393',
         fucsia: '#E84393',
-        fondoClaro: '#F8F9FA',
+        // Nuevos colores Premium
+        fondoClaro: '#F8FAFC', // Slate 50
         fondo: '#F9FAFB',
-        fondoOscuro: '#121212',
-        textoPrimario: '#1A1A1A',
-        textoPrimarioClaro: '#333333',
-        textoSecundario: '#666666',
+        fondoOscuro: '#0F172A', // Slate 900
+        textoPrimario: '#0F172A', // Slate 900
+        textoPrimarioClaro: '#334155', // Slate 700
+        textoSecundario: '#64748B', // Slate 500
         textoClaro: '#FFFFFF',
       },
       fontFamily: {
         sans: ['var(--font-inter)', ...fontFamily.sans],
+        heading: ['var(--font-outfit)', ...fontFamily.sans],
         inter: ['Inter', 'sans-serif'],
         poppins: ['Poppins', 'sans-serif'],
       },

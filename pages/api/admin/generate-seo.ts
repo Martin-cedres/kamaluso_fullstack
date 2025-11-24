@@ -107,6 +107,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       ${specializedInstructions}
 
+      **INFORMACIÓN CLAVE DEL NEGOCIO KAMALUSO:**
+      - **Personalización de Tapas:** Nuestras agendas, libretas y cuadernos tienen tapas 100% personalizables (diseño, colores, logos, nombres).
+      - **Variedad de Interiores:** Ofrecemos la colección más amplia de Uruguay en interiores especializados (rayado, cuadriculado, grillas para bullet journal, hojas en blanco, calendarios mensuales/semanales, puntillado, etc.).
+      - **Propuesta de Valor Única:** El cliente diseña la tapa a su gusto Y elige el interior que mejor se adapte a su uso específico.
+      *Instrucción:* Cuando describas la personalización, enfatiza que "podés diseñar la tapa como quieras" y "elegir entre docenas de tipos de interior según tu necesidad".
+
       **DATOS DEL PRODUCTO:**
       - Nombre: ${nombre}
       - Contexto base: ${descripcion}

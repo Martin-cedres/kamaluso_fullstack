@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Head from 'next/head' // Importo Head para añadir el schema
 import SeoMeta from '../components/SeoMeta'; // Importar SeoMeta
 
+import { StarIcon } from '@heroicons/react/24/solid'; // Importar StarIcon
 import Product from '../models/Product'; // Importar el MODELO Product
 import Review from '../models/Review'; // Importar el modelo Review
 import Category from '../models/Category'; // Importar el MODELO Category
@@ -12,6 +13,7 @@ import FeaturedReviews from '../components/FeaturedReviews'; // Importar Feature
 import ProductCard from '../components/ProductCard'; // Importar ProductCard
 import { IReview } from '../models/Review'; // Importar la interfaz IReview global
 import NewsletterForm from '../components/NewsletterForm'; // Importar NewsletterForm
+import HowItWorks from '../components/HowItWorks'; // Importar HowItWorks
 
 // Interfaces
 interface Categoria {
@@ -106,30 +108,132 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
       </Head>
 
       <main className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
-        {/* Hero */}
-        <section className="flex flex-col items-center justify-center text-center px-6 py-16">
-          <Image
-            src="/logo.webp"
-            alt="Logo Kamaluso"
-            width={140}
-            height={140}
-            className="mb-6"
-          />
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Papelería Personalizada en Uruguay
-          </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Agendas, libretas y cuadernos únicos. <br /> ✨ Envíos a todo
-            Uruguay ✨
-          </p>
-          <Link
-            href="/productos"
-            className="inline-block bg-pink-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-pink-600 transition-colors duration-300"
-          >
-            Ver Productos
-          </Link>
+        {/* Hero Section - Rediseñado para Impacto */}
+        <section className="relative bg-fondoClaro overflow-hidden">
+          {/* Patrón de fondo sutil */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(#0F172A 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+          </div>
 
+          <div className="max-w-7xl mx-auto px-6 py-16 md:py-24 lg:py-32 flex flex-col-reverse md:flex-row items-center justify-between gap-12 relative z-10">
+
+            {/* Texto Hero */}
+            <div className="flex-1 text-center md:text-left space-y-8">
+
+              {/* Badge de Confianza */}
+              <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100 animate-fade-in-up">
+                <div className="flex text-amarillo">
+                  <StarIcon className="h-5 w-5" />
+                  <StarIcon className="h-5 w-5" />
+                  <StarIcon className="h-5 w-5" />
+                  <StarIcon className="h-5 w-5" />
+                  <StarIcon className="h-5 w-5" />
+                </div>
+                <span className="text-sm font-medium text-textoSecundario">
+                  <span className="font-bold text-textoPrimario">4.9/5</span>
+                </span>
+              </div>
+
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-heading text-textoPrimario leading-tight tracking-tight">
+                Tu Vida, <br className="hidden md:block" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rosa to-moradoClaro">
+                  Organizada con Estilo.
+                </span>
+              </h1>
+
+              <p className="text-xl text-textoSecundario max-w-2xl mx-auto md:mx-0 leading-relaxed">
+                Deja el caos atrás con agendas y libretas 100% personalizadas.
+                Diseñadas en Uruguay para quienes valoran su tiempo y su identidad.
+              </p>
+
+              <div className="flex flex-col items-center gap-4 justify-center md:justify-start pt-4">
+                <Link
+                  href="/productos"
+                  className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-rosa to-moradoClaro text-white rounded-2xl font-bold text-xl shadow-kamalusoPink hover:shadow-kamalusoPinkXl hover:-translate-y-2 transition-all duration-300 text-center overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    Explorar Productos
+                    <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </span>
+                  <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                </Link>
+                <p className="text-sm text-textoSecundario">
+                  ✨ Personaliza tu agenda, libreta o planner ideal
+                </p>
+              </div>
+
+              <div className="pt-8 flex items-center justify-center md:justify-start gap-8 text-sm text-textoSecundario font-medium">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-verde"></span>
+                  Envíos a todo el país
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-verde"></span>
+                  Calidad Premium
+                </div>
+              </div>
+            </div>
+
+            {/* Imagen Hero */}
+            <div className="flex-1 w-full max-w-lg md:max-w-xl lg:max-w-2xl relative">
+              <div className="relative aspect-square md:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl transform md:rotate-3 hover:rotate-0 transition-transform duration-500 isolate will-change-transform">
+                <Image
+                  src="/Agendas tapa dura y tapa flex papeleriapersonalizada.uy kamaluso.webp"
+                  alt="Agendas Tapa Dura y Tapa Flex Personalizadas Uruguay - Kamaluso"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  style={{ objectFit: 'cover' }}
+                  className="transition-transform duration-700"
+                />
+                {/* Floating Card Effect */}
+                <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl shadow-2xl border border-white/60 hidden sm:block">
+                  {/* Header with Logo and Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <Image
+                      src="/logo.webp"
+                      alt="Kamaluso Logo"
+                      width={40}
+                      height={40}
+                      className="rounded-lg"
+                    />
+                    <span className="bg-gradient-to-r from-rosa to-moradoClaro text-white text-xs font-bold px-3 py-1 rounded-full">
+                      100% Tuya
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <p className="font-bold text-textoPrimario text-lg mb-3">Personalización Real</p>
+
+                  {/* Benefits */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-textoSecundario">
+                      <span className="text-base">✨</span>
+                      <span>Tapas + tu logo o diseño</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-textoSecundario">
+                      <span className="text-base">📖</span>
+                      <span>Interiores premium</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-textoSecundario">
+                      <span className="text-base">💪</span>
+                      <span>Tapa Dura o Flex</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Decorative Elements */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-amarillo/20 rounded-full blur-3xl -z-10"></div>
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-rosa/20 rounded-full blur-3xl -z-10"></div>
+            </div>
+
+          </div>
         </section>
+
+        {/* Cómo Funciona (Nuevo) */}
+        <HowItWorks />
 
         {/* Categorías Dinámicas */}
         <section className="px-6 py-12 bg-gray-50">
@@ -191,43 +295,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         {/* Reseñas Destacadas */}
         <FeaturedReviews reviews={reviews} />
 
-        {/* Sección de Proceso de Compra */}
-        <section className="px-6 py-12 bg-white">
-          <h2 className="text-3xl font-semibold text-center mb-8">
-            Así funciona tu compra personalizada
-          </h2>
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 flex items-center justify-center rounded-full bg-pink-100 text-pink-500 text-3xl font-bold mb-4">
-                1
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Elige y Personaliza</h3>
-              <p className="text-gray-600">Selecciona tu producto y ajusta los detalles a tu gusto.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 flex items-center justify-center rounded-full bg-pink-100 text-pink-500 text-3xl font-bold mb-4">
-                2
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Paga Seguro</h3>
-              <p className="text-gray-600">Completa tu compra con nuestros métodos de pago seguros.</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 flex items-center justify-center rounded-full bg-pink-100 text-pink-500 text-3xl font-bold mb-4">
-                3
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Recibe en Casa</h3>
-              <p className="text-gray-600">Tu pedido llega a la puerta de tu casa en todo Uruguay.</p>
-            </div>
-          </div>
-          <div className="text-center mt-10">
-            <Link
-              href="/proceso-de-compra"
-              className="inline-block bg-pink-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-pink-600 transition"
-            >
-              Ver Proceso Completo
-            </Link>
-          </div>
-        </section>
+
 
         {/* Newsletter Form */}
         <NewsletterForm />
@@ -273,7 +341,7 @@ export const getStaticProps: GetStaticProps = async () => {
   ];
 
   const destacadosData = await Product.aggregate(destacadosPipeline);
-  const destacados = JSON.parse(JSON.stringify(destacadosData)).map((p:any) => ({
+  const destacados = JSON.parse(JSON.stringify(destacadosData)).map((p: any) => ({
     ...p,
     averageRating: p.averageRating === null ? 0 : p.averageRating,
     numReviews: p.numReviews || 0,

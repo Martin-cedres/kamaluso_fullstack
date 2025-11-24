@@ -7,7 +7,7 @@ const adminEmails = [
   'katherinesilvalong@gmail.com',
 ]
 
-export default NextAuth({
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -16,7 +16,7 @@ export default NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -38,4 +38,6 @@ export default NextAuth({
       return session
     },
   },
-})
+}
+
+export default NextAuth(authOptions)

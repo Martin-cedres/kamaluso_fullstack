@@ -4,11 +4,12 @@ import { SessionProvider } from 'next-auth/react'
 import { CartProvider } from '../context/CartContext'
 import { CategoryProvider } from '../context/CategoryContext'
 import Navbar from '../components/Navbar'
+import TopBar from '../components/TopBar'
 import Head from 'next/head'
 import Script from 'next/script'
 import dynamic from 'next/dynamic'
 import { Toaster } from 'react-hot-toast'
-import { Inter } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { useRouter } from 'next/router'
@@ -26,6 +27,11 @@ const DynamicWhatsAppButton = dynamic(
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
 })
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -117,10 +123,11 @@ export default function App({ Component, pageProps }: AppProps) {
           />
           {/* Apply the font class to the main container */}
           <div
-            className={`${inter.variable} font-sans flex flex-col min-h-screen`}
+            className={`${inter.variable} ${outfit.variable} font-sans flex flex-col min-h-screen`}
           >
+            <TopBar />
             <Navbar />
-            <main className="flex-grow pb-24 pt-8">
+            <main className="flex-grow pb-24 transition-all duration-300" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 6rem)' }}>
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />

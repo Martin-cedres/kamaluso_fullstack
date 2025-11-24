@@ -2,10 +2,12 @@ import { GetStaticProps, GetStaticPaths } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
+import ProductCard from '../../../components/ProductCard';
+import VisualOptionSelector from '../../../components/VisualOptionSelector';
 import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ShieldCheckIcon, TruckIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
 import StarRating from '../../../components/StarRating';
@@ -430,20 +432,21 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     })),
   };
 
-  const faqSchema = product.faqs && product.faqs.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: product.faqs.map(faq => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer
-      }
-    }))
-  } : null;
-
-
+  let faqSchema = null;
+  if (product.faqs && product.faqs.length > 0) {
+    faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: product.faqs.map(faq => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer
+        }
+      }))
+    };
+  }
 
   return (
     <>
@@ -472,7 +475,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 '@type': 'Offer',
                 url: `https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`,
                 priceCurrency: 'UYU',
-                price: product.basePrice, // Assuming basePrice is the main price for schema
+                price: product.basePrice,
                 availability: 'https://schema.org/InStock',
                 itemCondition: 'https://schema.org/NewCondition',
               },
@@ -675,6 +678,22 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 Agregar al carrito
               </button>
             </div>
+
+            {/* Trust Badges (Desktop) */}
+            <div className="hidden md:flex items-center gap-6 mt-6 pt-6 border-t border-gray-100 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <ShieldCheckIcon className="w-5 h-5 text-verde" />
+                <span>Compra 100% Segura</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <TruckIcon className="w-5 h-5 text-azul" />
+                <span>Envíos a todo el país</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-5 h-5 text-amarillo" />
+                <span>Calidad Garantizada</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -757,19 +776,44 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               {orderedCustomizationGroups.map((group, index) => {
                 const groupNumber = index + 1;
                 const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
+
                 if (isCoverDesignGroup) {
                   const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
                   return (
                     <div key={group.name}>
-                      <NewCoverDesignGallery groupName={`${groupNumber}. ${groupTitle}`} options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))} onSelectOption={(option) => handleCoverDesignSelect(group.name, option)} selectedOptionName={selections[group.name]} />
+                      <NewCoverDesignGallery
+                        groupName={`${groupNumber}. ${groupTitle}`}
+                        options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
+                        onSelectOption={(option) => handleCoverDesignSelect(group.name, option)}
+                        selectedOptionName={selections[group.name]}
+                      />
                     </div>
                   );
                 } else {
                   const groupTitle = customGroupTitles[group.name] || group.name;
+
+                  // Determine visual type based on group name
+                  let selectorType: 'grid' | 'color' | 'text' | 'button' = 'button';
+                  if (group.type === 'text') selectorType = 'text';
+                  else if (group.name.toLowerCase().includes('interior') || group.name.toLowerCase().includes('diseño')) selectorType = 'grid';
+                  else if (group.name.toLowerCase().includes('wire') || group.name.toLowerCase().includes('elástico') || group.name.toLowerCase().includes('color')) selectorType = 'color';
+
                   return (
                     <div key={group.name}>
-                      <h3 className="font-bold text-lg text-gray-800 mb-2">{groupNumber}. {groupTitle}{group.required && <span className="text-red-500 ml-1">*</span>}</h3>
-                      {group.type === 'text' ? (<input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500" placeholder="Escribe aquí..." value={selections[group.name] || ''} onChange={(e) => handleSelectionChange(group.name, e.target.value)} />) : (<div className="flex flex-wrap gap-3">{(group.options || []).map((option) => (<button key={option.name} onClick={() => handleSelectionChange(group.name, option.name)} className={`px-6 py-3 rounded-lg border text-base font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>{option.name}</button>))}</div>)}
+                      <VisualOptionSelector
+                        type={selectorType}
+                        title={`${groupNumber}. ${groupTitle}`}
+                        required={group.required}
+                        options={(group.options || []).map(opt => ({
+                          name: opt.name,
+                          priceModifier: opt.priceModifier,
+                          // For grid types, we might want to map to specific images if available, 
+                          // otherwise VisualOptionSelector handles placeholders.
+                          // For color types, VisualOptionSelector handles color mapping by name.
+                        }))}
+                        selectedOption={selections[group.name]}
+                        onSelect={(value) => handleSelectionChange(group.name, value)}
+                      />
                     </div>
                   );
                 }
@@ -798,75 +842,79 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             </div>
 
             <div className="py-8">
-              {activeTab === 'descripcion' && (
-                <div className="prose max-w-none text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.descripcion || product.descripcionExtensa || '' }} />
-              )}
-              {activeTab === 'puntosClave' && (
-                <div>
-                  <ul className="space-y-4">
-                    {product.puntosClave?.map((punto, index) => (
-                      <li key={index} className="flex items-start">
-                        <svg className="h-6 w-6 text-pink-500 mr-4 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-gray-700 text-lg">{punto}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {activeTab === 'reseñas' && (
-                <div id="reviews-section" className="max-w-4xl mx-auto">
-                  <div className="space-y-12">
-                    <ReviewForm productId={product._id} onReviewSubmit={() => window.location.reload()} />
-                    <ReviewList reviews={reviews} />
-                  </div>
-                </div>
-              )}
-              {activeTab === 'faqs' && (
-                <FaqSection faqs={product.faqs || []} />
-              )}
-              {activeTab === 'useCases' && (
-                <UseCasesSection useCases={product.useCases || []} />
-              )}
+              {/* ... content ... */}
             </div>
-          </div>
-        </div>
 
-        {relatedProducts.length > 0 && (
+
+            {/* Sticky Mobile Add to Cart Bar */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 md:hidden z-50 flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.1)] safe-area-bottom">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 font-medium">Total a pagar</span>
+                <span className="text-xl font-bold text-rosa">$U {totalPrice}</span>
+              </div>
+              <button
+                onClick={handleAddToCart}
+                className="bg-rosa text-white px-8 py-3 rounded-xl font-bold shadow-kamalusoPink hover:bg-pink-600 transition-all active:scale-95"
+              >
+                Agregar
+              </button>
+            </div>
+
+            {activeTab === 'descripcion' && (
+              <div className="prose max-w-none text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.descripcion || product.descripcionExtensa || '' }} />
+            )}
+            {activeTab === 'puntosClave' && (
+              <div>
+                <ul className="space-y-4">
+                  {product.puntosClave?.map((punto, index) => (
+                    <li key={index} className="flex items-start">
+                      <svg className="h-6 w-6 text-pink-500 mr-4 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-gray-700 text-lg">{punto}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {activeTab === 'reseñas' && (
+              <div id="reviews-section" className="max-w-4xl mx-auto">
+                <div className="space-y-12">
+                  <ReviewForm productId={product._id} onReviewSubmit={() => window.location.reload()} />
+                  <ReviewList reviews={reviews} />
+                </div>
+              </div>
+            )}
+            {activeTab === 'faqs' && (
+              <FaqSection faqs={product.faqs || []} />
+            )}
+            {activeTab === 'useCases' && (
+              <UseCasesSection useCases={product.useCases || []} />
+            )}
+          </div>
+        </div >
+      </div >
+
+      {
+        relatedProducts.length > 0 && (
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <section className="mt-16">
               <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
                 {relatedProducts.map((p) => (
-                  <Link key={p._id} href={`/productos/detail/${p.slug}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group flex flex-col">
-                    <div className="relative w-full aspect-square">
-                      <Image
-                        src={p.images?.[0] || p.imageUrl || '/placeholder.png'}
-                        alt={p.nombre}
-                        fill
-                        sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
-                        style={{ objectFit: 'cover' }}
-                        className="group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h3 className="font-bold text-lg truncate text-gray-800 flex-grow">{p.nombre}</h3>
-                      {getCardDisplayPrice(p) && <p className="text-pink-500 font-semibold mt-2">$U {getCardDisplayPrice(p)}</p>}
-                    </div>
-                    <div className="block w-full bg-pink-500 text-white px-4 py-3 font-medium text-center shadow-md rounded-b-2xl">
-                      Ver más
-                    </div>
-                  </Link>
+                  <div key={p._id} className="h-full">
+                    <ProductCard product={p} />
+                  </div>
                 ))}
               </div>
             </section>
           </div>
-        )}
-      </div>
+        )
+      }
 
       {/* --- Botón de Compra Pegajoso para Móviles --- */}
 
+      {/* --- Botón de Compra Pegajoso para Móviles --- */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
         <div className="flex justify-between items-center gap-4">
           {/* Precio a la izquierda */}
@@ -881,10 +929,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           >
             Agregar al carrito
           </button>
-
         </div>
       </div>
-
 
       {/* --- Botón Flotante de WhatsApp para Móviles --- */}
       <a

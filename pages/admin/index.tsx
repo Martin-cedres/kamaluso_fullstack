@@ -598,7 +598,23 @@ const AdminIndex = () => {
         seoTitle: generatedContent.seoTitle,
         seoDescription: generatedContent.seoDescription,
         seoKeywords: Array.isArray(generatedContent.seoKeywords) ? generatedContent.seoKeywords.join(', ') : generatedContent.seoKeywords || '',
-        puntosClave: Array.isArray(generatedContent.puntosClave) ? generatedContent.puntosClave.join(', ') : generatedContent.puntosClave || '',
+        puntosClave: (() => {
+          const raw = generatedContent.puntosClave;
+          if (Array.isArray(raw)) return raw.join(', ');
+          if (typeof raw === 'string') {
+            // Intentar parsear si parece un array JSON
+            if (raw.trim().startsWith('[') && raw.trim().endsWith(']')) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed.join(', ');
+              } catch (e) {
+                // Si falla, devolver string original
+              }
+            }
+            return raw;
+          }
+          return '';
+        })(),
         descripcion: generatedContent.descripcionExtensa || currentForm.descripcion,
         // --- CAMPOS ADICIONALES ACTUALIZADOS ---
         descripcionBreve: generatedContent.descripcionBreve || '',
@@ -810,35 +826,19 @@ const AdminIndex = () => {
       Object.keys(form).forEach((key) => {
         if (key === 'seoKeywords') {
           // Enviar como string directo, el backend lo espera así (separado por comas)
-          // Si es array, lo unimos. Si es string, lo enviamos tal cual.
           const keywordsToSend = Array.isArray(form.seoKeywords)
             ? form.seoKeywords.join(',')
             : form.seoKeywords;
-
           formData.append('seoKeywords', keywordsToSend);
         } else if (key !== 'customizationGroups' && key !== 'categoria' && key !== 'subCategoria' && key !== 'faqs' && key !== 'useCases' && key !== 'puntosClave' && key !== 'descripcionBreve') {
-          // Excluir los que manejamos manualmente abajo para evitar duplicados
-          // Asegurar que puntosClave se envíe como array de strings
-          if (form.puntosClave) {
-            // Si es string (del input separado por comas), lo convertimos a array
-            const puntosArray = typeof form.puntosClave === 'string'
-              ? form.puntosClave.split(',').map((p: string) => p.trim()).filter((p: string) => p)
-              : form.puntosClave;
-
-            // Enviamos cada punto clave individualmente para que el backend lo reciba como array
-            // O si el backend espera un JSON stringificado, ajustamos aquí.
-            // Basado en generate-seo.ts, el backend espera un array en el modelo.
-            // FormData con misma key crea un array en el servidor si se usa multer/formidable correctamente,
-            // pero para mayor seguridad con Next.js API routes, a veces es mejor enviar JSON stringificado si el backend lo parsea.
-            // Revisando api/products/editar, usa formidable.
-            // Vamos a enviar como JSON stringificado para evitar problemas de parsing de arrays en FormData
-            formData.append('puntosClave', JSON.stringify(puntosArray));
-          }
-
-          if (image) formData.append('image', image)
-          images.forEach((f, i) => formData.append(`images[${i}]`, f))
+          // Append regular fields (these are excluded and handled separately below)
+          formData.append(key, form[key]);
         }
       })
+
+      // Handle images OUTSIDE the loop
+      if (image) formData.append('image', image)
+      images.forEach((f, i) => formData.append(`images[${i}]`, f))
 
       // Append option images
       Object.keys(optionImages).forEach(key => {
@@ -851,6 +851,27 @@ const AdminIndex = () => {
       if (selectedSubCategoria) {
         formData.append('subCategoria', selectedSubCategoria)
       }
+
+      // --- Append complex fields that were excluded from the loop ---
+      if (form.descripcionBreve) {
+        formData.append('descripcionBreve', form.descripcionBreve);
+      }
+      if (form.puntosClave) {
+        const puntosArray = typeof form.puntosClave === 'string'
+          ? form.puntosClave.split(',').map((p: string) => p.trim()).filter((p: string) => p)
+          : form.puntosClave;
+        formData.append('puntosClave', JSON.stringify(puntosArray));
+      }
+      if (form.faqs && form.faqs.length > 0) {
+        formData.append('faqs', JSON.stringify(form.faqs));
+      }
+      if (form.useCases && form.useCases.length > 0) {
+        formData.append('useCases', JSON.stringify(form.useCases));
+      }
+      if (form.customizationGroups && form.customizationGroups.length > 0) {
+        formData.append('customizationGroups', JSON.stringify(form.customizationGroups));
+      }
+      // ------------------------------------------------------------------
 
       setProgress(30)
       const url = editId ? '/api/products/editar' : '/api/products/crear'
@@ -894,7 +915,7 @@ const AdminIndex = () => {
 
   const handleEditClick = async (id: string) => {
     try {
-      const res = await fetch(`/api/products/get?id=${id}`)
+      const res = await fetch(`/api/products/get?id=${id}&t=${Date.now()}`)
       if (!res.ok) throw new Error('No se pudo obtener el producto')
       const p = await res.json()
       setEditingProduct(p);

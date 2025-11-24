@@ -52,3 +52,67 @@ Se implementaron dos nuevas herramientas enfocadas en ventas y competencia:
     - **Creación Manual:** Se corrigió el error 500 en `/api/admin/pillar-pages/crear` añadiendo validación de contenido y manejo de colisiones de slug (sufijos automáticos).
     - **Fábrica de Clusters:** Se corrigió la estructura del payload enviado desde el frontend y el manejo de acentos en la generación de slugs.
     - **Frontend:** Se solucionaron errores de sintaxis y el problema de `Invalid <Link>` en las notificaciones toast.
+
+### Mejoras Visuales y de UX (23 de noviembre de 2025 - Fase 1 & 2)
+
+Se implementó un rediseño significativo enfocado en la percepción de valor "Premium" y la optimización de conversiones (CRO):
+
+1.  **Hero Section de Alto Impacto (`pages/index.tsx`):**
+    - Nuevo diseño de pantalla dividida con tipografía moderna y gradientes.
+    - Badge de confianza simplificado ("4.9/5") para prueba social inmediata.
+    - Llamadas a la acción claras y jerarquizadas.
+
+2.  **Tarjetas de Producto Mejoradas (`components/ProductCard.tsx`):**
+    - Sombras suaves y efectos hover para tangibilidad.
+    - Reemplazo del botón `+` por una flecha de navegación (`->`) para mayor claridad.
+    - **Corrección de Bugs:** Se solucionaron problemas de propiedades indefinidas (`imagen` vs `imageUrl`, `precio` vs `basePrice`) para soportar productos relacionados.
+
+3.  **Barra de Compra "Sticky" en Móvil (`pages/productos/detail/[slug].tsx`):**
+    - Barra fija inferior en vistas móviles con precio y botón de "Agregar".
+    - Aumenta la conversión al mantener la acción de compra siempre visible.
+
+4.  **Selectores Visuales (`components/VisualOptionSelector.tsx`):**
+    - Se reemplazaron los botones de texto por una experiencia de "Constructor Visual".
+    - **Interiores:** Grilla de miniaturas.
+    - **Acabados:** Swatches de color real.
+    - **Texto:** Input estilizado.
+    - Integración dinámica basada en el nombre del grupo de opciones.
+
+### Implementación del Sistema de Banner de Anuncios (24 de noviembre de 2025)
+
+Se implementó un sistema completo de gestión de anuncios (Top Bar) con panel de administración:
+
+1.  **Modelo de Datos (`models/Settings.ts`):**
+    - Creado modelo `Settings` en MongoDB para almacenar configuraciones globales del sitio.
+    - Schema incluye propiedades para: `enabled`, `text`, `link`, `couponCode`, `backgroundColor`, `textColor`.
+
+2.  **API Endpoint (`pages/api/admin/settings.ts`):**
+    - GET público para que el frontend lea la configuración.
+    - PUT protegido con autenticación de admin usando `getServerSession` y `authOptions`.
+    - Correcciones: Se exportó `authOptions` desde `[...nextauth].ts` para reutilización.
+    - Correcciones: Se cambió `mongooseConnect` por `connectDB` para coincidir con la exportación correcta.
+
+3.  **Panel de Administración (`pages/admin/settings.tsx`):**
+    - Nueva página `/admin/settings` para gestionar el banner.
+    - Controles: activar/desactivar, texto del mensaje, enlace, código de cupón, colores personalizables.
+    - Vista previa en tiempo real del banner.
+    - Título actualizado: "Gestión del Banner de Anuncios".
+
+4.  **Componente Frontend (`components/TopBar.tsx`):**
+    - Componente que consume la configuración desde el API.
+    - Se muestra en la parte superior de todas las páginas.
+    - Incluye botón de cierre (dismiss).
+    - Usa `fetch` en lugar de axios para evitar dependencias innecesarias.
+
+5.  **Integración en AdminLayout (`components/AdminLayout.tsx`):**
+    - Agregado enlace "Banner de Anuncios" en el menú lateral del admin.
+    - Icono: `MegaphoneIcon` (más intuitivo que el engranaje de configuración).
+
+6.  **Integración Global (`pages/_app.tsx`):**
+    - `TopBar` agregado al layout principal para aparecer en todas las páginas.
+
+**Correcciones realizadas durante la implementación:**
+- Exportación de `authOptions` para permitir verificación de sesión en APIs.
+- Corrección de nombre de función `mongooseConnect` → `connectDB`.
+- Reemplazo de `axios` por `fetch` nativo para evitar dependencias.
+- Mejora del manejo de errores en el frontend para debugging.
