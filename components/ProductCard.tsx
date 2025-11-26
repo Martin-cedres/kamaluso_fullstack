@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import StarRating from './StarRating'; // Importar StarRating
+import OptimizedImage from './OptimizedImage';
+import StarRating from './StarRating';
 import Head from 'next/head';
 
 export interface Product {
@@ -9,8 +9,8 @@ export interface Product {
   nombre: string;
   precio?: number;
   basePrice?: number;
-  categoria?: string; // Made optional to match ProductProp
-  slug?: string; // Made optional to match ProductProp
+  categoria?: string;
+  slug?: string;
   imagen?: string;
   imageUrl?: string;
   images?: string[];
@@ -18,7 +18,6 @@ export interface Product {
   averageRating?: number;
   numReviews?: number;
   soloDestacado?: boolean;
-  // Nuevos campos para el schema
   descripcionBreve?: string;
   descripcionExtensa?: string;
   puntosClave?: string[];
@@ -32,20 +31,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const productUrl = `/productos/detail/${product.slug}`;
   const siteUrl = 'https://www.papeleriapersonalizada.uy';
 
-  // Construir la descripción para el schema
   let schemaDescription = product.descripcionExtensa || product.descripcionBreve || '';
   if (product.puntosClave && product.puntosClave.length > 0) {
     schemaDescription += ` Puntos Clave: ${product.puntosClave.join(', ')}.`;
   }
 
-  // Determine the image source safely
   const imageSrc = product.imagen || product.imageUrl || (product.images && product.images.length > 0 ? product.images[0] : '/placeholder.png');
 
   const absoluteImageUrl = imageSrc.startsWith('http')
     ? imageSrc
     : `${siteUrl}${imageSrc}`;
 
-  // Construir el script JSON-LD para el schema de producto
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -76,22 +72,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <>
-
       <div className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-kamalusoSoft transition-all duration-300 hover:shadow-kamalusoPink hover:-translate-y-1 border border-slate-100">
-        {/* Imagen como enlace */}
         <Link href={productUrl} className="block relative w-full aspect-square min-w-0 overflow-hidden bg-fondoClaro">
-          <Image
+          <OptimizedImage
             src={imageSrc}
             alt={product.alt || product.nombre}
             fill
             sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
-          {/* Overlay sutil al hover */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
         </Link>
 
-        {/* Contenido */}
         <div className="flex flex-col flex-grow p-5">
           <Link href={productUrl}>
             <h2 className="text-lg font-bold font-heading text-textoPrimario line-clamp-2 group-hover:text-rosa transition-colors">
@@ -99,7 +91,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </h2>
           </Link>
 
-          {/* Rating de Estrellas */}
           {product.numReviews && product.numReviews > 0 && product.averageRating ? (
             <div className="flex items-center mt-2 mb-1">
               <StarRating rating={product.averageRating} />
@@ -127,9 +118,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </Link>
           </div>
         </div>
-
-        {/* Botón "Ver detalles" eliminado visualmente en favor de la tarjeta clicable completa, 
-            pero mantenemos el enlace en la imagen y título para accesibilidad y SEO */}
       </div>
     </>
   );

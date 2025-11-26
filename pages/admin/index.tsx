@@ -1515,52 +1515,47 @@ const AdminIndex = () => {
                         >
 
                           <td className="px-2 py-3 cursor-grab">
-
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-400">
-
                               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6h16.5" />
-
                             </svg>
-
                           </td>
 
                           <td className="px-4 py-3">
-
-                            <Image
-
-                              src={p.imageUrl}
-
-                              alt={p.alt || p.nombre}
-
-                              width={64}
-
-                              height={64}
-
-                              className="object-cover rounded-xl"
-
-                            />
-
+                            {p.images && p.images[0] ? (
+                              <Image
+                                src={p.images[0]}
+                                alt={p.nombre}
+                                width={48}
+                                height={48}
+                                className="object-cover rounded-md"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                N/A
+                              </div>
+                            )}
                           </td>
 
-                          <td className="px-4 py-3">{p.nombre}</td>
+                          <td className="px-4 py-3 font-medium text-gray-900">{p.nombre}</td>
 
-                          <td className="px-4 py-3">{getDisplayPrice(p)}</td>
-
-                          <td className="px-4 py-3">{p.status}</td>
-
-                          <td className="px-4 py-3">{p.categoria}</td>
+                          <td className="px-4 py-3 text-gray-600">{getDisplayPrice(p)}</td>
 
                           <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${p.status === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                              {p.status}
+                            </span>
+                          </td>
 
+                          <td className="px-4 py-3 text-gray-600">{p.categoria}</td>
+
+                          <td className="px-4 py-3 text-gray-600">
                             {Array.isArray(p.subCategoria)
-
                               ? p.subCategoria.join(', ')
-
                               : p.subCategoria || '-'}
-
                           </td>
 
-                          <td className="px-4 py-3">{p.destacado ? '✅' : '-'}</td>
+                          <td className="px-4 py-3 text-center">{p.destacado ? '⭐' : '-'}</td>
 
                           <td className="px-4 py-3 flex gap-2">
 

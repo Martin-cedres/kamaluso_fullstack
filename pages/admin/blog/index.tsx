@@ -169,7 +169,7 @@ export default function AdminBlogIndex() {
 
       {postsLoading && <p>Cargando artículos existentes...</p>}
       {postsError && <p className="text-red-500">Error: {postsError}</p>}
-      
+
       {!postsLoading && !postsError && posts.length === 0 ? (
         <p>No hay artículos en el blog.</p>
       ) : (
@@ -201,4 +201,11 @@ export default function AdminBlogIndex() {
       )}
     </AdminLayout>
   );
+}
+
+// Use SSR for admin pages
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
 }

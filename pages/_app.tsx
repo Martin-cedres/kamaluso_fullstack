@@ -55,6 +55,7 @@ export default function App({ Component, pageProps }: AppProps) {
           name="description"
           content="Papelería personalizada en Uruguay. Agendas, cuadernos y libretas únicas, con tapa dura, hechas a tu medida."
         />
+        <meta name="google-site-verification" content="flCBkjVQOhBSoOP_IBxyt7jdN4HJFIn3vmnInkUckqY" />
 
         {/* Open Graph (para redes y Google) */}
         <meta property="og:title" content="Papelería Personalizada | Kamaluso" />
@@ -127,7 +128,7 @@ export default function App({ Component, pageProps }: AppProps) {
           >
             <TopBar />
             <Navbar />
-            <main className="flex-grow pb-24 transition-all duration-300" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 6rem)' }}>
+            <main className="flex-grow pb-24 transition-all duration-300" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 4rem)' }}>
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />

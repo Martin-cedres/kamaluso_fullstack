@@ -25,6 +25,8 @@ import InteriorDesignGallery from '../../../components/InteriorDesignGallery';
 import NewCoverDesignGallery, { DesignOption } from '../../../components/NewCoverDesignGallery';
 import FaqSection from '../../../components/FaqSection';
 import UseCasesSection from '../../../components/UseCasesSection';
+import s3Loader from '../../../lib/s3-loader';
+import ProductSchema from '../../../ProductSchema';
 
 
 // This interface is for the props passed to the component
@@ -455,39 +457,9 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         description={product.seoDescription || product.descripcion}
         image={product.imageUrl}
       />
+      <ProductSchema product={product} />
       <Head>
         {noindex && <meta name="robots" content="noindex" />}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Product',
-              name: product.nombre,
-              image: allProductImages.map(img => img.startsWith('http') ? img : `https://www.papeleriapersonalizada.uy${img}`),
-              description: product.seoDescription || product.descripcion,
-              sku: product._id,
-              brand: {
-                '@type': 'Brand',
-                name: 'Kamaluso',
-              },
-              offers: {
-                '@type': 'Offer',
-                url: `https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`,
-                priceCurrency: 'UYU',
-                price: product.basePrice,
-                availability: 'https://schema.org/InStock',
-                itemCondition: 'https://schema.org/NewCondition',
-              },
-              aggregateRating: reviewCount > 0 ? {
-                '@type': 'AggregateRating',
-                ratingValue: averageRating,
-                reviewCount: reviewCount,
-              } : undefined,
-            }),
-          }}
-          key="product-schema"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
@@ -585,6 +557,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       onClick={() => handleImageChange(img)}
                     >
                       <Image
+                        loader={s3Loader}
                         src={img}
                         alt={`Thumbnail ${index + 1}`}
                         fill
@@ -748,7 +721,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 opacity-80'}`}
                       onClick={() => handleImageChange(img)}
                     >
-                      <Image src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
+                      <Image loader={s3Loader} src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
                     </div>
                   ))}
                 </div>

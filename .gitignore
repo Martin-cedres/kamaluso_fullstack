@@ -36,6 +36,8 @@ coverage/
 .vscode/
 .idea/
 
+# Ignorar todos los archivos .env* EXCEPTO .env.example
 .env*
+!.env.example
 .vscode/settings.json
 chat_summary.txt

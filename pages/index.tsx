@@ -14,6 +14,7 @@ import ProductCard from '../components/ProductCard'; // Importar ProductCard
 import { IReview } from '../models/Review'; // Importar la interfaz IReview global
 import NewsletterForm from '../components/NewsletterForm'; // Importar NewsletterForm
 import HowItWorks from '../components/HowItWorks'; // Importar HowItWorks
+import RealResultsGallery from '../components/RealResultsGallery'; // Importar RealResultsGallery
 
 // Interfaces
 interface Categoria {
@@ -50,6 +51,12 @@ interface HomeProps {
 }
 
 export default function Home({ destacados, categories, reviews }: HomeProps) {
+  // Calculate real average rating from reviews
+  const averageRating = reviews.length > 0
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length)
+    : 0;
+  const totalReviews = reviews.length;
+
   const getCardPrice = (product: Product) => {
     if (product.basePrice) {
       return (
@@ -115,24 +122,35 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
             style={{ backgroundImage: 'radial-gradient(#0F172A 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
           </div>
 
-          <div className="max-w-7xl mx-auto px-6 py-16 md:py-24 lg:py-32 flex flex-col-reverse md:flex-row items-center justify-between gap-12 relative z-10">
+          <div className="max-w-7xl mx-auto px-6 py-12 md:py-20 lg:py-28 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12 relative z-10">
 
             {/* Texto Hero */}
             <div className="flex-1 text-center md:text-left space-y-8">
 
-              {/* Badge de Confianza */}
-              <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100 animate-fade-in-up">
+              {/* Badge de Confianza - DYNAMIC from real reviews - Clickable */}
+              <a
+                href="#reviews"
+                className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100 animate-fade-in-up hover:shadow-md hover:border-pink-200 transition-all duration-300 cursor-pointer group"
+                title={`Basado en ${totalReviews} reseñas reales de clientes. Click para ver detalles.`}
+              >
                 <div className="flex text-amarillo">
-                  <StarIcon className="h-5 w-5" />
-                  <StarIcon className="h-5 w-5" />
-                  <StarIcon className="h-5 w-5" />
-                  <StarIcon className="h-5 w-5" />
-                  <StarIcon className="h-5 w-5" />
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      className={`h-5 w-5 transition-transform group-hover:scale-110 ${i < Math.floor(averageRating)
+                          ? 'text-amarillo'
+                          : i < Math.ceil(averageRating) && averageRating % 1 >= 0.5
+                            ? 'text-amarillo'
+                            : 'text-gray-300'
+                        }`}
+                    />
+                  ))}
                 </div>
                 <span className="text-sm font-medium text-textoSecundario">
-                  <span className="font-bold text-textoPrimario">4.9/5</span>
+                  <span className="font-bold text-textoPrimario">{averageRating.toFixed(1)}/5</span>
+                  <span className="text-xs text-pink-600 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">→ Ver reseñas</span>
                 </span>
-              </div>
+              </a>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-heading text-textoPrimario leading-tight tracking-tight">
                 Tu Vida, <br className="hidden md:block" />
@@ -232,11 +250,41 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           </div>
         </section>
 
-        {/* Cómo Funciona (Nuevo) */}
+        {/* Expectativas hechas realidad - MOVED UP for immediate social proof */}
+        <RealResultsGallery />
+
+        {/* Productos Destacados - MOVED UP to show products earlier */}
+        {destacados.length > 0 && (
+          <section className="px-6 py-16 bg-white">
+            <h2 className="text-3xl font-semibold text-center mb-8">
+              Los más elegidos
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+              {destacados.map((product) => (
+                <ProductCard key={product._id} product={{
+                  _id: product._id,
+                  nombre: product.nombre,
+                  precio: product.basePrice || product.precio || 0,
+                  imagen: product.imageUrl || '/placeholder.png',
+                  alt: product.alt,
+                  slug: product.slug || '',
+                  categoria: product.categoria || '',
+                  averageRating: product.averageRating,
+                  numReviews: product.numReviews,
+                  descripcionBreve: product.descripcionBreve,
+                  descripcionExtensa: product.descripcionExtensa,
+                  puntosClave: product.puntosClave,
+                }} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Cómo Funciona - MOVED DOWN after products */}
         <HowItWorks />
 
         {/* Categorías Dinámicas */}
-        <section className="px-6 py-12 bg-gray-50">
+        <section className="px-6 py-16 bg-gray-50">
           <h2 className="text-3xl font-semibold text-center mb-8">
             Explora nuestras colecciones
           </h2>
@@ -264,38 +312,8 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           </div>
         </section>
 
-        {/* Productos Destacados */}
-        {destacados.length > 0 && (
-          <section className="px-6 py-12">
-            <h2 className="text-3xl font-semibold text-center mb-8">
-              Los más elegidos
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-              {destacados.map((product) => (
-                <ProductCard key={product._id} product={{
-                  _id: product._id,
-                  nombre: product.nombre,
-                  precio: product.basePrice || product.precio || 0,
-                  imagen: product.imageUrl || '/placeholder.png',
-                  alt: product.alt,
-                  slug: product.slug || '',
-                  categoria: product.categoria || '',
-                  averageRating: product.averageRating,
-                  numReviews: product.numReviews,
-                  // Pasar los nuevos campos para el schema
-                  descripcionBreve: product.descripcionBreve,
-                  descripcionExtensa: product.descripcionExtensa,
-                  puntosClave: product.puntosClave,
-                }} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Reseñas Destacadas */}
+        {/* Reseñas Destacadas - MOVED UP before newsletter */}
         <FeaturedReviews reviews={reviews} />
-
-
 
         {/* Newsletter Form */}
         <NewsletterForm />

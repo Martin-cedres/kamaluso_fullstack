@@ -44,14 +44,14 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
   }));
 
   return (
-    <section className="px-6 py-12 bg-gray-50">
-        <Head>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema) }}
-                key="reviews-jsonld"
-            />
-        </Head>
+    <section id="reviews" className="px-6 py-12 bg-gray-50 scroll-mt-20">
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema) }}
+          key="reviews-jsonld"
+        />
+      </Head>
       <h2 className="text-3xl font-semibold text-center mb-10">
         Lo que dicen nuestros clientes
       </h2>

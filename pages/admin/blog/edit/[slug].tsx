@@ -97,3 +97,10 @@ export default function AdminBlogEdit() {
     </AdminLayout>
   )
 }
+
+// Use SSR instead of SSG for admin pages
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
+}

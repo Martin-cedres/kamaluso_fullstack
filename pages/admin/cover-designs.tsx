@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { PlusIcon, TrashIcon, PencilIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Select from 'react-select'; // Importar Select (si se usa)
 import CreatableSelect from 'react-select/creatable'; // Importar CreatableSelect correctamente
+import s3Loader from '../../lib/s3-loader';
 
 interface ICoverDesign {
   _id: string;
@@ -55,8 +56,8 @@ export default function AdminCoverDesigns() {
         setGroupOptions((data as string[]).map(group => ({ value: group, label: group })));
       } else {
         // Check if data is an object with an error property
-        const errorMessage = (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string') 
-          ? data.error 
+        const errorMessage = (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string')
+          ? data.error
           : 'Error al cargar opciones de grupos';
         throw new Error(errorMessage);
       }
@@ -108,7 +109,7 @@ export default function AdminCoverDesigns() {
       formData.append('code', form.code || '');
       formData.append('name', form.name || '');
       formData.append('priceModifier', (form.priceModifier || 0).toString());
-      
+
       const groupsArray = selectedGroups.map(g => g.value);
       formData.append('groups', JSON.stringify(groupsArray));
 
@@ -296,7 +297,7 @@ export default function AdminCoverDesigns() {
                 />
                 {previewImageUrl && (
                   <div className="mt-3">
-                    <Image src={previewImageUrl} alt="Preview" width={100} height={100} className="object-cover rounded-lg" />
+                    <Image loader={s3Loader} src={previewImageUrl} alt="Preview" width={100} height={100} className="object-cover rounded-lg" />
                   </div>
                 )}
               </div>
@@ -340,7 +341,7 @@ export default function AdminCoverDesigns() {
               coverDesigns.map((design) => (
                 <tr key={design._id}>
                   <td className="px-4 py-3">
-                    <Image src={design.imageUrl} alt={design.name || design.code} width={50} height={50} className="object-cover rounded-lg" />
+                    <Image loader={s3Loader} src={design.imageUrl} alt={design.name || design.code} width={50} height={50} className="object-cover rounded-lg" />
                   </td>
                   <td className="px-4 py-3 font-medium">{design.code}</td>
                   <td className="px-4 py-3">{design.name || '-'}</td>

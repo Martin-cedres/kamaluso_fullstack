@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import formidable from 'formidable';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,6 +23,7 @@ export const uploadFileToS3 = async (file: formidable.File) => {
   const fileBuffer = fs.readFileSync(file.filepath);
   const s3Key = `uploads/${baseKey}${extension}`;
 
+  // Subir el archivo original a S3 (esto disparará la Lambda)
   await s3.send(
     new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
@@ -35,7 +36,42 @@ export const uploadFileToS3 = async (file: formidable.File) => {
 
   try { fs.unlinkSync(file.filepath); } catch (e) { console.error(e); }
 
-  // URL pública del archivo subido
+  // Esperar a que Lambda procese la imagen
+  // Esperamos la versión BASE (.webp) que siempre se genera, independientemente del tamaño
+  const processedKey = `processed/${baseKey}.webp`;
+  const maxAttempts = 8; // 8 intentos = ~16 segundos
+  const delayMs = 2000; // 2 segundos entre intentos
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      // Verificar si la imagen procesada existe
+      await s3.send(
+        new HeadObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: processedKey,
+        })
+      );
+
+      // Si llegamos aquí, la imagen fue procesada exitosamente
+      console.log(`✅ Imagen procesada por Lambda: ${baseKey}`);
+
+      // Retornar URL base (sin el tamaño, el loader lo agregará según viewport)
+      return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/processed/${baseKey}.webp`;
+    } catch (error: any) {
+      if (error.name === 'NotFound' && attempt < maxAttempts - 1) {
+        // La imagen aún no se procesó, esperar y reintentar
+        console.log(`⏳ Esperando procesamiento Lambda... intento ${attempt + 1}/${maxAttempts}`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      } else if (attempt === maxAttempts - 1) {
+        // Timeout: Lambda no procesó la imagen a tiempo
+        console.warn(`⚠️ Lambda no procesó la imagen a tiempo. Retornando original: ${baseKey}`);
+        // Retornar URL del archivo original como fallback
+        return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
+      }
+    }
+  }
+
+  // Fallback final (no debería llegar aquí)
   return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
 };
 

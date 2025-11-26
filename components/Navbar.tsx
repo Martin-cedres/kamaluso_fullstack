@@ -115,6 +115,10 @@ export default function Navbar() {
             )}
           </div>
 
+          <Link href="/nuestros-trabajos-entregados" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
+            Nuestros Trabajos
+            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
+          </Link>
           <Link href="/regalos-empresariales" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
             Regalos Empresariales
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
@@ -165,6 +169,7 @@ export default function Navbar() {
         <div className={`md:hidden bg-white shadow-md px-6 space-y-2 overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-screen py-4' : 'max-h-0'}`}>
           <Link href="/" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Inicio</Link>
           {renderCategoryLinks(true)}
+          <Link href="/nuestros-trabajos-entregados" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Nuestros Trabajos</Link>
           <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Regalos Empresariales</Link>
           <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Contacto</Link>
           <Link href="/blog" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Blog</Link>

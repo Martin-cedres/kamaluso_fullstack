@@ -1,1 +1,1 @@
-{"name":"lambda-package","version":"1.0.0","description":"Package for AWS Lambda function","dependencies":{"sharp":"^0.34.4"}}
+{"name":"lambda-package","version":"1.0.0","description":"Package for AWS Lambda function","dependencies":{"sharp":"^0.34.5"}}

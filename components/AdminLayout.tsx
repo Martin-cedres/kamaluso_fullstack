@@ -33,6 +33,7 @@ const navigation = [
   { name: 'Gestor de Clusters', href: '/admin/clusters', icon: CircleStackIcon },
   { name: 'Fábrica de Clusters', href: '/admin/cluster-factory', icon: BeakerIcon },
   { name: 'Modo Espía', href: '/admin/competitor-analysis', icon: EyeIcon },
+  { name: 'Expectativa vs Realidad', href: '/admin/real-results', icon: StarIcon },
   // --- Fin Nuevos Enlaces ---
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
   { name: 'Banner de Anuncios', href: '/admin/settings', icon: MegaphoneIcon },

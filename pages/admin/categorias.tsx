@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import AdminLayout from '../../components/AdminLayout';
 import toast from 'react-hot-toast';
+import s3Loader from '../../lib/s3-loader';
 
 interface ICategory {
   _id: string;
@@ -148,7 +149,7 @@ export default function AdminCategorias() {
     <>
       <div className="grid grid-cols-4 items-center gap-4 odd:bg-white even:bg-gray-50 border-b px-4 py-2">
         <div className="py-3">
-          {category.imagen && <Image src={category.imagen} alt={category.nombre} width={50} height={50} className="object-cover rounded-md" />}
+          {category.imagen && <Image loader={s3Loader} src={category.imagen} alt={category.nombre} width={50} height={50} className="object-cover rounded-md" />}
         </div>
         <div className="py-3 font-medium" style={{ paddingLeft: `${level * 2}rem` }}>
           {category.nombre}
@@ -208,7 +209,7 @@ export default function AdminCategorias() {
             <div>
               <label className="block text-sm font-medium">Imagen</label>
               <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} className="w-full" />
-              {preview && <Image src={preview} alt="preview" width={100} height={100} className="mt-2 rounded-xl object-cover" />}
+              {preview && <Image loader={s3Loader} src={preview} alt="preview" width={100} height={100} className="mt-2 rounded-xl object-cover" />}
             </div>
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={loading} className="bg-fucsia text-white px-6 py-2 rounded-2xl shadow">{loading ? 'Guardando...' : (editId ? 'Guardar Cambios' : 'Crear')}</button>

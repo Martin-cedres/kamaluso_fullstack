@@ -28,6 +28,9 @@ export default async function handler(
       return res.status(500).json({ error: 'Error parseando archivos' });
     }
 
+    console.log('[DEBUG] Files received:', Object.keys(files));
+    if (files.image) console.log('[DEBUG] files.image type:', Array.isArray(files.image) ? 'Array' : 'Object');
+
     try {
       const uploadedUrls: string[] = [];
 
@@ -38,8 +41,12 @@ export default async function handler(
           : fileArray.push(files.images);
       }
       if (files.image) {
-        fileArray.unshift(files.image);
+        Array.isArray(files.image)
+          ? fileArray.unshift(...files.image)
+          : fileArray.unshift(files.image);
       }
+
+      console.log('[DEBUG] fileArray length:', fileArray.length);
 
       if (fileArray.length === 0) {
         return res.status(400).json({ error: 'No se subieron imágenes' });
@@ -54,6 +61,7 @@ export default async function handler(
             Tipo MIME: ${file.mimetype}`);
 
           const url = await uploadFileToS3(file);
+          console.log('[DEBUG] Uploaded URL:', url);
           uploadedUrls.push(url);
         }
       }

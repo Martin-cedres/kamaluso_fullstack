@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import s3Loader from '../lib/s3-loader';
 
 export interface DesignOption {
   name: string;
@@ -147,6 +148,7 @@ const NewCoverDesignGallery: React.FC<NewCoverDesignGalleryProps> = ({
             >
               {option.image && (
                 <Image
+                  loader={s3Loader}
                   src={option.image}
                   alt={option.name}
                   fill

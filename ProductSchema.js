@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import PropTypes from 'prop-types';
-import { siteConfig } from '../../lib/seoConfig';
+import { siteConfig } from './lib/seoConfig';
 
 /**
  * Componente para generar el script de datos estructurados (JSON-LD) para una página de producto.
@@ -13,6 +13,7 @@ const ProductSchema = ({ product }) => {
   }
 
   const productUrl = `${siteConfig.baseUrl}/productos/${product.slug}`;
+  const imageUrl = product.imageUrl ? (product.imageUrl.startsWith('http') ? product.imageUrl : `${siteConfig.baseUrl}${product.imageUrl}`) : '';
 
   const schema = {
     '@context': 'https://schema.org',
@@ -20,22 +21,24 @@ const ProductSchema = ({ product }) => {
       {
         '@type': 'Product',
         '@id': `${productUrl}#product`,
-        name: product.name,
-        description: product.description,
-        image: product.images || [],
-        sku: product.sku,
+        name: product.nombre, // Corregido: name -> nombre
+        description: product.descripcionBreve || product.descripcion, // Corregido: description -> descripcion
+        image: product.images && product.images.length > 0 ? product.images : [imageUrl],
+        sku: product._id, // Usamos ID como SKU por defecto
         brand: {
           '@type': 'Brand',
-          name: siteConfig.organization.name,
+          name: siteConfig.organization?.name || 'Kamaluso',
         },
         offers: {
           '@type': 'Offer',
           url: productUrl,
-          priceCurrency: 'UYU',
-          price: product.price,
-          availability: 'https://schema.org/InStock',
+          priceCurrency: 'UYU', // Moneda fija UYU
+          price: product.basePrice, // Corregido: price -> basePrice
+          availability: 'https://schema.org/InStock', // Siempre en stock como solicitado
+          itemCondition: 'https://schema.org/NewCondition',
           seller: {
-            '@id': `${siteConfig.baseUrl}/#organization`,
+            '@type': 'Organization',
+            name: siteConfig.organization?.name || 'Kamaluso',
           },
         },
         // Si el producto tiene FAQs, las vinculamos aquí
@@ -48,19 +51,19 @@ const ProductSchema = ({ product }) => {
       // Si hay FAQs, generamos el schema FAQPage correspondiente
       ...(product.faqs && product.faqs.length > 0
         ? [
-            {
-              '@type': 'FAQPage',
-              '@id': `${productUrl}#faqpage`,
-              mainEntity: product.faqs.map((faq) => ({
-                '@type': 'Question',
-                name: faq.question,
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: faq.answer,
-                },
-              })),
-            },
-          ]
+          {
+            '@type': 'FAQPage',
+            '@id': `${productUrl}#faqpage`,
+            mainEntity: product.faqs.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.answer,
+              },
+            })),
+          },
+        ]
         : []),
     ],
   };

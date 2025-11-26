@@ -12,7 +12,7 @@ export default function CompetitorAnalysis() {
 
     // Cargar productos para el selector
     useEffect(() => {
-        fetch('/api/products') // Asumiendo que existe una ruta pública o admin para listar productos. Si no, usaremos una específica.
+        fetch('/api/products/listar') // Corrected endpoint
             .then(res => res.json())
             .then(data => {
                 // Ajustar según la estructura de respuesta de tu API de productos

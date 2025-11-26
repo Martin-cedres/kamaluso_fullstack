@@ -37,7 +37,7 @@ export default function AdminBlogCreate() {
       const generateOutline = async () => {
         try {
           toast.loading('Generando esquema con IA...', { id: 'outline-toast' });
-          
+
           const res = await fetch('/api/admin/blog/generate-outline', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -107,14 +107,14 @@ export default function AdminBlogCreate() {
   return (
     <AdminLayout>
       <h1 className="text-3xl font-bold mb-6">Crear Nuevo Artículo del Blog</h1>
-      
+
       {isLoading ? (
         <div className="text-center p-8 bg-white rounded-lg shadow-md">
           <p className="text-lg text-gray-600">🤖 Arquitecto de Contenidos trabajando...</p>
           <p className="mt-2 text-sm text-gray-500">Generando un esquema SEO detallado para tu artículo. Por favor, espera un momento.</p>
         </div>
       ) : error ? (
-         <div className="text-center p-8 bg-red-50 rounded-lg shadow-md border border-red-200">
+        <div className="text-center p-8 bg-red-50 rounded-lg shadow-md border border-red-200">
           <p className="text-lg text-red-700">❌ Error al generar el esquema</p>
           <p className="mt-2 text-sm text-red-600">{error}</p>
           <p className="mt-4 text-sm text-gray-500">Puedes continuar y escribir el artículo manualmente.</p>
@@ -125,4 +125,11 @@ export default function AdminBlogCreate() {
       )}
     </AdminLayout>
   );
+}
+
+// Use SSR for admin pages
+export async function getServerSideProps() {
+  return {
+    props: {},
+  };
 }
