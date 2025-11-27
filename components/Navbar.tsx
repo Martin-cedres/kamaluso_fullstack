@@ -5,12 +5,14 @@ import Image from 'next/image';
 import { useCart } from '../context/CartContext';
 import { useCategories } from '../context/CategoryContext';
 import MegaMenu from './MegaMenu';
+import MiniCart from './MiniCart';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [showMiniCart, setShowMiniCart] = useState(false);
   const { categories, loading } = useCategories();
-  const { cartCount } = useCart();
+  const { cartCount, cartItems, cartIconAnimate } = useCart();
   const { data: session, status } = useSession();
   const [isClient, setIsClient] = useState(false);
   const menuCloseTimer = useRef<NodeJS.Timeout | null>(null);
@@ -39,6 +41,14 @@ export default function Navbar() {
     menuCloseTimer.current = setTimeout(() => {
       setOpenDropdown(null);
     }, 200); // 200ms delay before closing
+  };
+
+  const handleCartEnter = () => {
+    setShowMiniCart(true);
+  };
+
+  const handleCartLeave = () => {
+    setShowMiniCart(false);
   };
 
   const renderCategoryLinks = (isMobile: boolean = false) => {
@@ -82,7 +92,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-md fixed w-full z-50 transition-all duration-300" style={{ top: 'var(--topbar-height, 0px)' }}>
-      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16">
+      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16 relative">
         <Link href="/" className="flex items-center" onClick={closeAllMenus}>
           <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" unoptimized />
         </Link>
@@ -96,7 +106,7 @@ export default function Navbar() {
 
           {/* Mega Menu Container */}
           <div
-            className="relative"
+            className=""
             onMouseEnter={handleMenuEnter}
             onMouseLeave={handleMenuLeave}
           >
@@ -149,12 +159,33 @@ export default function Navbar() {
         {/* Right side icons */}
         {isClient && (
           <div className="flex items-center gap-4">
-            <Link href="/cart" className="hidden md:block relative text-gray-900 hover:text-pink-500 transition" onClick={closeAllMenus}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {cartCount > 0 && <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
-            </Link>
+            <div
+              className="relative"
+              onMouseEnter={handleCartEnter}
+              onMouseLeave={handleCartLeave}
+            >
+              <Link
+                href="/cart"
+                className={`relative text-gray-900 hover:text-pink-500 transition ${cartIconAnimate ? 'animate-cartBounce' : ''
+                  }`}
+                onClick={closeAllMenus}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {cartCount > 0 && <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{cartCount}</span>}
+              </Link>
+
+              {/* Mini Cart Preview - Desktop Only */}
+              {showMiniCart && (
+                <div className="hidden md:block">
+                  <MiniCart
+                    cartItems={cartItems}
+                    onClose={() => setShowMiniCart(false)}
+                  />
+                </div>
+              )}
+            </div>
             <button className="md:hidden text-gray-900" onClick={() => setMenuOpen(!menuOpen)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m16 6H4" />

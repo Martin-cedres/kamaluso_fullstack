@@ -29,7 +29,7 @@ export default function RealResultCard({ title, description, mockupImage, realIm
                         className="object-cover"
                     />
                     <div className="absolute top-4 left-4 bg-gray-900/80 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10 backdrop-blur-sm">
-                        EXPECTATIVA
+                        MUESTRA
                     </div>
                 </div>
 
@@ -42,7 +42,7 @@ export default function RealResultCard({ title, description, mockupImage, realIm
                         className="object-cover"
                     />
                     <div className="absolute top-4 right-4 bg-naranja text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
-                        REALIDAD
+                        PRODUCTO
                     </div>
                 </div>
 

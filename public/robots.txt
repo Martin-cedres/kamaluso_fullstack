@@ -9,6 +9,7 @@ Disallow: /admin
 # *
 User-agent: *
 Disallow: /api/
+Allow: /api/feed/
 
 # Host
 Host: https://www.papeleriapersonalizada.uy

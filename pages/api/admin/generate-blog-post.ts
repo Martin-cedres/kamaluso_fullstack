@@ -33,7 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       "1. **Sigue el Esquema:** El 'outline' es tu guía principal. Desarrolla cada punto del esquema en párrafos bien escritos.\n" +
       "2. **Enlazado Interno Natural:** Tienes una lista de nuestros productos. Cuando el contenido lo permita, enlaza a 1-2 productos de forma natural. El texto del enlace debe ser persuasivo, no solo el nombre del producto.\n" +
       "3. **Sugerencias Visuales:** El contenido visual es clave. Donde creas que una imagen enriquecería el texto, inserta un placeholder descriptivo, por ejemplo: \"[IMAGEN: Collage de agendas 2026 con diseños personalizados]\".\n" +
-      "4. **Tono y Estilo:** Mantén un tono cercano, inspirador y profesional, relevante para personas en Uruguay.\n\n" +
+      "4. **Tono y Estilo:** Mantén un tono cercano, inspirador y profesional, relevante para personas en Uruguay.\n" +
+      "5. **CERO META-COMENTARIOS:** NO incluyas textos como \"(justificación)\", \"(escasez)\", etc. El output debe ser TEXTO FINAL para el lector.\n\n" +
       "Aquí tienes la lista de productos para el enlazado interno:\n" +
       productContext + "\n\n" +
       "Aquí está el esquema que debes desarrollar:\n" +

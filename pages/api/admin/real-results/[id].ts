@@ -14,7 +14,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await dbConnect();
 
-    if (req.method === 'PUT') {
+    if (req.method === 'GET') {
+        try {
+            const result = await RealResult.findById(id);
+            if (!result) {
+                return res.status(404).json({ message: 'Resultado no encontrado' });
+            }
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ message: 'Error al obtener el resultado', error });
+        }
+    } else if (req.method === 'PUT') {
         try {
             const updatedResult = await RealResult.findByIdAndUpdate(id, req.body, {
                 new: true,

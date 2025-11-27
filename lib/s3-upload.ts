@@ -75,6 +75,30 @@ export const uploadFileToS3 = async (file: formidable.File) => {
   return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
 };
 
+export const uploadFileToS3Original = async (file: formidable.File) => {
+  if (!file || !file.filepath) throw new Error("Archivo inválido para S3");
+
+  const originalFilename = file.originalFilename || "unknown-file";
+  const extension = path.extname(originalFilename);
+  const baseKey = uuidv4();
+
+  const fileBuffer = fs.readFileSync(file.filepath);
+  const s3Key = `uploads/${baseKey}${extension}`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: file.mimetype || "application/octet-stream",
+    })
+  );
+
+  try { fs.unlinkSync(file.filepath); } catch (e) { console.error(e); }
+
+  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
+};
+
 export const deleteFileFromS3 = async (fileUrl: string) => {
   if (!fileUrl) throw new Error("URL de archivo inválida para eliminar de S3.");
 

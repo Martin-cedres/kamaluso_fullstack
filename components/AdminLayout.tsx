@@ -16,6 +16,7 @@ import {
   BeakerIcon,
   EyeIcon, // <-- Icono para Modo Espía
   MegaphoneIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -26,6 +27,8 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Categorías', href: '/admin/categorias', icon: TagIcon },
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
+  { name: 'Presupuestos', href: '/admin/quotes', icon: DocumentTextIcon },
+  { name: 'Test de Email', href: '/admin/test-email', icon: BeakerIcon },
   { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
   { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },
   // --- Nuevos Enlaces ---

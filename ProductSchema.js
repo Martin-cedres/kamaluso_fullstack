@@ -7,7 +7,7 @@ import { siteConfig } from './lib/seoConfig';
  * Debe usarse junto con DefaultSchema.
  * @param {object} product - El objeto del producto con sus detalles.
  */
-const ProductSchema = ({ product }) => {
+const ProductSchema = ({ product, averageRating, reviewCount }) => {
   if (!product) {
     return null;
   }
@@ -41,6 +41,13 @@ const ProductSchema = ({ product }) => {
             name: siteConfig.organization?.name || 'Kamaluso',
           },
         },
+        ...(averageRating && reviewCount > 0 && {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: averageRating,
+            reviewCount: reviewCount,
+          },
+        }),
         // Si el producto tiene FAQs, las vinculamos aquí
         ...(product.faqs && product.faqs.length > 0 && {
           mainEntity: {
@@ -77,6 +84,8 @@ const ProductSchema = ({ product }) => {
 
 ProductSchema.propTypes = {
   product: PropTypes.object.isRequired,
+  averageRating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  reviewCount: PropTypes.number,
 };
 
 export default ProductSchema;

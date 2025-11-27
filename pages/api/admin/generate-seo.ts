@@ -113,6 +113,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       - **Propuesta de Valor Única:** El cliente diseña la tapa a su gusto Y elige el interior que mejor se adapte a su uso específico.
       *Instrucción:* Cuando describas la personalización, enfatiza que "podés diseñar la tapa como quieras" y "elegir entre docenas de tipos de interior según tu necesidad".
 
+      **REGLAS DE ORO PARA EL OUTPUT (CRÍTICO):**
+      1. **CERO META-COMENTARIOS:** NO incluyas textos como "(justificación)", "(escasez)", "(prueba social)", etc. El output debe ser TEXTO FINAL para el cliente.
+      2. **CERO INSTRUCCIONES EN EL TEXTO:** No expliques por qué escribiste algo. Solo escríbelo.
+      3. **NATURALIDAD:** Las técnicas psicológicas deben ser invisibles en la lectura.
+      
+
+
       **DATOS DEL PRODUCTO:**
       - Nombre: ${nombre}
       - Contexto base: ${descripcion}

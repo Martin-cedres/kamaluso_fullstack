@@ -5,6 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react'
+import Toast from '../components/Toast'
 
 // Define the shape of a cart item
 export interface CartItem {
@@ -34,6 +35,7 @@ interface CartContextType {
   cartCount: number
   appliedCoupon?: AppliedCoupon
   setAppliedCoupon: (coupon: AppliedCoupon | null) => void
+  cartIconAnimate: boolean
 }
 
 // Create the context
@@ -68,6 +70,9 @@ interface CartProviderProps {
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [cartIconAnimate, setCartIconAnimate] = useState(false)
 
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -118,6 +123,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       // Add new item with quantity 1
       return [...prevItems, { ...product, quantity: 1 }]
     })
+
+    // Show toast notification
+    setToastMessage(`${product.nombre} agregado al carrito`)
+    setShowToast(true)
+
+    // Trigger cart icon animation
+    setCartIconAnimate(true)
+    setTimeout(() => setCartIconAnimate(false), 500)
   }
 
   const removeFromCart = (cartItemId: string) => {
@@ -153,7 +166,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     cartCount,
     appliedCoupon,
     setAppliedCoupon,
+    cartIconAnimate,
   }
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
+    </CartContext.Provider>
+  )
 }
+

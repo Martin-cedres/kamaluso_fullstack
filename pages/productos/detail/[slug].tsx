@@ -457,7 +457,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         description={product.seoDescription || product.descripcion}
         image={product.imageUrl}
       />
-      <ProductSchema product={product} />
+      <ProductSchema product={product} averageRating={averageRating} reviewCount={reviewCount} />
       <Head>
         {noindex && <meta name="robots" content="noindex" />}
         <script
