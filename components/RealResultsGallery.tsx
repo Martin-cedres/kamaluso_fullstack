@@ -48,7 +48,7 @@ export default function RealResultsGallery() {
                     </h2>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-4">
                         La calidad que ves en el diseño es la calidad que recibes.
-                        Compara nuestros mockups digitales con los productos terminados.
+                        Compara nuestros mockups digitales con fotos reales tomadas en nuestro taller, sin filtros ni producción, para que veas exactamente lo que te llegará.
                     </p>
                     <Link
                         href="/nuestros-trabajos-entregados"

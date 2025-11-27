@@ -250,8 +250,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           </div>
         </section>
 
-        {/* Expectativas hechas realidad - MOVED UP for immediate social proof */}
-        <RealResultsGallery />
+
 
         {/* Productos Destacados - MOVED UP to show products earlier */}
         {destacados.length > 0 && (
@@ -314,6 +313,9 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
         {/* Reseñas Destacadas - MOVED UP before newsletter */}
         <FeaturedReviews reviews={reviews} />
+
+        {/* Expectativas hechas realidad */}
+        <RealResultsGallery />
 
         {/* Newsletter Form */}
         <NewsletterForm />
