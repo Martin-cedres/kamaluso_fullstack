@@ -25,6 +25,7 @@ export default function RealResultForm() {
         if (isEditing) {
             fetchResult();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const fetchResult = async () => {

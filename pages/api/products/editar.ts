@@ -166,7 +166,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       // Nuevo: Manejo de customizationGroups
       if (fields.customizationGroups) {
         try {
-          const groups = JSON.parse(fields.customizationGroups as string);
+          const groups = JSON.parse(getFieldValue(fields.customizationGroups));
 
           // Asegurarse de que las URLs de las imágenes de los diseños de tapa sean completas
           groups.forEach((group: any) => {
@@ -223,8 +223,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       // Campo de keywords (array de strings)
-      if (typeof fields.seoKeywords === 'string') {
-        updateDoc.seoKeywords = fields.seoKeywords
+      const seoKeywordsValue = getFieldValue(fields.seoKeywords);
+      if (seoKeywordsValue) {
+        updateDoc.seoKeywords = seoKeywordsValue
           .split(',')
           .map((s) => s.trim())
       }

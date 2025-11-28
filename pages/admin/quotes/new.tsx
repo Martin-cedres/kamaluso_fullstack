@@ -3,6 +3,7 @@ import AdminLayout from '../../../components/AdminLayout';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function NewQuote() {
     const router = useRouter();
@@ -320,7 +321,7 @@ export default function NewQuote() {
                                                 {/* Preview */}
                                                 {item.imageUrl ? (
                                                     <div className="relative">
-                                                        <img src={item.imageUrl} alt="Preview" className="h-16 w-full object-cover rounded border" />
+                                                        <Image src={item.imageUrl} alt="Preview" width={64} height={64} className="h-16 w-full object-cover rounded border" unoptimized />
                                                         <button
                                                             type="button"
                                                             onClick={() => handleItemChange(index, 'imageUrl', '')}

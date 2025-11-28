@@ -109,7 +109,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       let customizationGroups = [];
       try {
-        const groupsString = fields.customizationGroups as string;
+        const groupsString = getFieldValue(fields.customizationGroups);
         if (groupsString) {
           customizationGroups = JSON.parse(groupsString);
 
@@ -198,7 +198,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         nombre: String(fields.nombre || ''),
         slug: String(fields.slug || ''),
         claveDeGrupo: String(fields.claveDeGrupo || ''),
-        descripcion: fields.descripcion as string || '',
+        descripcion: getFieldValue(fields.descripcion) || '',
         basePrice: parseFloat(String(fields.basePrice || '0')) || 0,
         categoria: finalCategoriaSlug,
         subCategoria: finalSubCategoriaSlugs,
@@ -207,17 +207,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         seoTitle: String(fields.seoTitle || ''),
         seoDescription: String(fields.seoDescription || ''),
         seoKeywords:
-          typeof fields.seoKeywords === 'string'
-            ? fields.seoKeywords.split(',').map((s) => s.trim())
+          getFieldValue(fields.seoKeywords)
+            ? getFieldValue(fields.seoKeywords).split(',').map((s) => s.trim())
             : [],
 
         alt: String(fields.alt || ''),
         notes: String(fields.notes || ''),
         status: String(fields.status || 'activo'),
         destacado:
-          fields.destacado === 'true' || fields.destacado === true || false,
+          getFieldValue(fields.destacado) === 'true' || false,
         showCoverType:
-          fields.showCoverType === 'true' || fields.showCoverType === true || false,
+          getFieldValue(fields.showCoverType) === 'true' || false,
         imageUrl,
         images: imagesUrls,
         customizationGroups: customizationGroups,

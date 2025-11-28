@@ -63,7 +63,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-500 mb-0.5">Opinión sobre:</p>
-            <p className="text-sm font-medium text-pink-600 group-hover/link:text-pink-700 truncate">
+            <p className="text-sm font-medium text-blue-600 group-hover/link:underline truncate">
               {review.product.nombre} →
             </p>
           </div>

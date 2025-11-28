@@ -2,6 +2,28 @@
 
 ---
 
+## 📅 Sesión: 27 de noviembre de 2025
+
+### ✨ Mejora UX: Pestañas de Producto Optimizadas
+*   **Descripción:** Se ha mejorado la sección de pestañas en la página de detalle del producto (`/productos/detail/[slug]`) para una mejor experiencia de usuario.
+*   **Cambios:**
+    1.  **Iconos en Pestañas:** Se añadieron iconos descriptivos a cada pestaña ("Descripción", "Puntos Clave", "Reseñas", etc.) para mejorar la escaneabilidad visual.
+    2.  **Priorización de "Puntos Clave":** La pestaña "Puntos Clave" ahora es la primera en el orden y la que se muestra por defecto al cargar la página, presentando la información más valiosa al cliente de forma inmediata.
+
+### ⚙️ Tarea Pendiente: Migración del Servicio de Email a Resend
+*   **Objetivo:** Reemplazar el sistema actual de envío de correos (vía Gmail) por un servicio transaccional profesional (**Resend**) para mejorar la entregabilidad, el profesionalismo y habilitar futuras mejoras.
+*   **Progreso Realizado:**
+    *   Se creó una cuenta en Resend.
+    *   Se obtuvo una API Key y se configuró en las variables de entorno del proyecto (`RESEND_API_KEY`).
+*   **Próximos Pasos:**
+    1.  **Acción Manual (Usuario):** Entrar al panel de Resend, añadir el dominio de envío (ej: `kamaluso.com`) y verificarlo agregando los registros DNS que Resend proporcione en el proveedor de dominio.
+    2.  **Instalar Dependencia (Desarrollador):** Ejecutar `npm install resend`.
+    3.  **Refactorizar Servicio de Email (Desarrollador):** Reemplazar el contenido de `lib/nodemailer.ts` para utilizar el cliente de Resend en lugar de Nodemailer/Gmail.
+    4.  **Actualizar API de Envío (Desarrollador):** Modificar la API (`pages/api/admin/quotes/[id]/send.ts`) para que use la nueva función de envío de Resend.
+*   **Estado:** En pausa hasta que el dominio sea verificado por el usuario.
+
+---
+
 ## 📅 Sesión: 22 de noviembre de 2025
 
 ### 🚀 Implementación: Sistema de Páginas Pilares (Topic Clusters) con IA

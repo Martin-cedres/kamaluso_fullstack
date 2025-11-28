@@ -1,5 +1,4 @@
 import React from 'react';
-import path from 'path';
 import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer';
 
 // Estilos para el PDF
@@ -22,7 +21,7 @@ const styles = StyleSheet.create({
         width: '40%',
     },
     logo: {
-        width: 120,
+        width: 60,
         marginBottom: 10,
     },
     companyInfo: {
@@ -209,8 +208,9 @@ const QuoteTemplate: React.FC<QuoteTemplateProps> = ({ quote, logoUrl }) => {
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.logoSection}>
+                        {/* eslint-disable-next-line jsx-a11y/alt-text */}
                         <Image
-                            src={path.join(process.cwd(), 'public', 'logo.webp')}
+                            src={logoUrl || "/logo.webp"}
                             style={styles.logo}
                         />
                         <View style={styles.companyInfo}>
@@ -232,26 +232,12 @@ const QuoteTemplate: React.FC<QuoteTemplateProps> = ({ quote, logoUrl }) => {
 
                 {/* Client Info */}
                 <View style={styles.clientSection}>
-                    <View style={styles.clientCol}>
-                        <Text style={styles.sectionTitle}>Facturar a:</Text>
+                    <View style={{ width: '100%' }}>
+                        <Text style={styles.sectionTitle}>Cliente:</Text>
                         <Text style={{ fontWeight: 'bold', marginBottom: 2 }}>{quote.customer.name}</Text>
                         {quote.customer.company && <Text style={styles.text}>{quote.customer.company}</Text>}
                         <Text style={styles.text}>{quote.customer.email}</Text>
                         {quote.customer.phone && <Text style={styles.text}>{quote.customer.phone}</Text>}
-                    </View>
-                    <View style={styles.clientCol}>
-                        <Text style={styles.sectionTitle}>Estado:</Text>
-                        <Text style={{
-                            color: quote.status === 'accepted' ? '#2ECC71' :
-                                quote.status === 'rejected' ? '#E74C3C' : '#F1C40F',
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase'
-                        }}>
-                            {quote.status === 'draft' ? 'Borrador' :
-                                quote.status === 'sent' ? 'Enviado' :
-                                    quote.status === 'accepted' ? 'Aceptado' :
-                                        quote.status === 'rejected' ? 'Rechazado' : 'Expirado'}
-                        </Text>
                     </View>
                 </View>
 
@@ -272,6 +258,7 @@ const QuoteTemplate: React.FC<QuoteTemplateProps> = ({ quote, logoUrl }) => {
                             <View key={index} style={styles.tableRow}>
                                 <View style={styles.colImage}>
                                     {imageUrl ? (
+                                        // eslint-disable-next-line jsx-a11y/alt-text
                                         <Image src={imageUrl} style={styles.productImage} />
                                     ) : (
                                         <View style={{

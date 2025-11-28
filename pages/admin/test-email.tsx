@@ -144,10 +144,10 @@ export default function TestEmail() {
                                 <h3 className="font-semibold text-blue-900 mb-3">📋 Pasos para Solucionar</h3>
                                 <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
                                     <li>Ve a tu cuenta de Google (gmail.com)</li>
-                                    <li>Accede a "Gestionar tu cuenta de Google" → Seguridad</li>
+                                    <li>Accede a &quot;Gestionar tu cuenta de Google&quot; → Seguridad</li>
                                     <li>Activa la verificación en dos pasos</li>
-                                    <li>Ve a "Contraseñas de aplicación"</li>
-                                    <li>Genera una nueva contraseña para "Correo"</li>
+                                    <li>Ve a &quot;Contraseñas de aplicación&quot;</li>
+                                    <li>Genera una nueva contraseña para &quot;Correo&quot;</li>
                                     <li>Copia la contraseña generada (16 caracteres)</li>
                                     <li>En tu archivo .env.local agrega:
                                         <div className="bg-white p-3 rounded mt-2 font-mono text-xs">

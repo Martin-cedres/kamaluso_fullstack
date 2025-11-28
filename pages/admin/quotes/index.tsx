@@ -28,6 +28,28 @@ export default function QuotesList() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este presupuesto? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/admin/quotes/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (res.ok) {
+                toast.success('Presupuesto eliminado correctamente');
+                setQuotes(quotes.filter((q: any) => q._id !== id));
+            } else {
+                toast.error('Error al eliminar el presupuesto');
+            }
+        } catch (error) {
+            console.error('Error deleting quote:', error);
+            toast.error('Error al eliminar el presupuesto');
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'draft': return 'bg-yellow-100 text-yellow-800';
@@ -111,10 +133,21 @@ export default function QuotesList() {
                                                     {getStatusLabel(quote.status)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <Link href={`/admin/quotes/${quote._id}/edit`} className="text-blue-600 hover:text-blue-900 mr-4">
-                                                    Editar
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center">
+                                                <Link href={`/admin/quotes/${quote._id}/edit`} className="text-blue-600 hover:text-blue-900 mr-4" title="Editar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
                                                 </Link>
+                                                <button
+                                                    onClick={() => handleDelete(quote._id)}
+                                                    className="text-red-600 hover:text-red-900"
+                                                    title="Eliminar"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))

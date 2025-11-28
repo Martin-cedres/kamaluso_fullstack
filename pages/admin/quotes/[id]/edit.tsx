@@ -3,6 +3,7 @@ import AdminLayout from '../../../../components/AdminLayout';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function EditQuote() {
     const router = useRouter();
@@ -16,6 +17,7 @@ export default function EditQuote() {
         if (id) {
             fetchQuote();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const fetchQuote = async () => {
@@ -341,7 +343,7 @@ export default function EditQuote() {
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs mb-1"
                                                 />
                                                 {item.imageUrl ? (
-                                                    <img src={item.imageUrl} alt="Preview" className="h-16 w-full object-cover rounded border" />
+                                                    <Image src={item.imageUrl} alt="Preview" width={64} height={64} className="h-16 w-full object-cover rounded border" unoptimized />
                                                 ) : (
                                                     <div className="h-16 w-full bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center">
                                                         <span className="text-xs text-gray-400">Sin imagen</span>

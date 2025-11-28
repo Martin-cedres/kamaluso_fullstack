@@ -56,22 +56,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             updateDoc.tags = tags
               .map((tag) => String(tag).trim())
               .filter((tag) => tag.length > 0)
-          } else if (typeof tags === 'string') {
-            updateDoc.tags = tags
+          } else {
+            const tagsStr = String(tags);
+            updateDoc.tags = tagsStr
               .split(',')
               .map((tag) => tag.trim())
               .filter((tag) => tag.length > 0)
-          } else {
-            updateDoc.tags = []
           }
         }
 
         let coverImageFile: formidable.File | undefined
-      if (files.coverImage && Array.isArray(files.coverImage)) {
-        coverImageFile = files.coverImage[0] as formidable.File
-      } else if (files.coverImage) {
-        coverImageFile = files.coverImage as formidable.File
-      }
+        if (files.coverImage && Array.isArray(files.coverImage)) {
+          coverImageFile = files.coverImage[0]
+        } else if (files.coverImage) {
+          coverImageFile = files.coverImage as any
+        }
         if (coverImageFile) {
           console.log('Cover Image Filepath:', coverImageFile.filepath);
           console.log('Cover Image Mimetype (raw):', coverImageFile.mimetype);
@@ -95,38 +94,39 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         }
 
-              if (Object.keys(updateDoc).length === 0 && !coverImageFile) {
-                res.status(400).json({ error: 'No fields to update' })
-                return resolve()
-              }
-        
-              console.log('Update Document:', updateDoc);
-        
-              const updatedPost = await Post.findByIdAndUpdate(
-                String(_id),
-                updateDoc,
-                {
-                  new: true,
-                },
-              )
-        
-              if (!updatedPost) {
-                res.status(404).json({ error: 'Post not found' })
-                return resolve()
-              }
-        
-              res.status(200).json({ ok: true, message: 'Post updated successfully' })
-              resolve()
-            } catch (error: any) {
-              console.error('EDIT POST ERROR:', error)
-              console.error('Full Error Object:', JSON.stringify(error, null, 2));
-              if (error.code === 11000) {
-                res.status(409).json({ error: 'Slug already exists.' })
-              } else {
-                res.status(500).json({ error: error.message || 'Internal Server Error' })
-              }
-              resolve()
-            }    })
+        if (Object.keys(updateDoc).length === 0 && !coverImageFile) {
+          res.status(400).json({ error: 'No fields to update' })
+          return resolve()
+        }
+
+        console.log('Update Document:', updateDoc);
+
+        const updatedPost = await Post.findByIdAndUpdate(
+          String(_id),
+          updateDoc,
+          {
+            new: true,
+          },
+        )
+
+        if (!updatedPost) {
+          res.status(404).json({ error: 'Post not found' })
+          return resolve()
+        }
+
+        res.status(200).json({ ok: true, message: 'Post updated successfully' })
+        resolve()
+      } catch (error: any) {
+        console.error('EDIT POST ERROR:', error)
+        console.error('Full Error Object:', JSON.stringify(error, null, 2));
+        if (error.code === 11000) {
+          res.status(409).json({ error: 'Slug already exists.' })
+        } else {
+          res.status(500).json({ error: error.message || 'Internal Server Error' })
+        }
+        resolve()
+      }
+    })
   })
 }
 

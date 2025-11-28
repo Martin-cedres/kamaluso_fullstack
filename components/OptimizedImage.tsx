@@ -10,7 +10,7 @@ import s3Loader from '../lib/s3-loader';
  * - Imágenes locales (/): Marca como unoptimized
  */
 const OptimizedImage = (props: ImageProps) => {
-    const { src, ...restProps } = props;
+    const { src, alt, ...restProps } = props;
 
     // Convertir src a string si es un objeto (StaticImport)
     const srcString = typeof src === 'string' ? src : (typeof src === 'object' && 'src' in src ? src.src : '');
@@ -23,11 +23,11 @@ const OptimizedImage = (props: ImageProps) => {
         srcString.endsWith('.webp');
 
     if (shouldUseLoader) {
-        return <Image src={src} loader={s3Loader} {...restProps} />;
+        return <Image src={src} alt={alt} loader={s3Loader} {...restProps} />;
     }
 
     // Para imágenes locales, JPG/PNG antiguas, o cualquier otra
-    return <Image src={src} unoptimized {...restProps} />;
+    return <Image src={src} alt={alt} unoptimized {...restProps} />;
 };
 
 export default OptimizedImage;

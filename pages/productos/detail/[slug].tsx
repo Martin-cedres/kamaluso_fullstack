@@ -7,7 +7,7 @@ import VisualOptionSelector from '../../../components/VisualOptionSelector';
 import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon, ShieldCheckIcon, TruckIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ShieldCheckIcon, TruckIcon, SparklesIcon, DocumentTextIcon, CheckCircleIcon, QuestionMarkCircleIcon, LightBulbIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
 import StarRating from '../../../components/StarRating';
@@ -113,7 +113,11 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const [showDesktopRightArrow, setShowDesktopRightArrow] = useState(false);
   const [showMobileLeftArrow, setShowMobileLeftArrow] = useState(false);
   const [showMobileRightArrow, setShowMobileRightArrow] = useState(false);
-  const [activeTab, setActiveTab] = useState('descripcion');
+  const [activeTab, setActiveTab] = useState(
+    product && product.puntosClave && product.puntosClave.length > 0
+      ? 'puntosClave'
+      : 'descripcion'
+  );
 
   const [tapaSeleccionada, setTapaSeleccionada] = useState<any>(null);
 
@@ -121,15 +125,20 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     setIsClient(true); // Indicar que el componente se ha montado en el cliente
   }, []);
 
-  const TabButton = ({ tabName, label }: { tabName: string; label: string }) => (
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [router.asPath]);
+
+  const TabButton = ({ tabName, label, icon: Icon }: { tabName: string; label: string; icon: React.FC<React.ComponentProps<'svg'>> }) => (
     <button
       onClick={() => setActiveTab(tabName)}
-      className={`px-4 py-2 text-sm sm:text-base font-semibold transition-colors duration-300 whitespace-nowrap ${activeTab === tabName
+      className={`flex items-center gap-x-2 px-4 py-2 text-sm sm:text-base font-semibold transition-colors duration-300 whitespace-nowrap ${activeTab === tabName
         ? 'border-b-2 border-pink-500 text-pink-600'
         : 'text-gray-500 hover:text-gray-800'
         }`}
     >
-      {label}
+      <Icon className="h-5 w-5" />
+      <span>{label}</span>
     </button>
   );
 
@@ -474,7 +483,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         )}
       </Head>
 
-      <div className="bg-white pt-24">
+      <div className="bg-white" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 4rem)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Migas de pan para Escritorio */}
           <div className="hidden md:block pb-6">
@@ -660,7 +669,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               </div>
               <div className="flex items-center gap-2">
                 <TruckIcon className="w-5 h-5 text-azul" />
-                <span>Envíos a todo el país</span>
+                <span>Envíos a todo Uruguay</span>
               </div>
               <div className="flex items-center gap-2">
                 <SparklesIcon className="w-5 h-5 text-amarillo" />
@@ -800,17 +809,17 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           <div className="w-full mt-8 md:mt-16">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex gap-x-4 sm:gap-x-6 overflow-x-auto scrollbar-hide" aria-label="Tabs">
-                <TabButton tabName="descripcion" label="Descripción" />
                 {product.puntosClave && product.puntosClave.length > 0 && (
-                  <TabButton tabName="puntosClave" label="Puntos Clave" />
+                  <TabButton tabName="puntosClave" label="Puntos Clave" icon={ClipboardDocumentListIcon} />
                 )}
+                <TabButton tabName="descripcion" label="Descripción" icon={DocumentTextIcon} />
                 {product.faqs && product.faqs.length > 0 && (
-                  <TabButton tabName="faqs" label="Preguntas Frecuentes" />
+                  <TabButton tabName="faqs" label="Preguntas Frecuentes" icon={QuestionMarkCircleIcon} />
                 )}
                 {product.useCases && product.useCases.length > 0 && (
-                  <TabButton tabName="useCases" label="Casos de Uso" />
+                  <TabButton tabName="useCases" label="Casos de Uso" icon={LightBulbIcon} />
                 )}
-                <TabButton tabName="reseñas" label={`Reseñas (${reviewCount})`} />
+                <TabButton tabName="reseñas" label={`Reseñas (${reviewCount})`} icon={StarIcon} />
               </nav>
             </div>
 

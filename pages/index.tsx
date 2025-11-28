@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Head from 'next/head' // Importo Head para añadir el schema
 import SeoMeta from '../components/SeoMeta'; // Importar SeoMeta
 
-import { StarIcon } from '@heroicons/react/24/solid'; // Importar StarIcon
+import { StarIcon, ShieldCheckIcon, TruckIcon, SparklesIcon } from '@heroicons/react/24/solid'; // Importar StarIcon
 import Product from '../models/Product'; // Importar el MODELO Product
 import Review from '../models/Review'; // Importar el modelo Review
 import Category from '../models/Category'; // Importar el MODELO Category
@@ -138,10 +138,10 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                     <StarIcon
                       key={i}
                       className={`h-5 w-5 transition-transform group-hover:scale-110 ${i < Math.floor(averageRating)
+                        ? 'text-amarillo'
+                        : i < Math.ceil(averageRating) && averageRating % 1 >= 0.5
                           ? 'text-amarillo'
-                          : i < Math.ceil(averageRating) && averageRating % 1 >= 0.5
-                            ? 'text-amarillo'
-                            : 'text-gray-300'
+                          : 'text-gray-300'
                         }`}
                     />
                   ))}
@@ -153,15 +153,14 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
               </a>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-heading text-textoPrimario leading-tight tracking-tight">
-                Tu Vida, <br className="hidden md:block" />
+                Organizá tu vida <br className="hidden md:block" />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-rosa to-moradoClaro">
-                  Organizada con Estilo.
+                  con productos creados para vos.
                 </span>
               </h1>
 
               <p className="text-xl text-textoSecundario max-w-2xl mx-auto md:mx-0 leading-relaxed">
-                Deja el caos atrás con agendas y libretas 100% personalizadas.
-                Diseñadas en Uruguay para quienes valoran su tiempo y su identidad.
+                Decile chau al caos. Diseñá agendas y libretas 100% personalizadas, hechas en Uruguay para quienes quieren organización, estilo y una identidad única.
               </p>
 
               <div className="flex flex-col items-center gap-4 justify-center md:justify-start pt-4">
@@ -170,7 +169,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                   className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-rosa to-moradoClaro text-white rounded-2xl font-bold text-xl shadow-kamalusoPink hover:shadow-kamalusoPinkXl hover:-translate-y-2 transition-all duration-300 text-center overflow-hidden"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-3">
-                    Explorar Productos
+                    Ver Productos
                     <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
@@ -182,14 +181,18 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                 </p>
               </div>
 
-              <div className="pt-8 flex items-center justify-center md:justify-start gap-8 text-sm text-textoSecundario font-medium">
+              <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-x-8 gap-y-4 text-sm text-textoSecundario font-medium">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-verde"></span>
-                  Envíos a todo el país
+                  <ShieldCheckIcon className="w-5 h-5 text-verde" />
+                  <span>Compra 100% Segura</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-verde"></span>
-                  Calidad Premium
+                  <TruckIcon className="w-5 h-5 text-azul" />
+                  <span>Envíos a todo Uruguay</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <SparklesIcon className="w-5 h-5 text-amarillo" />
+                  <span>Calidad Garantizada</span>
                 </div>
               </div>
             </div>
@@ -252,6 +255,35 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
 
 
+        {/* Categorías Dinámicas */}
+        <section className="px-6 py-16 bg-gray-50">
+          <h2 className="text-3xl font-semibold text-center mb-8">
+            Categorías
+          </h2>
+          <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+            {categories.map((cat) => (
+              <Link
+                key={cat._id}
+                href={`/productos/${cat.slug}`}
+                className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+              >
+                <div className="relative w-full h-64">
+                  <Image
+                    src={cat.imagen || '/placeholder.png'}
+                    alt={cat.nombre}
+                    fill
+                    sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                <div className="p-4 text-center">
+                  <h3 className="text-xl font-semibold">{cat.nombre}</h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* Productos Destacados - MOVED UP to show products earlier */}
         {destacados.length > 0 && (
           <section className="px-6 py-16 bg-white">
@@ -281,35 +313,6 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
         {/* Cómo Funciona - MOVED DOWN after products */}
         <HowItWorks />
-
-        {/* Categorías Dinámicas */}
-        <section className="px-6 py-16 bg-gray-50">
-          <h2 className="text-3xl font-semibold text-center mb-8">
-            Explora nuestras colecciones
-          </h2>
-          <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/productos/${cat.slug}`}
-                className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
-              >
-                <div className="relative w-full h-64">
-                  <Image
-                    src={cat.imagen || '/placeholder.png'}
-                    alt={cat.nombre}
-                    fill
-                    sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-                <div className="p-4 text-center">
-                  <h3 className="text-xl font-semibold">{cat.nombre}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
 
         {/* Reseñas Destacadas - MOVED UP before newsletter */}
         <FeaturedReviews reviews={reviews} />

@@ -16,15 +16,17 @@ export default function s3Loader({ src, width, quality }: ImageLoaderProps): str
     const imageWidths = [480, 800, 1200, 1920];
     const bestFitSize = imageWidths.find(w => w >= width) || imageWidths[imageWidths.length - 1];
 
-    let cleanSrc = src.replace(/-\d+w\.webp$/, '.webp');
+    // Clean the src to get the base URL, e.g., '.../image-800w.webp' -> '.../image'
+    const cleanSrc = src.replace(/-\d+w\.webp$/, '.webp');
     const baseUrl = cleanSrc.slice(0, -5);
 
-    // Para tamaños grandes (>=1920), usar la versión base sin sufijo
-    // Esto asegura que funcione con imágenes originales menores a 1920px
-    if (bestFitSize >= 1920) {
+    // For the smallest size (mobile) or largest size, fall back to the base .webp image.
+    // This is safer, assuming the base .webp always exists but specific small variants might not for non-product images.
+    if (bestFitSize <= 480 || bestFitSize >= 1920) {
       return `${baseUrl}.webp`;
     }
 
+    // For medium sizes, use the specific responsive images.
     return `${baseUrl}-${bestFitSize}w.webp`;
   }
 

@@ -9,9 +9,11 @@ module.exports = {
   generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [
-      { userAgent: '*', allow: '/' },
-      { userAgent: '*', disallow: '/admin' },
-      { userAgent: '*', disallow: '/api/' },
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin', '/api/'],
+      },
     ],
   },
   changefreq: 'weekly',
