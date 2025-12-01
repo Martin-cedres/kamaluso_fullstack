@@ -12,17 +12,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   await connectDB()
 
   try {
-    const { id } = req.query
+    const { slug } = req.query
 
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({ error: 'Post ID is required' })
+    if (!slug || typeof slug !== 'string') {
+      return res.status(400).json({ error: 'Post slug is required' })
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'Invalid Post ID' })
-    }
-
-    const deletedPost = await Post.findByIdAndDelete(id)
+    const deletedPost = await Post.findOneAndDelete({ slug })
 
     if (!deletedPost) {
       return res.status(404).json({ error: 'Post not found' })

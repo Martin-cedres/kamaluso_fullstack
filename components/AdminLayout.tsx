@@ -25,19 +25,21 @@ interface AdminLayoutProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Productos', href: '/admin/productos', icon: ShoppingCartIcon },
   { name: 'Categorías', href: '/admin/categorias', icon: TagIcon },
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
   { name: 'Presupuestos', href: '/admin/quotes', icon: DocumentTextIcon },
   { name: 'Test de Email', href: '/admin/test-email', icon: BeakerIcon },
   { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
   { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },
-  // --- Nuevos Enlaces ---
+  // --- Nuevos Enlaces SEO & Content ---
+  { name: 'Centro de Mando SEO', href: '/admin/seo/strategies', icon: CircleStackIcon },
   { name: 'Páginas Pilares', href: '/admin/pillar-pages', icon: BookOpenIcon },
+  { name: 'Event Pages', href: '/admin/event-pages', icon: MegaphoneIcon },
   { name: 'Gestor de Clusters', href: '/admin/clusters', icon: CircleStackIcon },
-  { name: 'Fábrica de Clusters', href: '/admin/cluster-factory', icon: BeakerIcon },
   { name: 'Modo Espía', href: '/admin/competitor-analysis', icon: EyeIcon },
   { name: 'Expectativa vs Realidad', href: '/admin/real-results', icon: StarIcon },
-  // --- Fin Nuevos Enlaces ---
+  // --- Fin Enlaces SEO ---
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
   { name: 'Banner de Anuncios', href: '/admin/settings', icon: MegaphoneIcon },
 ]

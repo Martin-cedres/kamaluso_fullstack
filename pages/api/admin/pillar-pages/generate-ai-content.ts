@@ -15,20 +15,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       // Prompt para generar el contenido principal
+      // Prompt para generar el contenido principal
       const contentPrompt = `Eres un especialista en SEO para papelería en Uruguay. Tu objetivo es generar contenido extenso y de alta calidad para una página pilar.
       
       **Título de la Página Pilar:** "${title}"
       **Tema Principal del Cluster:** "${topic}"
 
-      Genera un artículo completo y detallado (mínimo 1500 palabras) que aborde el tema principal de forma exhaustiva. Incluye:
+      Genera un artículo completo y detallado (mínimo 1500 palabras) que aborde el tema principal de forma exhaustiva.
+      
+      **FORMATO OBLIGATORIO: HTML**
+      - Usa etiquetas <h2> para los subtítulos principales.
+      - Usa etiquetas <h3> para secciones dentro de los subtítulos.
+      - Usa etiquetas <p> para los párrafos.
+      - Usa etiquetas <ul> y <li> para listas.
+      - Usa etiquetas <strong> para resaltar frases clave.
+      - NO uses etiquetas <html>, <head> o <body>. Devuelve solo el contenido del cuerpo.
+      - NO uses Markdown (nada de ## o **).
+      - NO incluyas el título H1 al principio (ya se renderiza en la plantilla).
+
+      Incluye:
       - Una introducción atractiva.
-      - Subtítulos (H2, H3) relevantes.
       - Información útil y práctica para el público uruguayo interesado en papelería.
       - Palabras clave relacionadas con "${topic}" y "papelería en Uruguay".
       - Un tono profesional, informativo y persuasivo.
-      - Conclusión.
-      
-      El contenido debe estar formateado en Markdown.`;
+      - Conclusión.`;
 
       // Prompt para generar el título SEO
       const seoTitlePrompt = `Genera un título SEO optimizado para Google para la siguiente página pilar de papelería en Uruguay. Debe ser conciso (máximo 60 caracteres), atractivo y contener palabras clave relevantes.

@@ -25,7 +25,7 @@ export async function getGoogleSuggestions(query: string, lang: string = 'es'): 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
 
     // The response is a JSON array where the second element is an array of suggestions.
@@ -56,7 +56,7 @@ export async function getKeywordSuggestions(seedKeyword: string): Promise<string
 
   try {
     const googleSuggestions = await getGoogleSuggestions(seedKeyword, 'es');
-    
+
     // In the future, other sources like Bing could be added here.
     // const bingSuggestions = await getBingSuggestions(seedKeyword);
     // const allSuggestions = [...googleSuggestions, ...bingSuggestions];
@@ -83,23 +83,13 @@ export async function getSearchTrends(
   productName: string,
   categoryName: string
 ): Promise<{ trendsSummary: string; keywords: string[] }> {
-  console.log(`Iniciando investigación de tendencias para: ${productName}`);
-  
-  // Este resumen se basa en la investigación real realizada con google_web_search.
-  // Representa los hallazgos clave sobre las tendencias de búsqueda en Uruguay.
-  const broadTrendsSummary = `
-- Fuerte enfoque en la personalización para nichos: "agendas para estudiantes", "planners para profesionales", "regalos empresariales".
-- La autenticidad es clave: los usuarios valoran las reseñas y el contenido generado por otros clientes.
-- Búsquedas por voz y visuales están en aumento. El contenido debe ser conversacional.
-- El año ("2026") es un término de búsqueda fundamental y debe usarse en combinación con "Uruguay".
-- "Planner" se usa de forma intercambiable con "agenda".
-  `.trim();
+  console.log(`Iniciando investigación de tendencias REALES para: ${productName}`);
 
-  // Se obtienen sugerencias específicas usando la función existente.
+  // 1. Obtener sugerencias "crudas" de Google Suggest (Datos Reales del Mercado)
   const longTailKeywords = await getKeywordSuggestions(productName);
   const categoryKeywords = await getKeywordSuggestions(categoryName);
 
-  // Se definen keywords primarias basadas en la investigación.
+  // 2. Definir keywords semilla para ampliar la búsqueda
   const primaryKeywords = [
     `comprar ${productName}`,
     `${productName} Uruguay`,
@@ -109,17 +99,48 @@ export async function getSearchTrends(
     `ideas ${productName}`,
     `${productName} Montevideo`,
   ];
-  
-  // Se combina y depura la lista final de keywords.
+
+  // 3. Combinar y limpiar keywords
   const allKeywords = [...primaryKeywords, ...longTailKeywords, ...categoryKeywords];
   const uniqueKeywords = [...new Set(allKeywords)]
-    .filter(k => k.length > 5) // Filtro simple para asegurar calidad.
-    .slice(0, 20); // Se limita a un número razonable para no saturar el prompt.
+    .filter(k => k.length > 4) // Filtro de ruido
+    .slice(0, 25); // Tomamos una muestra representativa
 
-  console.log(`Investigación completada: ${uniqueKeywords.length} keywords únicas encontradas.`);
+  console.log(`Keywords encontradas: ${uniqueKeywords.length}. Analizando patrones con IA...`);
 
-  return {
-    trendsSummary: broadTrendsSummary,
-    keywords: uniqueKeywords,
-  };
+  // 4. Generar Resumen de Tendencias Dinámico con IA
+  // En lugar de un texto fijo, le damos los datos a la IA para que interprete el mercado actual.
+  try {
+    const analysisPrompt = `
+      Actúa como un Analista de Datos de Mercado Senior.
+      He extraído las siguientes TENDENCIAS DE BÚSQUEDA (Keywords) de Google Uruguay para el producto "${productName}" (${categoryName}):
+
+      LISTA DE KEYWORDS DETECTADAS:
+      ${uniqueKeywords.join(', ')}
+
+      Tu tarea:
+      Analiza esta lista y genera un "Resumen de Inteligencia de Mercado" (máx 5 puntos).
+      Identifica:
+      1. ¿Qué busca exactamente la gente? (Barato, calidad, personalizado, urgente?)
+      2. ¿Hay términos estacionales o años específicos (ej: 2026)?
+      3. ¿Qué intención de compra predomina?
+
+      Responde SOLO con el resumen en formato lista (bullet points). Sé directo y estratégico.
+    `;
+
+    const dynamicTrendsSummary = await generateWithFallback(analysisPrompt);
+
+    return {
+      trendsSummary: dynamicTrendsSummary,
+      keywords: uniqueKeywords,
+    };
+
+  } catch (error) {
+    console.error("Error generando análisis de tendencias dinámico:", error);
+    // Fallback seguro si falla la IA de análisis, pero aún devolvemos las keywords reales
+    return {
+      trendsSummary: "No se pudo generar el análisis detallado, pero las keywords adjuntas reflejan la demanda actual del mercado.",
+      keywords: uniqueKeywords,
+    };
+  }
 }

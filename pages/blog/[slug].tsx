@@ -128,8 +128,11 @@ export default function ContentPage({ content }: Props) {
               Publicado el {new Date(content.createdAt).toLocaleDateString()}
             </p>
             <div
-              className="prose lg:prose-xl max-w-none mb-12"
-              dangerouslySetInnerHTML={{ __html: content.content }}
+              className="prose lg:prose-xl max-w-none mb-12 
+              prose-a:text-blue-600 prose-a:no-underline prose-a:border-b-2 prose-a:border-blue-200 hover:prose-a:border-blue-600 hover:prose-a:text-blue-800 transition-all"
+              dangerouslySetInnerHTML={{
+                __html: content.content.replace(/<h1[^>]*>.*?<\/h1>/gi, '')
+              }}
             />
             {content.type === 'post' && content.tags && content.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-8">

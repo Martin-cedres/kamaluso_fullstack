@@ -7,11 +7,28 @@ import Post from '../../models/Post';
 import Product from '../../models/Product';
 import SeoMeta from '../../components/SeoMeta';
 
-interface Props {
-    pillarPage: IPillarPage | null;
+interface PopulatedProduct {
+    _id: string;
+    nombre: string;
+    slug: string;
+    imageUrl?: string;
+    images?: string[];
+    basePrice?: number;
+    descripcion?: string;
 }
 
-export default function PillarPageDetail({ pillarPage }: Props) {
+interface PopulatedPillarPage extends Omit<IPillarPage, 'clusterProducts' | 'clusterPosts'> {
+    clusterProducts: PopulatedProduct[];
+    clusterPosts: any[]; // We can type this better if needed, but any is fine for now
+}
+
+interface Props {
+    pillarPage: PopulatedPillarPage | null;
+    toc?: { id: string; text: string }[];
+    processedContent?: string;
+}
+
+export default function PillarPageDetail({ pillarPage, toc, processedContent }: Props) {
     if (!pillarPage) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -19,6 +36,9 @@ export default function PillarPageDetail({ pillarPage }: Props) {
             </div>
         );
     }
+
+    // Use processedContent if available, otherwise fallback to raw content
+    const contentToRender = processedContent || pillarPage.content;
 
     return (
         <>
@@ -48,15 +68,92 @@ export default function PillarPageDetail({ pillarPage }: Props) {
 
                     {/* Main Content Column */}
                     <article className="lg:col-span-8 prose prose-lg prose-pink max-w-none">
-                        {/* Render HTML Content safely */}
-                        <div dangerouslySetInnerHTML={{ __html: pillarPage.content }} />
+                        {/* Render HTML Content safely with Product Cards processed */}
+                        <div dangerouslySetInnerHTML={{
+                            __html: (() => {
+                                let content = contentToRender;
+                                // Regex para encontrar los shortcodes {{PRODUCT_CARD:slug}}
+                                const regex = /{{PRODUCT_CARD:([a-zA-Z0-9-]+)}}/g;
+
+                                content = content.replace(regex, (match, slug) => {
+                                    // Buscar el producto en la lista de clusterProducts
+                                    const product = pillarPage.clusterProducts?.find((p: any) => p.slug === slug);
+
+                                    if (!product) return ''; // Si no se encuentra, eliminar el shortcode
+
+                                    // Generar HTML para la tarjeta del producto
+                                    const imageUrl = product.imageUrl || (product.images && product.images[0]) || '';
+
+                                    return `
+                                        <div class="not-prose my-8">
+                                            <a href="/productos/detail/${product.slug}" class="block group no-underline">
+                                                <div class="flex flex-col sm:flex-row items-center gap-6 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-pink-300 hover:-translate-y-1">
+                                                    <div class="w-full sm:w-48 h-48 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-100">
+                                                        ${imageUrl ?
+                                            `<img src="${imageUrl}" alt="${product.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />` :
+                                            `<div class="w-full h-full flex items-center justify-center text-gray-400 text-4xl">📷</div>`
+                                        }
+                                                    </div>
+                                                    <div class="flex-1 text-center sm:text-left">
+                                                        <h3 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition-colors">
+                                                            ${product.nombre}
+                                                        </h3>
+                                                        <p class="text-gray-600 mb-4 line-clamp-2 text-sm">
+                                                            ${product.descripcion ? product.descripcion.substring(0, 120) + '...' : 'Descubre este increíble producto personalizado.'}
+                                                        </p>
+                                                        <div class="flex items-center justify-center sm:justify-start gap-4">
+                                                            <span class="text-xl font-bold text-gray-900">$${product.basePrice}</span>
+                                                            <span class="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-bold rounded-lg shadow-md group-hover:bg-pink-700 transition-colors">
+                                                                Ver Producto
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 ml-2">
+                                                                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                                                                </svg>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    `;
+                                });
+
+                                return content;
+                            })()
+                        }} />
                     </article>
                     {/* Sidebar / Cluster Navigation */}
                     <aside className="lg:col-span-4 space-y-8">
 
+                        {/* Table of Contents (TOC) */}
+                        {toc && toc.length > 0 && (
+                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm sticky top-8 z-10">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 border-b pb-2">
+                                    📑 En esta guía
+                                </h3>
+                                <nav>
+                                    <ul className="space-y-2 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                                        {toc.map((item) => (
+                                            <li key={item.id}>
+                                                <a
+                                                    href={`#${item.id}`}
+                                                    className="block text-gray-600 hover:text-pink-600 hover:bg-pink-50 px-3 py-2 rounded-lg transition-all text-sm font-medium"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' });
+                                                    }}
+                                                >
+                                                    {item.text}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </nav>
+                            </div>
+                        )}
+
                         {/* Cluster Products */}
                         {pillarPage.clusterProducts && pillarPage.clusterProducts.length > 0 && (
-                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-8">
+                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm">
                                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                                     🛍️ Productos Recomendados
                                 </h3>
@@ -151,9 +248,45 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
             };
         }
 
+        // --- TOC Generation Logic ---
+        const toc: { id: string; text: string }[] = [];
+        let processedContent = page.content;
+
+        // Regex to find <h2> tags and capture their content
+        // This simple regex assumes <h2>Content</h2> structure. 
+        // It might need refinement if attributes are present, but for generated content it's usually clean.
+        const h2Regex = /<h2[^>]*>(.*?)<\/h2>/g;
+
+        processedContent = processedContent.replace(h2Regex, (match, title) => {
+            // Clean title for ID (remove HTML tags inside title if any, though unlikely for H2)
+            const cleanTitle = title.replace(/<[^>]+>/g, '');
+
+            const id = cleanTitle
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+
+            // Ensure unique IDs in case of duplicate titles
+            let uniqueId = id;
+            let counter = 1;
+            while (toc.some(item => item.id === uniqueId)) {
+                uniqueId = `${id}-${counter}`;
+                counter++;
+            }
+
+            toc.push({ id: uniqueId, text: cleanTitle });
+
+            // Return the H2 with the injected ID
+            return `<h2 id="${uniqueId}">${title}</h2>`;
+        });
+
         return {
             props: {
                 pillarPage: JSON.parse(JSON.stringify(page)),
+                toc,
+                processedContent,
             },
             revalidate: 60, // Revalidar cada minuto si es necesario
         };
