@@ -20,6 +20,7 @@ import { useState, useEffect } from 'react'; // Import hooks
 import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
 import Marquee from '../components/Marquee'; // Import Marquee
 import ScrollReveal from '../components/ScrollReveal'; // Import ScrollReveal
+import OptimizedImage from '../components/OptimizedImage'; // Import OptimizedImage
 
 // Interfaces
 interface Categoria {
@@ -278,7 +279,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                   className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
                 >
                   <div className="relative w-full h-64">
-                    <Image
+                    <OptimizedImage
                       src={cat.imagen || '/placeholder.png'}
                       alt={cat.nombre}
                       fill

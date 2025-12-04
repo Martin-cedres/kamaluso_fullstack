@@ -10,9 +10,7 @@ const nextConfig = {
   reactStrictMode: true, // Force rebuild
   poweredByHeader: false, // Added this line
   images: {
-    // loader: 'custom',
-    // loaderFile: './lib/s3-loader.ts',
-    unoptimized: true, // Temporary for Next.js 16 migration
+    loaderFile: './lib/s3-loader.ts',
     remotePatterns: [
       {
         protocol: 'https',

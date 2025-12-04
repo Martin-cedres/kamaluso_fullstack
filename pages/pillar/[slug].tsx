@@ -213,11 +213,18 @@ export default function PillarPageDetail({ pillarPage, toc, processedContent }: 
                                 <ul className="space-y-3">
                                     {pillarPage.clusterPosts.map((post: any) => (
                                         <li key={post._id}>
-                                            <Link href={`/blog/${post.slug}`} className="block p-3 hover:bg-purple-50 rounded-lg transition group">
+                                            <a
+                                                href={`#${post.slug}`}
+                                                className="block p-3 hover:bg-purple-50 rounded-lg transition group"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    document.getElementById(post.slug)?.scrollIntoView({ behavior: 'smooth' });
+                                                }}
+                                            >
                                                 <h4 className="font-medium text-gray-700 group-hover:text-purple-700">
                                                     {post.title}
                                                 </h4>
-                                            </Link>
+                                            </a>
                                         </li>
                                     ))}
                                 </ul>
@@ -225,8 +232,8 @@ export default function PillarPageDetail({ pillarPage, toc, processedContent }: 
                         )}
 
                     </aside>
-                </div >
-            </main >
+                </div>
+            </main>
         </>
     );
 }
@@ -267,7 +274,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         let processedContent = page.content;
 
         // Regex to find <h2> tags and capture their content
-        // This simple regex assumes <h2>Content</h2> structure. 
+        // This simple regex assumes <h2>Content</h2> structure.
         // It might need refinement if attributes are present, but for generated content it's usually clean.
         const h2Regex = /<h2[^>]*>(.*?)<\/h2>/g;
 

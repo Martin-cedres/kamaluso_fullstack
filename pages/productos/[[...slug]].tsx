@@ -12,6 +12,7 @@ import connectDB from '../../lib/mongoose';
 import Product from '../../models/Product';
 import Category from '@/models/Category';
 import ProductCard from '../../components/ProductCard'; // Importar ProductCard
+import OptimizedImage from '../../components/OptimizedImage'; // Importar OptimizedImage
 
 // Interfaces
 interface IProduct {
@@ -105,10 +106,10 @@ export default function CategoryPage({
         if (categorySlug) {
           apiUrl += `&categoria=${categorySlug}`;
         }
-        
+
         const res = await fetch(apiUrl);
         const data = await res.json();
-        
+
         setProducts(data.products || []);
         setTotalPages(data.totalPages || 0);
       } catch (error) {
@@ -174,7 +175,7 @@ export default function CategoryPage({
   if (!category) {
     return (
       <>
-        
+
         <main className="min-h-screen bg-gray-50 px-6">
           <h1 className="text-3xl font-semibold text-center mb-10">
             Categoría no encontrada
@@ -225,7 +226,7 @@ export default function CategoryPage({
         />
       </Head>
 
-      
+
       <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 pt-24">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex md:hidden">
@@ -250,7 +251,7 @@ export default function CategoryPage({
                     className="w-full sm:w-56 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
                   >
                     <div className="relative w-full h-48">
-                      <Image
+                      <OptimizedImage
                         src={cat.imagen || '/placeholder.png'}
                         alt={cat.nombre}
                         fill
@@ -411,7 +412,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .lean();
-      
+
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
@@ -555,7 +556,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       const productsData = await Product.aggregate(aggregationPipeline as any[]);
       const totalProducts = await Product.countDocuments(query);
 
-      initialProducts = JSON.parse(JSON.stringify(productsData)).map((p:any) => ({
+      initialProducts = JSON.parse(JSON.stringify(productsData)).map((p: any) => ({
         ...p,
         averageRating: p.averageRating === null ? 0 : p.averageRating,
         numReviews: p.numReviews || 0,
