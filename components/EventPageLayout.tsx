@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 
 interface EventPageLayoutProps {
-    children: ReactNode;
+    children: React.ReactNode;
 }
+
 
 const EventPageLayout: React.FC<EventPageLayoutProps> = ({ children }) => {
     return (

@@ -33,7 +33,7 @@ interface CartContextType {
   updateQuantity: (cartItemId: string, quantity: number) => void
   clearCart: () => void
   cartCount: number
-  appliedCoupon?: AppliedCoupon
+  appliedCoupon?: AppliedCoupon | null
   setAppliedCoupon: (coupon: AppliedCoupon | null) => void
   cartIconAnimate: boolean
 }
@@ -64,8 +64,9 @@ export const getCartItemId = (product: { _id: string; finish?: string; selection
 
 // Create the provider component
 interface CartProviderProps {
-  children: ReactNode
+  children: React.ReactNode;
 }
+
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])

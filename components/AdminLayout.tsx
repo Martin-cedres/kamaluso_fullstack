@@ -44,6 +44,10 @@ const navigation = [
   { name: 'Banner de Anuncios', href: '/admin/settings', icon: MegaphoneIcon },
 ]
 
+interface AdminLayoutProps {
+  children: React.ReactNode;
+}
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const router = useRouter()
   const { data: session, status } = useSession()

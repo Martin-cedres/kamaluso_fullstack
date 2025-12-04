@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import OptimizedImage from './OptimizedImage';
 import StarRating from './StarRating';
 
 import { IReview } from '../models/Review';
@@ -21,12 +22,14 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
     }
   };
 
+
+
   return (
     <div className="h-[500px] flex flex-col justify-between p-6 bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-2 hover:border-pink-200 transition-all duration-300 group">
       <div>
         {review.imageUrl && (
           <div className="mb-4 w-full h-48 relative rounded-lg overflow-hidden bg-gray-100 group-hover:scale-105 transition-transform duration-300">
-            <Image
+            <OptimizedImage
               src={review.imageUrl}
               alt={`Imagen de reseña de ${review.user.name}`}
               fill

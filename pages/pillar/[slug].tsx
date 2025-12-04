@@ -1,5 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
+import Image from 'next/image';
 import Link from 'next/link';
 import connectDB from '../../lib/mongoose';
 import PillarPage, { IPillarPage } from '../../models/PillarPage';
@@ -69,57 +70,70 @@ export default function PillarPageDetail({ pillarPage, toc, processedContent }: 
                     {/* Main Content Column */}
                     <article className="lg:col-span-8 prose prose-lg prose-pink max-w-none">
                         {/* Render HTML Content safely with Product Cards processed */}
-                        <div dangerouslySetInnerHTML={{
-                            __html: (() => {
-                                let content = contentToRender;
-                                // Regex para encontrar los shortcodes {{PRODUCT_CARD:slug}}
-                                const regex = /{{PRODUCT_CARD:([a-zA-Z0-9-]+)}}/g;
+                        {/* Render Content with Product Cards */}
+                        <div className="prose prose-lg prose-pink max-w-none">
+                            {(() => {
+                                const content = contentToRender;
+                                // Split content by product card shortcodes
+                                const parts = content.split(/({{PRODUCT_CARD:[a-zA-Z0-9-]+}})/g);
 
-                                content = content.replace(regex, (match, slug) => {
-                                    // Buscar el producto en la lista de clusterProducts
-                                    const product = pillarPage.clusterProducts?.find((p: any) => p.slug === slug);
+                                return parts.map((part, index) => {
+                                    const match = part.match(/{{PRODUCT_CARD:([a-zA-Z0-9-]+)}}/);
+                                    if (match) {
+                                        const slug = match[1];
+                                        const product = pillarPage.clusterProducts?.find((p: any) => p.slug === slug);
 
-                                    if (!product) return ''; // Si no se encuentra, eliminar el shortcode
+                                        if (!product) return null;
 
-                                    // Generar HTML para la tarjeta del producto
-                                    const imageUrl = product.imageUrl || (product.images && product.images[0]) || '';
+                                        const imageUrl = product.imageUrl || (product.images && product.images[0]) || '';
 
-                                    return `
-                                        <div class="not-prose my-8">
-                                            <a href="/productos/detail/${product.slug}" class="block group no-underline">
-                                                <div class="flex flex-col sm:flex-row items-center gap-6 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-pink-300 hover:-translate-y-1">
-                                                    <div class="w-full sm:w-48 h-48 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-100">
-                                                        ${imageUrl ?
-                                            `<img src="${imageUrl}" alt="${product.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />` :
-                                            `<div class="w-full h-full flex items-center justify-center text-gray-400 text-4xl">📷</div>`
-                                        }
-                                                    </div>
-                                                    <div class="flex-1 text-center sm:text-left">
-                                                        <h3 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition-colors">
-                                                            ${product.nombre}
-                                                        </h3>
-                                                        <p class="text-gray-600 mb-4 line-clamp-2 text-sm">
-                                                            ${product.descripcion ? product.descripcion.substring(0, 120) + '...' : 'Descubre este increíble producto personalizado.'}
-                                                        </p>
-                                                        <div class="flex items-center justify-center sm:justify-start gap-4">
-                                                            <span class="text-xl font-bold text-gray-900">$${product.basePrice}</span>
-                                                            <span class="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-bold rounded-lg shadow-md group-hover:bg-pink-700 transition-colors">
-                                                                Ver Producto
-                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 ml-2">
-                                                                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                                                                </svg>
-                                                            </span>
+                                        return (
+                                            <div key={index} className="not-prose my-8">
+                                                <Link href={`/productos/detail/${product.slug}`} className="block group no-underline">
+                                                    <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-pink-300 hover:-translate-y-1">
+                                                        <div className="w-full sm:w-48 h-48 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-100 relative">
+                                                            {imageUrl ? (
+                                                                <div className="relative w-full h-full">
+                                                                    <Image
+                                                                        src={imageUrl}
+                                                                        alt={product.nombre}
+                                                                        fill
+                                                                        sizes="(max-width: 640px) 100vw, 200px"
+                                                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl">📷</div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 text-center sm:text-left">
+                                                            <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition-colors">
+                                                                {product.nombre}
+                                                            </h3>
+                                                            <p className="text-gray-600 mb-4 line-clamp-2 text-sm">
+                                                                {product.descripcion ? product.descripcion.substring(0, 120) + '...' : 'Descubre este increíble producto personalizado.'}
+                                                            </p>
+                                                            <div className="flex items-center justify-center sm:justify-start gap-4">
+                                                                <span className="text-xl font-bold text-gray-900">$U {product.basePrice}</span>
+                                                                <span className="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-bold rounded-lg shadow-md group-hover:bg-pink-700 transition-colors">
+                                                                    Ver Producto
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 ml-2">
+                                                                        <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    `;
-                                });
+                                                </Link>
+                                            </div>
+                                        );
+                                    }
 
-                                return content;
-                            })()
-                        }} />
+                                    // Render regular HTML content
+                                    return <div key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+                                });
+                            })()}
+                        </div>
                     </article>
                     {/* Sidebar / Cluster Navigation */}
                     <aside className="lg:col-span-4 space-y-8">

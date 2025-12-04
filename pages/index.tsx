@@ -15,6 +15,11 @@ import { IReview } from '../models/Review'; // Importar la interfaz IReview glob
 import NewsletterForm from '../components/NewsletterForm'; // Importar NewsletterForm
 import HowItWorks from '../components/HowItWorks'; // Importar HowItWorks
 import RealResultsGallery from '../components/RealResultsGallery'; // Importar RealResultsGallery
+import ProductCarousel from '../components/ProductCarousel'; // Importar ProductCarousel
+import { useState, useEffect } from 'react'; // Import hooks
+import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
+import Marquee from '../components/Marquee'; // Import Marquee
+import ScrollReveal from '../components/ScrollReveal'; // Import ScrollReveal
 
 // Interfaces
 interface Categoria {
@@ -51,6 +56,17 @@ interface HomeProps {
 }
 
 export default function Home({ destacados, categories, reviews }: HomeProps) {
+  // Hero Text Animation State
+  const [heroTextIndex, setHeroTextIndex] = useState(0);
+  const heroTexts = ["vos", "tu empresa", "regalar"];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeroTextIndex((prev) => (prev + 1) % heroTexts.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Calculate real average rating from reviews
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length)
@@ -75,29 +91,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
     return null
   }
 
-  // --- Mis datos para el Schema de Google --- //
-  const siteUrl = 'https://www.papeleriapersonalizada.uy'
-  // Aquí defino los datos de mi organización y sitio web para que Google los entienda.
-  // Esto puede ayudar a que aparezca la caja de búsqueda de mi sitio en Google.
-  const siteSchema = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      url: siteUrl,
-      logo: `${siteUrl}/logo.webp`,
-      name: 'Kamaluso Papelería',
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      url: siteUrl,
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: `${siteUrl}/productos?search={search_term_string}`,
-        'query-input': 'required name=search_term_string',
-      },
-    },
-  ]
+
 
   return (
     <>
@@ -105,14 +99,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         title="Papelería Personalizada en Uruguay | Agendas y Libretas | Kamaluso"
         description="Encuentra agendas, libretas y planners 100% personalizados en Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo el Uruguay!"
       />
-      <Head>
-        {/* Inyecto los datos estructurados de mi sitio para que Google los lea */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteSchema) }}
-          key="site-jsonld"
-        />
-      </Head>
+
 
       <main className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
         {/* Hero Section - Rediseñado para Impacto */}
@@ -152,15 +139,31 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                 </span>
               </a>
 
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-heading text-textoPrimario leading-tight tracking-tight">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-heading text-textoPrimario leading-tight tracking-tight pb-6">
                 Organizá tu vida <br className="hidden md:block" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rosa to-moradoClaro">
-                  con productos creados para vos.
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-rosa to-moradoClaro mt-2 min-h-[130px] md:min-h-[150px] lg:min-h-[170px] overflow-visible pb-4">
+                  <span className="block overflow-visible mb-1">
+                    con productos para
+                  </span>
+                  <span className="block overflow-visible">
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={heroTextIndex}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="inline-block"
+                      >
+                        {heroTexts[heroTextIndex]}.
+                      </motion.span>
+                    </AnimatePresence>
+                  </span>
                 </span>
               </h1>
 
               <p className="text-xl text-textoSecundario max-w-2xl mx-auto md:mx-0 leading-relaxed">
-                Decile chau al caos. Diseñá agendas y libretas 100% personalizadas, hechas en Uruguay para quienes quieren organización, estilo y una identidad única.
+                Decile chau al caos. Obtené agendas y libretas 100% personalizadas, hechas en Uruguay para quienes quieren organización, estilo y una identidad única.
               </p>
 
               <div className="flex flex-col items-center gap-4 justify-center md:justify-start pt-4">
@@ -253,75 +256,81 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           </div>
         </section>
 
+        {/* Marquee Section */}
+        <Marquee items={["Envíos a todo el país", "Calidad Premium", "100% Personalizado", "Hecho en Uruguay", "Compra Segura"]} />
+
 
 
         {/* Categorías Dinámicas */}
-        <section className="px-6 py-16 bg-gray-50">
-          <h2 className="text-3xl font-semibold text-center mb-8">
-            Categorías
-          </h2>
-          <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/productos/${cat.slug}`}
-                className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
-              >
-                <div className="relative w-full h-64">
-                  <Image
-                    src={cat.imagen || '/placeholder.png'}
-                    alt={cat.nombre}
-                    fill
-                    sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-                <div className="p-4 text-center">
-                  <h3 className="text-xl font-semibold">{cat.nombre}</h3>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Productos Destacados - MOVED UP to show products earlier */}
-        {destacados.length > 0 && (
-          <section className="px-6 py-16 bg-white">
-            <h2 className="text-3xl font-semibold text-center mb-8">
-              Los más elegidos
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-              {destacados.map((product) => (
-                <ProductCard key={product._id} product={{
-                  _id: product._id,
-                  nombre: product.nombre,
-                  precio: product.basePrice || product.precio || 0,
-                  imagen: product.imageUrl || '/placeholder.png',
-                  alt: product.alt,
-                  slug: product.slug || '',
-                  categoria: product.categoria || '',
-                  averageRating: product.averageRating,
-                  numReviews: product.numReviews,
-                  descripcionBreve: product.descripcionBreve,
-                  descripcionExtensa: product.descripcionExtensa,
-                  puntosClave: product.puntosClave,
-                }} />
+        <ScrollReveal>
+          <section className="px-6 py-16 bg-gray-50">
+            <div className="text-center mb-16">
+              <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Explorá</p>
+              <h2 className="text-4xl md:text-6xl font-bold text-textoPrimario tracking-tight">
+                Categorías
+              </h2>
+            </div>
+            <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+              {categories.map((cat) => (
+                <Link
+                  key={cat._id}
+                  href={`/productos/${cat.slug}`}
+                  className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+                >
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={cat.imagen || '/placeholder.png'}
+                      alt={cat.nombre}
+                      fill
+                      sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div className="p-4 text-center">
+                    <h3 className="text-xl font-semibold">{cat.nombre}</h3>
+                  </div>
+                </Link>
               ))}
             </div>
           </section>
+        </ScrollReveal>
+
+        {/* Productos Destacados - MOVED UP to show products earlier */}
+        {destacados.length > 0 && (
+          <ScrollReveal>
+            <section className="px-6 py-16 bg-white overflow-hidden">
+              <div className="text-center mb-16">
+                <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Más vendidos</p>
+                <h2 className="text-4xl md:text-6xl font-bold text-textoPrimario tracking-tight">
+                  Los más elegidos
+                </h2>
+              </div>
+              <div className="max-w-[1400px] mx-auto">
+                <ProductCarousel products={destacados} />
+              </div>
+            </section>
+          </ScrollReveal>
         )}
 
         {/* Cómo Funciona - MOVED DOWN after products */}
-        <HowItWorks />
+        <ScrollReveal>
+          <HowItWorks />
+        </ScrollReveal>
 
         {/* Reseñas Destacadas - MOVED UP before newsletter */}
-        <FeaturedReviews reviews={reviews} />
+        <ScrollReveal>
+          <FeaturedReviews reviews={reviews} />
+        </ScrollReveal>
 
         {/* Expectativas hechas realidad */}
-        <RealResultsGallery />
+        <ScrollReveal>
+          <RealResultsGallery />
+        </ScrollReveal>
 
         {/* Newsletter Form */}
-        <NewsletterForm />
+        <ScrollReveal>
+          <NewsletterForm />
+        </ScrollReveal>
       </main>
     </>
   )
@@ -334,7 +343,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const destacadosPipeline = [
     { $match: { destacado: true } },
     { $sort: { order: 1, createdAt: -1 } as any },
-    { $limit: 4 },
+    { $limit: 12 },
     {
       $lookup: {
         from: 'reviews',

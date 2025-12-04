@@ -52,9 +52,12 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
           key="reviews-jsonld"
         />
       </Head>
-      <h2 className="text-3xl font-semibold text-center mb-10">
-        Lo que dicen nuestros clientes
-      </h2>
+      <div className="text-center mb-16">
+        <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Testimonios</p>
+        <h2 className="text-4xl md:text-6xl font-bold text-textoPrimario tracking-tight">
+          Lo que dicen nuestros clientes
+        </h2>
+      </div>
       <div className="max-w-6xl mx-auto">
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}

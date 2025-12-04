@@ -41,14 +41,9 @@ export const handler = async (event) => {
 
     console.log(`📐 Dimensiones originales: ${originalWidth}x${originalHeight}px`);
 
-    // Generar solo los tamaños que no excedan el original (no upscalear)
-    const validSizes = SIZES.filter(size => size <= originalWidth);
-
-    if (validSizes.length === 0) {
-      // Si la imagen es más pequeña que 400px, usar su tamaño original
-      validSizes.push(originalWidth);
-      console.log(`⚠️ Imagen pequeña (${originalWidth}px), usando tamaño original`);
-    }
+    // Generar SIEMPRE todos los tamaños estándar para evitar 404s en el frontend
+    // Sharp con withoutEnlargement: true no upscaleará, pero guardaremos el archivo con el nombre esperado (ej: 480w)
+    const validSizes = SIZES;
 
     console.log(`✨ Generando versiones: ${validSizes.join(', ')}px`);
 

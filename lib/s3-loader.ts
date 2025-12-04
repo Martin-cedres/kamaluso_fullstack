@@ -6,7 +6,10 @@ interface ImageLoaderProps {
 
 export default function s3Loader({ src, width, quality }: ImageLoaderProps): string {
   // Rutas locales (empiezan con /)
-  if (src.startsWith('/')) return src;
+  if (src.startsWith('/')) {
+    // For Next.js 16+, local images need to return the src with width parameter
+    return `${src}?w=${width}&q=${quality || 75}`;
+  }
 
   // Si no es una URL HTTPS, devolverla tal cual
   if (!src.startsWith('https://')) return src;
@@ -20,14 +23,10 @@ export default function s3Loader({ src, width, quality }: ImageLoaderProps): str
     const cleanSrc = src.replace(/-\d+w\.webp$/, '.webp');
     const baseUrl = cleanSrc.slice(0, -5);
 
-    // For the smallest size (mobile) or largest size, fall back to the base .webp image.
-    // This is safer, assuming the base .webp always exists but specific small variants might not for non-product images.
-    if (bestFitSize <= 480 || bestFitSize >= 1920) {
-      return `${baseUrl}.webp`;
-    }
-
-    // For medium sizes, use the specific responsive images.
-    return `${baseUrl}-${bestFitSize}w.webp`;
+    // Always use the sized variant - Lambda generates these more reliably than the base .webp
+    const generatedUrl = `${baseUrl}-${bestFitSize}w.webp`;
+    console.log(`s3Loader: src=${src}, width=${width} -> ${generatedUrl}`);
+    return generatedUrl;
   }
 
   // Para imágenes JPG/PNG antiguas (no optimizadas), devolverlas sin modificar

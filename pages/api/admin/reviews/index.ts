@@ -17,7 +17,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'GET':
       try {
-        const reviews = await Review.find({}).sort({ createdAt: -1 });
+        const reviews = await Review.find({})
+          .sort({ createdAt: -1 })
+          .populate('product', 'nombre slug imageUrl');
         res.status(200).json(reviews);
       } catch (error) {
         console.error('Error al listar las reseñas para admin:', error);

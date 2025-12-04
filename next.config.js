@@ -7,11 +7,12 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: true, // Force rebuild
   poweredByHeader: false, // Added this line
   images: {
-    loader: 'custom',
-    loaderFile: './lib/s3-loader.ts',
+    // loader: 'custom',
+    // loaderFile: './lib/s3-loader.ts',
+    unoptimized: true, // Temporary for Next.js 16 migration
     remotePatterns: [
       {
         protocol: 'https',
