@@ -16,8 +16,9 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { useRouter } from 'next/router'
 import DefaultSchema from '../lib/DefaultSchema'
 
+import Footer from '../components/Footer'
+
 // Dynamically import components
-const DynamicFooter = dynamic(() => import('../components/Footer'))
 const DynamicWhatsAppButton = dynamic(
   () => import('../components/WhatsAppButton'),
   {
@@ -167,7 +168,7 @@ export default function App({ Component, pageProps }: AppProps) {
             </main>
             {isClient && <DynamicWhatsAppButton />}
             {isClient && <DynamicChatWidget />}
-            <DynamicFooter />
+            <Footer />
           </div>
         </CategoryProvider>
       </CartProvider>

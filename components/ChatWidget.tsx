@@ -166,44 +166,55 @@ const ChatWidget = () => {
                                         : 'bg-white border border-gray-200 text-black rounded-bl-none shadow-sm'
                                         }`}
                                 >
-                                    {/* Helper to parse text with links (Markdown + Plain URLs) */}
+                                    {/* Helper to parse text with Bold (**text**) and Links (Markdown + Plain URLs) */}
                                     {(() => {
-                                        const parts = [];
-                                        let lastIndex = 0;
-                                        // Regex matches BOTH [markdown](url) AND plain https://url
-                                        // Group 1: Label (Markdown)
-                                        // Group 2: URL (Markdown)
-                                        // Group 3: URL (Plain)
-                                        const regex = /\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s]+)/g;
-                                        let match;
-                                        const text = msg.content;
+                                        // Note: split includes capturing groups in the result array
+                                        const boldParts = msg.content.split(/\*\*(.*?)\*\*/g);
 
-                                        while ((match = regex.exec(text)) !== null) {
-                                            if (match.index > lastIndex) {
-                                                parts.push(text.substring(lastIndex, match.index));
+                                        const parsedContent = boldParts.map((part, index) => {
+                                            const isBold = index % 2 === 1;
+
+                                            // 2. Parse links within this part
+                                            const subParts = [];
+                                            let lastIndex = 0;
+                                            // Regex matches BOTH [markdown](url) AND plain https://url
+                                            const regex = /\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s]+)/g;
+                                            let match;
+
+                                            while ((match = regex.exec(part)) !== null) {
+                                                if (match.index > lastIndex) {
+                                                    subParts.push(part.substring(lastIndex, match.index));
+                                                }
+
+                                                // Check if it's Markdown or Plain
+                                                const label = match[1] || match[3] || "Enlace";
+                                                const url = match[2] || match[3];
+
+                                                subParts.push(
+                                                    <a
+                                                        key={`${index}-${match.index}`}
+                                                        href={url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className={`hover:underline font-bold ${msg.role === 'user' ? 'text-white underline' : 'text-blue-600'}`}
+                                                    >
+                                                        {label === url ? ' (Ver Link) ' : label}
+                                                    </a>
+                                                );
+                                                lastIndex = regex.lastIndex;
+                                            }
+                                            if (lastIndex < part.length) {
+                                                subParts.push(part.substring(lastIndex));
                                             }
 
-                                            // Check if it's Markdown or Plain
-                                            const label = match[1] || match[3] || "Enlace";
-                                            const url = match[2] || match[3];
+                                            // 3. Return content wrapped if bold
+                                            if (isBold) {
+                                                return <strong key={index} className="font-bold">{subParts}</strong>;
+                                            }
+                                            return <span key={index}>{subParts}</span>;
+                                        });
 
-                                            parts.push(
-                                                <a
-                                                    key={match.index}
-                                                    href={url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={`hover:underline font-bold ${msg.role === 'user' ? 'text-white underline' : 'text-blue-600'}`}
-                                                >
-                                                    {label === url ? ' (Ver Link) ' : label}
-                                                </a>
-                                            );
-                                            lastIndex = regex.lastIndex;
-                                        }
-                                        if (lastIndex < text.length) {
-                                            parts.push(text.substring(lastIndex));
-                                        }
-                                        return <span className="whitespace-pre-wrap">{parts}</span>;
+                                        return <div className="whitespace-pre-wrap">{parsedContent}</div>;
                                     })()}
                                 </div>
                             </div>
@@ -244,24 +255,38 @@ const ChatWidget = () => {
                 </div>
             )}
 
-            {/* Floating Button */}
-            <button
-                onClick={handleToggle}
-                className={`fixed ${router.pathname.includes('/productos/') ? 'bottom-32 md:bottom-24' : 'bottom-24'} right-5 z-40 p-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group`}
-                aria-label="Chat con soporte"
-            >
-                {isOpen ? (
-                    <XMarkIcon className="w-7 h-7" />
-                ) : (
-                    <div className="relative">
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                        </span>
-                        <ChatBubbleLeftRightIcon className="w-7 h-7 group-hover:animate-bounce" />
+            {/* Floating Button Container */}
+            <div className={`fixed ${router.pathname.includes('/productos/') ? 'bottom-32 md:bottom-24' : 'bottom-24'} right-5 z-40 group`}>
+                {/* Tooltip on Hover */}
+                {!isOpen && (
+                    <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl font-medium">
+                            ¡Asistente Virtual!
+                            <div className="absolute top-full right-6 -mt-1">
+                                <div className="border-4 border-transparent border-t-pink-500"></div>
+                            </div>
+                        </div>
                     </div>
                 )}
-            </button>
+
+                <button
+                    onClick={handleToggle}
+                    className="p-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 relative"
+                    aria-label="Chat con soporte"
+                >
+                    {isOpen ? (
+                        <XMarkIcon className="w-7 h-7" />
+                    ) : (
+                        <div className="relative">
+                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                            </span>
+                            <ChatBubbleLeftRightIcon className="w-7 h-7 group-hover:animate-bounce" />
+                        </div>
+                    )}
+                </button>
+            </div>
         </>
 
 
