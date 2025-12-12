@@ -165,7 +165,7 @@ export default function App({ Component, pageProps }: AppProps) {
               <Analytics />
               <SpeedInsights />
             </main>
-            {isClient && router.pathname !== '/productos/detail/[slug]' && <DynamicWhatsAppButton />}
+            {isClient && <DynamicWhatsAppButton />}
             {isClient && <DynamicChatWidget />}
             <DynamicFooter />
           </div>
