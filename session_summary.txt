@@ -211,3 +211,22 @@ Se restauró y mejoró el sistema de conversión automática de imágenes a form
 - Miniaturas visibles en todo el admin panel
 
 **Costo:** Sigue siendo GRATIS (dentro del Free Tier de AWS Lambda)
+
+### Optimización de UI y Correcciones de Inicio (11 de diciembre de 2025)
+
+1.  **Corrección de Errores de Inicio:**
+    - **MongoDB:** Diagnóstico de error `ECONNREFUSED` (IP no permitida en Atlas). Solucionado por el usuario.
+    - **Redirects:** Creación de `redirects-map.json` vacío para eliminar advertencia en `next.config.js`.
+
+2.  **Optimización del Chatbot (Kamaluso Bot):**
+    - **Objetivo:** Mejorar responsividad, evitar solapamientos con Navbar/WhatsApp y optimizar espacio.
+    - **Solución ("Bulletproof Layout"):**
+        - **Móvil:** Diseño apilado (Stack) verticalmente. Chat sobre botón de WhatsApp. Altura limitada para no tocar Navbar.
+        - **Escritorio:** Diseño "Side-by-Side". Ventana a la izquierda del botón, alineada abajo (`bottom-5`). Altura expandida.
+    - **Técnica:** Se implementó posicionamiento `fixed` estricto (desacoplado de Flexbox) para garantizar márgenes matemáticos seguros en cualquier dispositivo.
+
+3.  **Historial y Monitoreo de Chat:**
+    - **Objetivo:** Permitir al administrador ver las conversaciones entre el bot y los usuarios.
+    - **Backend:** Se creó el modelo `ChatConversation` en MongoDB y se actualizó `/api/chat/send` para registrar mensajes automáticamente.
+    - **Frontend:** Nueva página `/admin/chat-history` con listado y vista detallada de chats.
+    - **Navegación:** Enlace agregado al Sidebar del Admin (`AdminLayout.tsx`).

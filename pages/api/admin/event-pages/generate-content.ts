@@ -33,58 +33,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Desc: ${(p.descripcion || '').substring(0, 150)}...
     `).join('\n');
 
-        // Prompt optimizado para SEO y conversión
+        // Prompt OPTIMIZADO: Breve, enfocado en conversión y persuasión emocional
         const contentPrompt = `
-TAREA: Generar contenido SEO para landing page de evento comercial.
+TAREA: Generar contenido breve, emotivo y persuasivo para landing page de evento.
 
-DATOS:
+CONTEXTO:
 - Evento: "${eventType}"
-- País: Uruguay
-- Productos disponibles:
-${productsContext}
+- País: Uruguay  
+- Productos: ${products.length} opciones personalizables y únicas
 
-ESTRUCTURA HTML (OBLIGATORIA):
-<h2>Por Qué Elegir Regalos Personalizados para ${eventType}</h2>
-<p>Introducción emocional (2-3 párrafos explicando la importancia de regalar bien en esta ocasión)</p>
+ESTRUCTURA HTML REQUERIDA:
+<h2>🎁 El Regalo Único que Recordarán de ${eventType}</h2>
+<p>[2-3 párrafos EMOTIVOS: Conectar con el significado del evento. Por qué un regalo personalizado demuestra más amor/aprecio que algo genérico. Hablar de la emoción de recibir algo hecho especialmente para ti.]</p>
 
-<h2>Perfiles y Personalidades</h2>
-<p>Breve intro</p>
-<h3>[Perfil 1: ej "Mamá Creativa"]</h3>
-<p>Descripción del perfil y por qué estos regalos son perfectos</p>
-<p>{{PRODUCT_CARD:slug-producto-1}}</p>
-
-<h3>[Perfil 2]</h3>
-<p>Descripción...</p>
-<p>{{PRODUCT_CARD:slug-producto-2}}</p>
-
-<h2>Ideas de Regalos Únicos</h2>
+<h2>✨ Por Qué Papelería Kamaluso es Tu Mejor Elección</h2>
 <ul>
-  <li><strong>Idea 1:</strong> Descripción con mención de producto {{PRODUCT_CARD:slug}}</li>
-  <li><strong>Idea 2:</strong> ...</li>
+  <li><strong>100% Personalizable:</strong> [Nombres, logos, diseños - tu idea hecha realidad]</li>
+  <li><strong>Calidad que Se Siente:</strong> [Materiales premium, hecho en Uruguay con amor]</li>
+  <li><strong>Entrega Garantizada:</strong> [Envíos a todo Uruguay en 3-5 días]</li>
+  <li><strong>Regalo con Significado:</strong> [Útil + emotivo = recuerdo duradero]</li>
 </ul>
 
-<h2>Cómo Personalizar Tu Regalo</h2>
-<p>Tips prácticos para agregar valor (nombres, fechas, mensajes especiales)</p>
+<h2>💝 Cómo Personalizar Tu Regalo Perfecto</h2>
+<p>[1-2 párrafos: Ideas concretas de personalización - nombres, fechas especiales, mensajes inspiradores. Hacer que visualicen el regalo terminado y la reacción de quien lo recibe.]</p>
 
-<h2>Por Qué Comprar en Papelería Personalizada</h2>
-<ul>
-  <li>Calidad uruguaya</li>
-  <li>Envíos a todo el país</li>
-  <li>Personalización profesional</li>
-</ul>
+REGLAS ESTRICTAS:
+1. Máximo 300-400 palabras total
+2. HTML limpio (sin <html>, <body>, <div>)
+3. NUNCA mencionar años específicos (2025, 2026)
+4. Usar lenguaje evergreen: "cada año", "en ${eventType}"
+5. Tono uruguayo emotivo (voseo: "hacé", "elegí", "regalá")
+6. NO insertar {{PRODUCT_CARD}} - productos se muestran arriba
+7. Keywords naturales: "${eventType} uruguay", "regalos únicos personalizados"
+8. CTAs emocionales: "Creá algo único", "Sorprendé con amor", "Hacé memorable este ${eventType}"
+9. NO introducción conversacional ("Aquí tienes")
+10. Comenzar directo con <h2>
+11. URGENCIA SUTIL: Mencionar plazos ("pedí con tiempo", "asegurá tu regalo único")
+12. BENEFICIO EMOCIONAL > característica técnica
 
-REGLAS CRÍTICAS:
-1. HTML limpio (no usar <html>, <body>)
-2. NUNCA mencionar años (2025, 2026)
-3. Usar frases evergreen: "cada año", "en esta época"
-4. Insertar TODOS los productos con {{PRODUCT_CARD:slug}}
-5. Tono uruguayo, cercano, sin tuteo
-6. Mínimo 800 palabras
-7. NO escribir intro conversacional ("Aquí tienes", "Claro")
-8. Keywords naturales: "${eventType} uruguay", "regalos personalizados", etc.
-9. Incluir CTAs sutiles ("Descubrí", "Explorá")
+TONO: Cálido, cercano, emotivo sin ser cursi. Como una amiga que te da un consejo valioso.
 
-SALIDA: Solo HTML. Comienza con <h2>, termina con última etiqueta.
+OBJETIVO: Contenido que conecte emocionalmente, genere urgencia sutil y complemente la visualización de productos arriba.
+
+SALIDA: Solo HTML limpio. Primera línea = <h2>
     `;
 
         const seoTitlePrompt = `

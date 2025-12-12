@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import ProductCard from '../../../components/ProductCard';
 import VisualOptionSelector from '../../../components/VisualOptionSelector';
+import ShareProductButton from '../../../components/ShareProductButton';
 import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
@@ -26,7 +27,7 @@ import NewCoverDesignGallery, { DesignOption } from '../../../components/NewCove
 import FaqSection from '../../../components/FaqSection';
 import UseCasesSection from '../../../components/UseCasesSection';
 import s3Loader from '../../../lib/s3-loader';
-import ProductSchema from '../../../ProductSchema';
+import ProductSchema from '../../../lib/ProductSchema';
 
 
 // This interface is for the props passed to the component
@@ -91,7 +92,6 @@ const groupOrder: Record<string, number> = {
 export default function ProductDetailPage({ product, relatedProducts, reviews, reviewCount, averageRating, mainCategory, subCategory, noindex }: Props) {
   const { addToCart } = useCart()
   const router = useRouter()
-  const [isClient, setIsClient] = useState(false);
   const [selections, setSelections] = useState<Record<string, string>>(() => {
     const defaultSelections: Record<string, string> = {};
     if (product) {
@@ -103,7 +103,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     return defaultSelections;
   });
   const [totalPrice, setTotalPrice] = useState(product?.basePrice || 0);
-  const [activeImage, setActiveImage] = useState(product?.imageUrl || '/placeholder.png');
+  // Inicializar con placeholder para evitar diferencias entre servidor y cliente
+  const [activeImage, setActiveImage] = useState('/placeholder.png');
   const [isAnimating, setIsAnimating] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
   const desktopCarouselRef = useRef<HTMLDivElement>(null);
@@ -113,17 +114,17 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const [showDesktopRightArrow, setShowDesktopRightArrow] = useState(false);
   const [showMobileLeftArrow, setShowMobileLeftArrow] = useState(false);
   const [showMobileRightArrow, setShowMobileRightArrow] = useState(false);
-  const [activeTab, setActiveTab] = useState(
-    product && product.puntosClave && product.puntosClave.length > 0
-      ? 'puntosClave'
-      : 'descripcion'
-  );
+  // Inicializar con 'descripcion' para evitar diferencias entre servidor y cliente
+  const [activeTab, setActiveTab] = useState('descripcion');
 
   const [tapaSeleccionada, setTapaSeleccionada] = useState<any>(null);
 
+  // Establecer el tab activo después del montaje para evitar diferencias de hidratación
   useEffect(() => {
-    setIsClient(true); // Indicar que el componente se ha montado en el cliente
-  }, []);
+    if (product?.puntosClave && product.puntosClave.length > 0) {
+      setActiveTab('puntosClave');
+    }
+  }, [product]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -576,7 +577,16 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               <StarRating rating={parseFloat(averageRating)} />
               <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
             </div>
-            <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
+            <div className="hidden md:flex items-center justify-between">
+              <p className="text-3xl font-semibold text-pink-500">$U {totalPrice}</p>
+              <ShareProductButton
+                productName={product.nombre}
+                productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
+                productImage={activeImage}
+                variant="button"
+                size="md"
+              />
+            </div>
 
             {product.descripcionBreve && (
               <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
@@ -878,12 +888,20 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
       {/* --- Botón de Compra Pegajoso para Móviles --- */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex justify-between items-center gap-3">
           {/* Precio a la izquierda */}
           <div className="text-left flex-1">
             <p className="text-xs text-gray-500 -mb-1">Total</p>
             <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
           </div>
+          {/* Botón de Compartir */}
+          <ShareProductButton
+            productName={product.nombre}
+            productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
+            productImage={activeImage}
+            variant="icon"
+            size="md"
+          />
           {/* Botón de Añadir a la derecha (principal) */}
           <button
             onClick={handleAddToCart}

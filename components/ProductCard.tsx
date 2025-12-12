@@ -3,6 +3,7 @@ import Link from 'next/link';
 import OptimizedImage from './OptimizedImage';
 import StarRating from './StarRating';
 import Head from 'next/head';
+import ShareProductButton from './ShareProductButton';
 
 export interface Product {
   _id: string;
@@ -82,6 +83,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             className="object-cover transform transition-transform duration-700 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+
+          {/* Botón de Compartir */}
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+            <ShareProductButton
+              productName={product.nombre}
+              productUrl={`${siteUrl}${productUrl}`}
+              productImage={absoluteImageUrl}
+              variant="icon"
+              size="sm"
+            />
+          </div>
         </Link>
 
         <div className="flex flex-col flex-grow p-5">

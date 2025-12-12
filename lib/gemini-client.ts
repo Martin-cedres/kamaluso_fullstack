@@ -135,3 +135,41 @@ export async function generateContentSmart(prompt: string | (string | Part)[]): 
   // --- FASE 3: Fracaso total ---
   throw new Error("🚨 Fracaso total: Todas las claves y modelos disponibles fallaron.");
 }
+
+/**
+ * Genera un embedding vectorial para un texto dado.
+ * Utiliza el modelo 'text-embedding-004'.
+ */
+export async function getEmbedding(text: string): Promise<number[]> {
+  // Usamos la primera clave Flash disponible (son más rápidas/baratas para embeddings)
+  // O iteramos si falla.
+  const modelName = "text-embedding-004";
+
+  for (let i = 0; i < flashApiKeys.length; i++) {
+    try {
+      const client = getClient('flash', i);
+      const model = client.getGenerativeModel({ model: modelName });
+
+      const result = await model.embedContent(text);
+      return result.embedding.values;
+    } catch (error: any) {
+      console.warn(`⚠️ Error generando embedding con clave FLASH[${i}]:`, error.message);
+      // Continuar con la siguiente clave
+    }
+  }
+
+  // Si fallan las Flash, intentamos con Pro (aunque es raro usarlas para esto)
+  for (let i = 0; i < proApiKeys.length; i++) {
+    try {
+      const client = getClient('pro', i);
+      const model = client.getGenerativeModel({ model: modelName });
+
+      const result = await model.embedContent(text);
+      return result.embedding.values;
+    } catch (error: any) {
+      console.warn(`⚠️ Error generando embedding con clave PRO[${i}]:`, error.message);
+    }
+  }
+
+  throw new Error("🚨 No se pudo generar el embedding con ninguna clave disponible.");
+}

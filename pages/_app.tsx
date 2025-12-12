@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import { useState, useEffect } from 'react'
 import type { AppProps } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
 import { CartProvider } from '../context/CartContext'
@@ -13,6 +14,7 @@ import { Inter, Outfit } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { useRouter } from 'next/router'
+import DefaultSchema from '../lib/DefaultSchema'
 
 // Dynamically import components
 const DynamicFooter = dynamic(() => import('../components/Footer'))
@@ -22,6 +24,9 @@ const DynamicWhatsAppButton = dynamic(
     ssr: false,
   },
 )
+const DynamicChatWidget = dynamic(() => import('../components/ChatWidget'), {
+  ssr: false,
+})
 
 // Setup next/font
 const inter = Inter({
@@ -37,9 +42,15 @@ const outfit = Outfit({
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const canonicalUrl = `https://www.papeleriapersonalizada.uy${router.asPath}`
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   return (
     <SessionProvider session={pageProps.session}>
+      <DefaultSchema />
       <Head>
         {/* Favicon */}
         <link rel="icon" href="/logo.webp" type="image/webp" />
@@ -153,9 +164,10 @@ export default function App({ Component, pageProps }: AppProps) {
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />
-              {router.pathname !== '/productos/detail/[slug]' && <DynamicWhatsAppButton />}
-              <DynamicFooter />
             </main>
+            {isClient && router.pathname !== '/productos/detail/[slug]' && <DynamicWhatsAppButton />}
+            {isClient && <DynamicChatWidget />}
+            <DynamicFooter />
           </div>
         </CategoryProvider>
       </CartProvider>

@@ -52,6 +52,7 @@ export interface IProduct extends Document {
   // Campos para el flujo de revisión de la IA
   proposedContent?: string; // Staging para descripcionExtensa
   contentStatus: 'published' | 'pending_review';
+  embedding?: number[];
 }
 
 const productSchema: Schema<IProduct> = new Schema(
@@ -107,6 +108,8 @@ const productSchema: Schema<IProduct> = new Schema(
       enum: ['published', 'pending_review'],
       default: 'published',
     },
+    // RAG: Vector Embedding
+    embedding: { type: [Number], select: false }, // select: false para no cargarlo siempre por defecto
   },
   {
     timestamps: true, // Handles createdAt and updatedAt

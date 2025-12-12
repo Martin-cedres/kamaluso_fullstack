@@ -17,6 +17,7 @@ import {
   EyeIcon, // <-- Icono para Modo Espía
   MegaphoneIcon,
   DocumentTextIcon,
+  ChatBubbleLeftRightIcon, // Added for Chat History
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -42,6 +43,7 @@ const navigation = [
   // --- Fin Enlaces SEO ---
   { name: 'Cupones', href: '/admin/coupons', icon: TicketIcon },
   { name: 'Banner de Anuncios', href: '/admin/settings', icon: MegaphoneIcon },
+  { name: 'Historial Chat', href: '/admin/chat-history', icon: ChatBubbleLeftRightIcon },
 ]
 
 interface AdminLayoutProps {

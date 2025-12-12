@@ -10,7 +10,7 @@ interface MarqueeProps {
 const Marquee: React.FC<MarqueeProps> = ({ items, speed = 20, className = '' }) => {
     return (
         <div className={`relative flex overflow-hidden bg-pink-600 text-white py-3 ${className}`}>
-            <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-pink-600 via-transparent to-pink-600 w-full h-full opacity-20"></div>
+            <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-pink-600 via-transparent to-pink-600 w-full h-full opacity-60"></div>
 
             <motion.div
                 className="flex whitespace-nowrap flex-nowrap"

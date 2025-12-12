@@ -1,5 +1,6 @@
 // components/FaqSection.tsx
 import { useState } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline';
 
 interface FaqItem {
@@ -38,7 +39,7 @@ const FaqSection = ({ faqs }: FaqSectionProps) => {
             )}
           </button>
           {openIndex === index && (
-            <div className="mt-3 text-base text-gray-600 leading-relaxed prose max-w-none" dangerouslySetInnerHTML={{ __html: faq.answer }} />
+            <div className="mt-3 text-base text-gray-600 leading-relaxed prose max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(faq.answer) }} />
           )}
         </div>
       ))}

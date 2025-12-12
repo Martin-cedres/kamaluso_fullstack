@@ -7,6 +7,7 @@ import PillarPage, { IPillarPage } from '../../models/PillarPage';
 import Post from '../../models/Post';
 import Product from '../../models/Product';
 import SeoMeta from '../../components/SeoMeta';
+import ArticleSchema from '../../lib/ArticleSchema';
 
 interface PopulatedProduct {
     _id: string;
@@ -41,6 +42,25 @@ export default function PillarPageDetail({ pillarPage, toc, processedContent }: 
     // Use processedContent if available, otherwise fallback to raw content
     const contentToRender = processedContent || pillarPage.content;
 
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Inicio',
+                item: 'https://www.papeleriapersonalizada.uy/',
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: pillarPage.title,
+                item: `https://www.papeleriapersonalizada.uy/pillar/${pillarPage.slug}`,
+            },
+        ],
+    };
+
     return (
         <>
             <SeoMeta
@@ -48,6 +68,14 @@ export default function PillarPageDetail({ pillarPage, toc, processedContent }: 
                 description={pillarPage.seoDescription || `Guía completa sobre ${pillarPage.topic}`}
                 url={`/pillar/${pillarPage.slug}`}
             />
+            <ArticleSchema article={{ ...pillarPage, description: pillarPage.seoDescription }} />
+            <Head>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+                    key="breadcrumb-jsonld"
+                />
+            </Head>
 
             <main className="min-h-screen bg-white font-sans text-gray-900">
                 {/* Hero Section */}

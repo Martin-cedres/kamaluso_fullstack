@@ -1,5 +1,6 @@
 import { GetStaticProps } from 'next'
 import SeoMeta from '../components/SeoMeta'
+import { shippingInfo } from '../lib/data/shipping'
 
 export default function EnviosPage() {
   return (
@@ -26,18 +27,14 @@ export default function EnviosPage() {
 
             <h2 className="text-2xl font-semibold">Empresas de Transporte</h2>
             <p>
-              Trabajamos con DAC y El Correo Uruguayo para garantizar la mejor
+              Trabajamos con {shippingInfo.agencies.join(' y ')} para garantizar la mejor
               cobertura y servicio. Puedes elegir la empresa que prefieras al
               momento de realizar tu compra.
             </p>
 
             <h2 className="text-2xl font-semibold">Tiempos de Entrega</h2>
             <p>
-              En pedidos estandar de hasta cinco unidades, una vez que
-              realizaste el pago de tu pedido y fue coordinado el diseño
-              personalizado de las tapas mediante WhatsApp, el tiempo estimado
-              de entrega a la agencia de transporte es de 72 horas hábiles.
-              Recuerda que los artículos personalizados llevan tiempo de
+              {shippingInfo.details.production} Recuerda que los artículos personalizados llevan tiempo de
               producción. Por cantidades mayores, consulta con nostros.
             </p>
 
@@ -52,9 +49,7 @@ export default function EnviosPage() {
               ¿Cómo hago el seguimiento?
             </h2>
             <p>
-              Una vez que despachamos tu pedido, te enviaremos el número de
-              seguimiento a través de WhatsApp o correo electrónico para que
-              puedas ver el estado de tu envío en todo momento.
+              {shippingInfo.details.tracking}
             </p>
           </div>
         </div>

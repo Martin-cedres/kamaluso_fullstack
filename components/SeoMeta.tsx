@@ -10,7 +10,7 @@ interface SeoMetaProps {
 
 const SeoMeta = ({
   title = 'Papelería Personalizada | Kamaluso',
-  description = 'Encuentra agendas, libretas, recetarios y planners, en tapa dura laminada o tapa flex, 100% personalziados en papeleria personalizada Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo Uruguay!.',
+  description = 'Encuentra agendas, libretas, recetarios y planners, en tapa dura laminada o tapa flex, 100% personalizados en papeleria personalizada Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo Uruguay!.',
   image = '/logo.webp',
   url = '/',
   type = 'website',
@@ -48,57 +48,6 @@ const SeoMeta = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={absoluteImage} />
 
-      {/* Schema JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@graph": [
-              {
-                "@type": "WebSite",
-                "@id": `${siteUrl}/#website`,
-                url: siteUrl,
-                name: title,
-                description: description,
-                publisher: { "@id": `${siteUrl}/#organization` },
-                potentialAction: {
-                  "@type": "SearchAction",
-                  target: `${siteUrl}/buscar?q={search_term_string}`,
-                  "query-input": "required name=search_term_string"
-                },
-                inLanguage: "es-UY"
-              },
-              {
-                "@type": "Organization",
-                "@id": `${siteUrl}/#organization`,
-                name: "Kamaluso",
-                url: siteUrl,
-                logo: { "@type": "ImageObject", url: `${siteUrl}/logo.png` },
-                sameAs: [
-                  "https://www.facebook.com/kamalusosj/",
-                  "https://www.instagram.com/kamaluso_sanjose",
-                
-                ],
-                contactPoint: {
-                  "@type": "ContactPoint",
-                  telephone: "+59898615074",
-                  contactType: "customer service",
-                  areaServed: "UY",
-                  availableLanguage: ["Spanish"]
-                }
-              },
-              {
-                "@type": "Service",
-                name: "Papelería Personalizada",
-                description: description,
-                areaServed: { "@type": "Country", name: "Uruguay" },
-                serviceType: "Productos personalizables"
-              }
-            ]
-          })
-        }}
-      />
     </Head>
   )
 }

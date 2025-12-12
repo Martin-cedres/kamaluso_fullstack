@@ -30,8 +30,8 @@ const WhatsAppButton = ({ customMessage }: WhatsAppButtonProps) => {
         className="relative flex items-center justify-center bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-110"
         aria-label="Contactar por WhatsApp"
       >
-        {/* Animación de pulso sutil */}
-        <span className="absolute inset-0 rounded-full bg-green-400 opacity-75 animate-ping"></span>
+        {/* Animación de pulso sutil eliminada para no competir con el bot */}
+        {/* <span className="absolute inset-0 rounded-full bg-green-400 opacity-75 animate-ping"></span> */}
 
         <svg
           xmlns="http://www.w3.org/2000/svg"
