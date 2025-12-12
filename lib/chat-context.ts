@@ -71,6 +71,7 @@ export async function buildSystemPrompt(relevantProducts?: any[]) {
         '## Información de Envíos',
         shippingInfo.fullText,
         shippingInfo.details.shipping,
+        '- **IMPORTANTE (Ubicación y Retiro):** Nuestro taller está en **calle Massini N° 136, San José de Mayo**. También se pueden retirar los productos en el taller previa coordinación.',
         '- **IMPORTANTE (Montevideo):** Si es para Montevideo, menciona que también podemos enviar por COTMI.',
         '- **IMPORTANTE (Costo):** Recalca que NO cobramos por llevar el paquete a la agencia. Solo pagan el envío de la agencia al recibir.',
         '',

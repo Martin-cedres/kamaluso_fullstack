@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { PaperAirplaneIcon, XMarkIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 
 const ChatWidget = () => {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [history, setHistory] = useState<{ role: 'user' | 'model'; content: string }[]>([]);
@@ -19,11 +21,17 @@ const ChatWidget = () => {
         scrollToBottom();
     }, [history, isOpen]);
 
-    // Auto-open chat after 10 seconds
+    // Auto-open chat after 10 seconds (ONLY ONCE PER SESSION)
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (history.length === 0 && !isOpen && !hasClosed) {
+            // Check session storage to see if chat has already been shown/interacted with
+            const hasSeenChat = typeof window !== 'undefined' ? sessionStorage.getItem('kamaluso_chat_seen') : false;
+
+            if (!hasSeenChat && history.length === 0 && !isOpen && !hasClosed) {
                 setIsOpen(true);
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('kamaluso_chat_seen', 'true');
+                }
             }
         }, 12000); // 12 seconds to be less intrusive
         return () => clearTimeout(timer);
@@ -84,11 +92,19 @@ const ChatWidget = () => {
     const handleClose = () => {
         setIsOpen(false);
         setHasClosed(true);
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('kamaluso_chat_seen', 'true');
+        }
     };
 
     const handleToggle = () => {
         if (isOpen) {
             setHasClosed(true);
+        } else {
+            // If user manually opens, mark as seen so it doesn't auto-open later
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('kamaluso_chat_seen', 'true');
+            }
         }
         setIsOpen(!isOpen);
     };
@@ -231,8 +247,7 @@ const ChatWidget = () => {
             {/* Floating Button */}
             <button
                 onClick={handleToggle}
-                className="fixed bottom-24 right-5 z-40 p-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group"
-
+                className={`fixed ${router.pathname.includes('/productos/') ? 'bottom-32 md:bottom-24' : 'bottom-24'} right-5 z-40 p-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group`}
                 aria-label="Chat con soporte"
             >
                 {isOpen ? (
@@ -248,6 +263,7 @@ const ChatWidget = () => {
                 )}
             </button>
         </>
+
 
     );
 };
