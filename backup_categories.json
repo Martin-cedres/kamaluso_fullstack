@@ -1,0 +1,74 @@
+[
+  {
+    "_id": "68e4d24f6f99f35099a674f5",
+    "nombre": "Tapa Dura",
+    "slug": "tapa-dura",
+    "descripcion": "Agendas, cuadernos,  libretas y recetarios con Tapa Dura.",
+    "keywords": [],
+    "parent": null,
+    "createdAt": "2025-10-07T08:41:51.377Z",
+    "updatedAt": "2025-11-09T02:26:40.240Z",
+    "__v": 0,
+    "imagen": "https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/9a2ff40a-829a-486b-8c63-9c555b713f89.webp"
+  },
+  {
+    "_id": "68e4d24f6f99f35099a674f8",
+    "nombre": "Tapa Flex",
+    "slug": "tapa-flex",
+    "descripcion": "Agendas, cuadernos, libretas y recetarios con Tapa Flexible ",
+    "keywords": [],
+    "parent": null,
+    "createdAt": "2025-10-07T08:41:51.682Z",
+    "updatedAt": "2025-11-04T21:12:58.342Z",
+    "__v": 0,
+    "imagen": "https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/fde5d858-c57b-4e5c-9c2e-48653c84b716.webp"
+  },
+  {
+    "_id": "68e4d24f6f99f35099a674fb",
+    "nombre": "Agendas Tapa Dura",
+    "slug": "agendas-tapa-dura",
+    "descripcion": "Agendas con tapa dura personalizadas.",
+    "keywords": [],
+    "parent": "68e4d24f6f99f35099a674f5",
+    "createdAt": "2025-10-07T08:41:51.979Z",
+    "updatedAt": "2025-11-04T16:24:31.838Z",
+    "__v": 0,
+    "imagen": "https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/d9ba210e-7675-42df-b830-177cb00242e3.webp"
+  },
+  {
+    "_id": "68e4d2506f99f35099a674fe",
+    "nombre": "Agendas con Tapa Flex",
+    "slug": "agendas-tapa-flex",
+    "descripcion": "Agendas con tapa flexible personalizadas.",
+    "keywords": [],
+    "parent": "68e4d24f6f99f35099a674f8",
+    "createdAt": "2025-10-07T08:41:52.274Z",
+    "updatedAt": "2025-11-02T02:11:42.628Z",
+    "__v": 0,
+    "imagen": "https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/0cee47a6-e447-4857-b85f-096db9416f4d.webp"
+  },
+  {
+    "_id": "690a285e339b9a7d1c1a27a1",
+    "nombre": "Libretas y Cuadernos Tapa Dura",
+    "slug": "libretas-y-cuadernos",
+    "descripcion": "Libretas y Cuadernos con Tapa Dura",
+    "imagen": "https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/1420d16d-6234-472e-86b7-a35132db29cc.webp",
+    "keywords": [],
+    "parent": "68e4d24f6f99f35099a674f5",
+    "createdAt": "2025-11-04T16:22:54.682Z",
+    "updatedAt": "2025-11-04T16:24:49.547Z",
+    "__v": 0
+  },
+  {
+    "_id": "6928d5696062cdb3a71cc12a",
+    "nombre": "Libretas y Cuadernos Tapa Flex",
+    "slug": "libretas-y-cuadernos-tapa-flex",
+    "descripcion": "Libretas y Cuadernos con Tapa Flex",
+    "imagen": "https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com/processed/189a1c16-6fec-47d2-9ce9-068887061832.webp",
+    "keywords": [],
+    "parent": "68e4d24f6f99f35099a674f8",
+    "createdAt": "2025-11-27T22:49:13.031Z",
+    "updatedAt": "2025-11-27T22:49:13.031Z",
+    "__v": 0
+  }
+]

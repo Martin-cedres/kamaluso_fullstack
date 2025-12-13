@@ -252,7 +252,7 @@ export default function EventLandingPage({ eventPage }: Props) {
                                     ref={carouselRef}
                                     onMouseEnter={() => setIsPaused(true)}
                                     onMouseLeave={() => setIsPaused(false)}
-                                    className="flex gap-6 overflow-x-auto scroll-smooth pb-4 snap-x snap-mandatory scrollbar-hide"
+                                    className="flex gap-6 overflow-x-auto scroll-smooth pb-4 snap-x snap-mandatory scrollbar-hide justify-center md:justify-start"
                                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                                 >
                                     {eventPage.selectedProducts.map((product) => (

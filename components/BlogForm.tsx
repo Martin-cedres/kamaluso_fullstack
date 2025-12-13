@@ -2,9 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill-new/dist/quill.snow.css';
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 interface PostFormProps {
   initialData?: {
@@ -117,7 +117,7 @@ const BlogForm = ({
       setSeoTitle(data.seoTitle || '');
       setSeoDescription(data.seoDescription || '');
       setTags(data.tags || '');
-      
+
       toast.success('Contenido generado con éxito', { id: toastId });
 
     } catch (err: any) {
@@ -143,7 +143,7 @@ const BlogForm = ({
       const res = await fetch('/api/admin/blog/optimize-post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           content,
           salesAngle,
           targetKeyword,
@@ -156,7 +156,7 @@ const BlogForm = ({
       }
 
       const data = await res.json();
-      
+
       if (data.optimizedContent) {
         setContent(data.optimizedContent);
         toast.success('¡Contenido optimizado con éxito!', { id: toastId });
@@ -262,25 +262,25 @@ const BlogForm = ({
       <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
         <h4 className="font-semibold text-md">Optimización SEO</h4>
         <div>
-           <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700">Título SEO</label>
-           <input
-             type="text"
-             id="seoTitle"
-             value={seoTitle}
-             onChange={(e) => setSeoTitle(e.target.value)}
-             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-           />
-         </div>
-         <div>
-           <label htmlFor="seoDescription" className="block text-sm font-medium text-gray-700">Descripción SEO (Meta)</label>
-           <textarea
-             id="seoDescription"
-             value={seoDescription}
-             onChange={(e) => setSeoDescription(e.target.value)}
-             rows={3}
-             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-           />
-         </div>
+          <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700">Título SEO</label>
+          <input
+            type="text"
+            id="seoTitle"
+            value={seoTitle}
+            onChange={(e) => setSeoTitle(e.target.value)}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          />
+        </div>
+        <div>
+          <label htmlFor="seoDescription" className="block text-sm font-medium text-gray-700">Descripción SEO (Meta)</label>
+          <textarea
+            id="seoDescription"
+            value={seoDescription}
+            onChange={(e) => setSeoDescription(e.target.value)}
+            rows={3}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          />
+        </div>
       </div>
 
       <div>
@@ -319,16 +319,16 @@ const BlogForm = ({
         />
       </div>
 
-       <div>
-          <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiquetas (separadas por comas)</label>
-          <input
-            type="text"
-            id="tags"
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-          />
-        </div>
+      <div>
+        <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Etiquetas (separadas por comas)</label>
+        <input
+          type="text"
+          id="tags"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+        />
+      </div>
 
       <button
         type="submit"

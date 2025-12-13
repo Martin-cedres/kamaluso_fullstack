@@ -5,7 +5,7 @@ const steps = [
     {
         id: 1,
         title: 'Elige tu Base',
-        description: 'Selecciona Tapa Dura o Tapa Flex, el tipo de producto (agenda, libreta, planner) y el interior que necesitas (semana vista, diaria, docentes...).',
+        description: 'Selecciona tu producto (agenda, libreta, planner) y el interior que necesitas (semana vista, diaria, docentes...).',
         icon: BookOpenIcon,
         color: 'from-pink-500 to-rose-500',
         delay: '0'

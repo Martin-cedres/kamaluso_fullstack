@@ -17,9 +17,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   switch (req.method) {
     case 'GET':
       try {
-        const reviews = await Review.find({})
+        const reviewsRaw = await Review.find({})
           .sort({ createdAt: -1 })
-          .populate('product', 'nombre slug imageUrl');
+          .populate('product', 'nombre slug imageUrl')
+          .lean();
+
+        // Filter out reviews where product is null (deleted products)
+        const reviews = reviewsRaw.filter((review: any) => review.product !== null);
+
         res.status(200).json(reviews);
       } catch (error) {
         console.error('Error al listar las reseñas para admin:', error);

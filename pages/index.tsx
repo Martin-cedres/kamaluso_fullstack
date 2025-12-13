@@ -206,7 +206,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
               <div className="relative aspect-square md:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl transform md:rotate-3 hover:rotate-0 transition-transform duration-500 isolate will-change-transform">
                 <Image
                   src="/Agendas tapa dura y tapa flex papeleriapersonalizada.uy kamaluso.webp"
-                  alt="Agendas Tapa Dura y Tapa Flex Personalizadas Uruguay - Kamaluso"
+                  alt="Agendas Tapa Dura Personalizadas Uruguay - Kamaluso"
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -244,7 +244,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                     </div>
                     <div className="flex items-center gap-2 text-textoSecundario">
                       <span className="text-base">💪</span>
-                      <span>Tapa Dura o Flex</span>
+                      <span>Tapa Dura Laminada</span>
                     </div>
                   </div>
                 </div>
@@ -391,7 +391,9 @@ export const getStaticProps: GetStaticProps = async () => {
     .populate('user', 'name')
     .populate('product', 'nombre imageUrl _id slug')
     .lean();
-  const reviews = JSON.parse(JSON.stringify(reviewsData));
+
+  // Filter out reviews where the product was deleted
+  const reviews = JSON.parse(JSON.stringify(reviewsData)).filter((r: any) => r.product != null);
 
 
   return {

@@ -53,15 +53,5 @@
     "source": "/productos/tapa-dura",
     "destination": "/",
     "permanent": true
-  },
-  {
-    "source": "/blog/tapa-dura-vs-tapa-flexible-como-elegir-la-agenda-ideal-segun-tu-estilo-de-vida-y-rutina",
-    "destination": "/blog/tapa-dura-eleccion-inteligente-estilo-vida",
-    "permanent": true
-  },
-  {
-    "source": "/blog/tapa-dura-vs-tapa-flexible-la-guia-definitiva-para-elegir-tu-proxima-agenda",
-    "destination": "/blog/guia-definitiva-ventajas-agenda-tapa-dura",
-    "permanent": true
   }
 ]

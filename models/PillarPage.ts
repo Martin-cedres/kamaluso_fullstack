@@ -7,15 +7,16 @@ export interface IPillarPageDTO {
   slug: string;           // URL amigable
   content: string;        // Contenido extenso de la página pilar
   topic: string;          // El tema central del cluster (ej: "Agendas Personalizadas")
-  
+
   // SEO Fields
   seoTitle?: string;
   seoDescription?: string;
+  seoKeywords?: string;
 
   // Relaciones con el Cluster (referencias como string para el frontend)
   clusterPosts?: string[];    // Array de IDs de Artículos de Blog (como string)
   clusterProducts?: string[]; // Array de IDs de Productos (como string)
-  
+
   // Campos para el flujo de revisión de la IA
   proposedContent?: string; // Contenido sugerido por la IA, pendiente de aprobación
   status: 'published' | 'pending_review'; // Estado del contenido
@@ -29,15 +30,16 @@ export interface IPillarPage extends Document {
   slug: string;           // URL amigable
   content: string;        // Contenido extenso de la página pilar
   topic: string;          // El tema central del cluster (ej: "Agendas Personalizadas")
-  
+
   // SEO Fields
   seoTitle?: string;
   seoDescription?: string;
+  seoKeywords?: string;
 
   // Relaciones con el Cluster (referencias como ObjectId para Mongoose)
   clusterPosts: mongoose.Types.ObjectId[];    // Array de IDs de Artículos de Blog
   clusterProducts: mongoose.Types.ObjectId[]; // Array de IDs de Productos
-  
+
   // Campos para el flujo de revisión de la IA
   proposedContent?: string; // Contenido sugerido por la IA, pendiente de aprobación
   status: 'published' | 'pending_review'; // Estado del contenido
@@ -49,9 +51,10 @@ const pillarPageSchema: Schema<IPillarPage> = new Schema(
     slug: { type: String, required: true, unique: true },
     content: { type: String, required: true },
     topic: { type: String, required: true },
-    
+
     seoTitle: { type: String },
     seoDescription: { type: String },
+    seoKeywords: { type: String },
 
     // Definimos las relaciones con los otros modelos
     clusterPosts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],

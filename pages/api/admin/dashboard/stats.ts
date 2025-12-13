@@ -38,6 +38,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // SEO Health: Check for broken product links
         const productSlugs = await Product.find({}).distinct('slug');
+
+        // Load redirects to exclude from broken links count
+        const fs = require('fs');
+        const path = require('path');
+        let redirectedSlugs: string[] = [];
+        try {
+            const redirectsPath = path.join(process.cwd(), 'redirects-map.json');
+            const redirectsData = JSON.parse(fs.readFileSync(redirectsPath, 'utf8'));
+            // Extract product slugs from redirect sources
+            redirectedSlugs = redirectsData
+                .map((r: any) => r.source.match(/\/productos\/detail\/([^/]+)$/)?.[1])
+                .filter(Boolean);
+        } catch (error) {
+            console.warn('Could not load redirects-map.json:', error);
+        }
+
         let brokenLinksCount = 0;
 
         pillarPages.forEach(page => {
@@ -45,7 +61,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const matches = [...page.content.matchAll(regex)];
             matches.forEach(match => {
                 const slug = match[1];
-                if (!productSlugs.includes(slug)) {
+                // Only count as broken if not in active products AND not redirected
+                if (!productSlugs.includes(slug) && !redirectedSlugs.includes(slug)) {
                     brokenLinksCount++;
                 }
             });

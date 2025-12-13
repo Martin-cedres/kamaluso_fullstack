@@ -1,12 +1,27 @@
-import React from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import React, { lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import ProductCard from './ProductCard';
-
-// Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+
+// Lazy load Swiper components (saves ~30KB initial bundle)
+const Swiper = dynamic(() => import('swiper/react').then(mod => mod.Swiper), {
+    ssr: false,
+    loading: () => <div className="text-center py-8">Cargando productos...</div>
+});
+
+const SwiperSlide = dynamic(() => import('swiper/react').then(mod => mod.SwiperSlide), {
+    ssr: false
+});
+
+// Dynamically import Swiper modules
+const loadSwiperModules = async () => {
+    const modules = await import('swiper/modules');
+    return [modules.Navigation, modules.Pagination, modules.Autoplay];
+};
+
+
 
 interface Product {
     _id: string;
@@ -29,22 +44,28 @@ interface ProductCarouselProps {
 }
 
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
+    const [swiperModules, setSwiperModules] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        loadSwiperModules().then(setSwiperModules);
+    }, []);
+
     if (!products || products.length === 0) return null;
 
     return (
         <div className="product-carousel-container relative px-4 sm:px-8">
             <Swiper
-                modules={[Navigation, Pagination, Autoplay]}
+                modules={swiperModules}
                 spaceBetween={24}
                 slidesPerView={1.2} // Mobile default: show part of next slide
                 centeredSlides={false}
-                navigation
-                pagination={{ clickable: true, dynamicBullets: true }}
-                autoplay={{
+                navigation={swiperModules.length > 0}
+                pagination={swiperModules.length > 0 ? { clickable: true, dynamicBullets: true } : false}
+                autoplay={swiperModules.length > 0 ? {
                     delay: 5000,
                     disableOnInteraction: false,
                     pauseOnMouseEnter: true
-                }}
+                } : false}
                 breakpoints={{
                     // Mobile landscape / Small tablets
                     640: {
@@ -65,7 +86,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
                 className="pb-12" // Add padding for pagination
             >
                 {products.map((product) => (
-                    <SwiperSlide key={product._id} className="h-auto">
+                    <SwiperSlide key={product._id}>
                         <div className="h-full py-2"> {/* Padding for hover effects */}
                             <ProductCard product={{
                                 _id: product._id,
@@ -88,6 +109,16 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
 
             {/* Custom styles for navigation buttons if needed */}
             <style jsx global>{`
+                /* Force equal height for all slides */
+                .product-carousel-container .swiper-wrapper {
+                    align-items: stretch;
+                }
+                .product-carousel-container .swiper-slide {
+                    height: auto;
+                    display: flex;
+                    flex-direction: column;
+                }
+                
                 .swiper-button-next,
                 .swiper-button-prev {
                     color: #ec4899; /* pink-500 */

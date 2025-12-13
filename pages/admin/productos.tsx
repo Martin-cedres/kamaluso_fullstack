@@ -20,10 +20,10 @@ import {
 import AdminLayout from '../../components/AdminLayout' // Importar el layout
 import toast from 'react-hot-toast' // Importar toast
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill-new/dist/quill.snow.css';
 import { ICoverDesign } from '../../models/CoverDesign'; // Import ICoverDesign
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 // Interfaces para los datos que vienen de la API
 interface SubCategoriaData {

@@ -1,0 +1,4 @@
+// _app.tsx - Global CSS imports for Swiper (loaded once)
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';

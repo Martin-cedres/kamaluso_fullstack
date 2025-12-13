@@ -7,8 +7,27 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true, // Force rebuild
-  poweredByHeader: false, // Added this line
+  reactStrictMode: true,
+  poweredByHeader: false,
+
+
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  experimental: {
+    optimizePackageImports: ['@heroicons/react', 'framer-motion', 'swiper'],
+  },
+
+  modularizeImports: {
+    '@heroicons/react/24/solid': {
+      transform: '@heroicons/react/24/solid/{{member}}',
+    },
+    '@heroicons/react/24/outline': {
+      transform: '@heroicons/react/24/outline/{{member}}',
+    },
+  },
+
   images: {
     loaderFile: './lib/s3-loader.ts',
     remotePatterns: [
