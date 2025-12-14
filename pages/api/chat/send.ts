@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { generateContentSmart } from '../../../lib/gemini-client';
+import { generateContentSmart, classifyMessageIntent } from '../../../lib/gemini-client';
 import { buildSystemPrompt } from '../../../lib/chat-context';
 import connectDB from '../../../lib/mongoose';
 import { ChatConversation } from '../../../models/ChatConversation';
@@ -42,13 +42,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error("⚠️ Error en búsqueda vectorial (fallback a catálogo completo):", err);
     }
 
-    // 2. Construir System Prompt con contexto actualizado (Productos Filtrados + Políticas)
-    const systemPrompt = await buildSystemPrompt(relevantProducts);
+    // 4. [MOVED UP] Clasificación de Intención (Ahora es bloqueante porque define el Prompt)
+    let analytics = { intent: 'indefinido', category: 'general', sentiment: 'neutro' };
+    try {
+      analytics = await classifyMessageIntent(message);
+      console.log("📊 Analytics (Pre-Response):", analytics);
+    } catch (e) {
+      console.error("Error clasificando intención:", e);
+    }
+
+    // 2. Construir System Prompt con contexto actualizado (Productos Filtrados + Políticas + INTENCIÓN)
+    const systemPrompt = await buildSystemPrompt(relevantProducts, analytics.intent);
 
     // [DEBUG] Log para verificar contexto
     console.log("--- CHATBOT CONTEXT DEBUG ---");
+    console.log("Intent Detected:", analytics.intent);
     console.log("System Prompt Length:", systemPrompt.length);
-    console.log("Snippet:", systemPrompt.substring(0, 500));
     console.log("-----------------------------");
 
     // 2. Formatear historial para Gemini
@@ -96,7 +105,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role: 'model',
       content: response
     });
-    conversation.lastMessageAt = new Date();
+    // Actualizamos conversation con los datos
+    // Mongoose permite guardar campos arbitrarios si strict: false, pero ya definimos el esquema
+    if (analytics) {
+      conversation.analytics = {
+        intent: analytics.intent as any,
+        category: analytics.category,
+        sentiment: analytics.sentiment as any,
+        productContext: relevantProducts.length > 0 ? relevantProducts[0].slug : undefined,
+        converted: false
+      };
+    }
+
+
     await conversation.save();
 
     return res.status(200).json({ response, conversationId: conversation._id });

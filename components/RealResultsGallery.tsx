@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import RealResultCard from './RealResultCard';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import dynamic from 'next/dynamic';
+
+// Dynamic imports for Swiper to avoid SSR "window not defined" errors
+const Swiper = dynamic(() => import('swiper/react').then(mod => mod.Swiper), { ssr: false });
+const SwiperSlide = dynamic(() => import('swiper/react').then(mod => mod.SwiperSlide), { ssr: false });
+
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';

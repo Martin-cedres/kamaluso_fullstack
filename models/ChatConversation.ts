@@ -12,6 +12,14 @@ const ChatConversationSchema = new Schema({
     lastMessageAt: { type: Date, default: Date.now },
     deviceInfo: { type: String }, // User Agent or similar
     status: { type: String, default: 'active', enum: ['active', 'closed'] },
+    // Analytics & SEO Metadata
+    analytics: {
+        intent: { type: String, enum: ['compra', 'duda_producto', 'envios', 'reclamo', 'otro', 'indefinido'] },
+        category: { type: String }, // Granular topic, e.g., "agendas", "precios"
+        sentiment: { type: String, enum: ['positivo', 'neutro', 'negativo'] },
+        productContext: { type: String }, // Slug of product if applicable
+        converted: { type: Boolean, default: false } // If they clicked a conversion link
+    },
     metadata: { type: Object } // Future proofing
 }, {
     timestamps: true,
@@ -29,6 +37,13 @@ export interface IChatConversation {
     lastMessageAt: Date;
     deviceInfo?: string;
     status: 'active' | 'closed';
+    analytics?: {
+        intent?: 'compra' | 'duda_producto' | 'envios' | 'reclamo' | 'otro' | 'indefinido';
+        category?: string;
+        sentiment?: 'positivo' | 'neutro' | 'negativo';
+        productContext?: string;
+        converted?: boolean;
+    };
     metadata?: Record<string, any>;
     createdAt?: Date;
     updatedAt?: Date;

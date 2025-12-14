@@ -174,3 +174,37 @@ export async function getEmbedding(text: string): Promise<number[]> {
 
   throw new Error("🚨 No se pudo generar el embedding con ninguna clave disponible.");
 }
+
+/**
+ * Clasifica la intención de un mensaje de usuario utilizando un modelo rápido (Flash).
+ * Devuelve un objeto JSON con la clasificación.
+ */
+export async function classifyMessageIntent(message: string): Promise<{ intent: string; category: string; sentiment: string }> {
+  const prompt = `
+    Analiza el siguiente mensaje de un cliente de una papelería personalizada (e-commerce).
+    Mensaje: "${message}"
+    
+    Clasifica en JSON puro (sin markdown) con estos campos:
+    - intent: "compra" (quiere comprar/precio), "duda_producto" (características), "envios" (tiempos/costos), "reclamo" (problema), "otro".
+    - category: Tema principal en 1 palabra (ej: agendas, libretas, diseño, pago, horaraio).
+    - sentiment: "positivo", "neutro", "negativo".
+  `;
+
+  try {
+    // Usamos FLASH directo porque es rápido y barato para esta tarea simple
+    // Iteramos sobre las claves flash disponibles
+    for (let i = 0; i < flashApiKeys.length; i++) {
+      const result = await tryGenerate(FLASH_MODEL, prompt, 'flash', i);
+      if (result) {
+        // Limpiar markdown si la IA lo pone (```json ... ```)
+        const cleanJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanJson);
+      }
+    }
+    // Fallback silencioso si falla
+    return { intent: 'indefinido', category: 'general', sentiment: 'neutro' };
+  } catch (error) {
+    console.error("Error clasificando intención:", error);
+    return { intent: 'indefinido', category: 'general', sentiment: 'neutro' };
+  }
+}

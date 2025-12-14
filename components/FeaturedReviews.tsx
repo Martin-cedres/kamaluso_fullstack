@@ -1,23 +1,35 @@
-import React from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-
+import React, { useRef } from 'react';
 import ReviewCard from './ReviewCard';
-import Head from 'next/head';
-
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { IReview } from '../models/Review';
+import Head from 'next/head';
 
 interface FeaturedReviewsProps {
   reviews: IReview[];
 }
 
 const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   if (!reviews || reviews.length === 0) {
     return null;
   }
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollAmount = container.clientWidth * 0.75;
+      const targetScroll =
+        direction === 'left'
+          ? container.scrollLeft - scrollAmount
+          : container.scrollLeft + scrollAmount;
+
+      container.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   const siteUrl = 'https://www.papeleriapersonalizada.uy';
 
@@ -58,34 +70,51 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
           Lo que dicen nuestros clientes
         </h2>
       </div>
-      <div className="max-w-6xl mx-auto">
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={30}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          loop={reviews.length >= 3}
-          breakpoints={{
-            640: {
-              slidesPerView: 2,
-              spaceBetween: 20,
-            },
-            1024: {
-              slidesPerView: 3,
-              spaceBetween: 30,
-            },
+
+      <div className="relative group max-w-7xl mx-auto px-4 sm:px-8">
+        {/* Navigation Buttons */}
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/90 p-3 rounded-full shadow-lg text-rosa opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hidden md:block focus:outline-none focus:ring-2 focus:ring-rosa/50"
+          aria-label="Anterior"
+        >
+          <ChevronLeftIcon className="w-6 h-6" />
+        </button>
+
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/90 p-3 rounded-full shadow-lg text-rosa opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hidden md:block focus:outline-none focus:ring-2 focus:ring-rosa/50"
+          aria-label="Siguiente"
+        >
+          <ChevronRightIcon className="w-6 h-6" />
+        </button>
+
+        {/* Scroll Container */}
+        <div
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto gap-6 pb-12 snap-x snap-mandatory scroll-smooth hide-scrollbar"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
           }}
-          className="pb-12"
         >
           {reviews.map((review) => (
-            <SwiperSlide key={review._id}>
-              <ReviewCard review={review} />
-            </SwiperSlide>
+            <div
+              key={review._id}
+              className="snap-start flex-shrink-0 w-[85%] sm:w-[45%] md:w-[40%] lg:w-[31%] xl:w-[31%]" // Adjusted widths for review cards
+            >
+              <div className="h-full py-2">
+                <ReviewCard review={review} />
+              </div>
+            </div>
           ))}
-        </Swiper>
+        </div>
       </div>
+      <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </section>
   );
 };

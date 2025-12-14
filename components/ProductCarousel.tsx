@@ -1,27 +1,6 @@
-import React, { lazy, Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useRef } from 'react';
 import ProductCard from './ProductCard';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-
-// Lazy load Swiper components (saves ~30KB initial bundle)
-const Swiper = dynamic(() => import('swiper/react').then(mod => mod.Swiper), {
-    ssr: false,
-    loading: () => <div className="text-center py-8">Cargando productos...</div>
-});
-
-const SwiperSlide = dynamic(() => import('swiper/react').then(mod => mod.SwiperSlide), {
-    ssr: false
-});
-
-// Dynamically import Swiper modules
-const loadSwiperModules = async () => {
-    const modules = await import('swiper/modules');
-    return [modules.Navigation, modules.Pagination, modules.Autoplay];
-};
-
-
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 interface Product {
     _id: string;
@@ -44,50 +23,63 @@ interface ProductCarouselProps {
 }
 
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
-    const [swiperModules, setSwiperModules] = React.useState<any[]>([]);
-
-    React.useEffect(() => {
-        loadSwiperModules().then(setSwiperModules);
-    }, []);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     if (!products || products.length === 0) return null;
 
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const scrollAmount = container.clientWidth * 0.75; // Scroll 75% of view width
+            const targetScroll = direction === 'left'
+                ? container.scrollLeft - scrollAmount
+                : container.scrollLeft + scrollAmount;
+
+            container.scrollTo({
+                left: targetScroll,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     return (
-        <div className="product-carousel-container relative px-4 sm:px-8">
-            <Swiper
-                modules={swiperModules}
-                spaceBetween={24}
-                slidesPerView={1.2} // Mobile default: show part of next slide
-                centeredSlides={false}
-                navigation={swiperModules.length > 0}
-                pagination={swiperModules.length > 0 ? { clickable: true, dynamicBullets: true } : false}
-                autoplay={swiperModules.length > 0 ? {
-                    delay: 5000,
-                    disableOnInteraction: false,
-                    pauseOnMouseEnter: true
-                } : false}
-                breakpoints={{
-                    // Mobile landscape / Small tablets
-                    640: {
-                        slidesPerView: 2.2,
-                        spaceBetween: 20,
-                    },
-                    // Tablets
-                    768: {
-                        slidesPerView: 3,
-                        spaceBetween: 24,
-                    },
-                    // Desktop
-                    1024: {
-                        slidesPerView: 4,
-                        spaceBetween: 30,
-                    },
+        <div className="relative group px-4 sm:px-8">
+            {/* Navigation Buttons */}
+            <button
+                onClick={() => scroll('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/90 p-3 rounded-full shadow-lg text-rosa opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hidden md:block focus:outline-none focus:ring-2 focus:ring-rosa/50"
+                aria-label="Anterior"
+            >
+                <ChevronLeftIcon className="w-6 h-6" />
+            </button>
+
+            <button
+                onClick={() => scroll('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/90 p-3 rounded-full shadow-lg text-rosa opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hidden md:block focus:outline-none focus:ring-2 focus:ring-rosa/50"
+                aria-label="Siguiente"
+            >
+                <ChevronRightIcon className="w-6 h-6" />
+            </button>
+
+            {/* Scroll Container */}
+            <div
+                ref={scrollContainerRef}
+                className="flex overflow-x-auto gap-6 pb-12 snap-x snap-mandatory scroll-smooth hide-scrollbar"
+                style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    // Force flex row layout to guarantee side-by-side
+                    display: 'flex',
+                    flexDirection: 'row',
+                    flexWrap: 'nowrap'
                 }}
-                className="pb-12" // Add padding for pagination
             >
                 {products.map((product) => (
-                    <SwiperSlide key={product._id}>
-                        <div className="h-full py-2"> {/* Padding for hover effects */}
+                    <div
+                        key={product._id}
+                        className="snap-start flex-shrink-0 w-[85%] sm:w-[45%] md:w-[30%] lg:w-[23%] xl:w-[23%]"
+                    >
+                        <div className="h-full py-2">
                             <ProductCard product={{
                                 _id: product._id,
                                 nombre: product.nombre,
@@ -103,45 +95,13 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
                                 puntosClave: product.puntosClave,
                             }} />
                         </div>
-                    </SwiperSlide>
+                    </div>
                 ))}
-            </Swiper>
+            </div>
 
-            {/* Custom styles for navigation buttons if needed */}
-            <style jsx global>{`
-                /* Force equal height for all slides */
-                .product-carousel-container .swiper-wrapper {
-                    align-items: stretch;
-                }
-                .product-carousel-container .swiper-slide {
-                    height: auto;
-                    display: flex;
-                    flex-direction: column;
-                }
-                
-                .swiper-button-next,
-                .swiper-button-prev {
-                    color: #ec4899; /* pink-500 */
-                    background: rgba(255, 255, 255, 0.8);
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                    transition: all 0.3s ease;
-                }
-                .swiper-button-next:hover,
-                .swiper-button-prev:hover {
-                    background: white;
-                    transform: scale(1.1);
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                }
-                .swiper-button-next::after,
-                .swiper-button-prev::after {
-                    font-size: 18px;
-                    font-weight: bold;
-                }
-                .swiper-pagination-bullet-active {
-                    background: #ec4899;
+            <style jsx>{`
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
                 }
             `}</style>
         </div>
