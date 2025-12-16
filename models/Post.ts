@@ -13,6 +13,8 @@ export interface IPost extends Document {
   // Campos para el flujo de revisión de la IA
   proposedContent?: string; // Contenido sugerido por la IA, pendiente de aprobación
   status: 'published' | 'pending_review'; // Estado del contenido
+  createdAt: Date; // Añadido para que TS lo reconozca
+  updatedAt: Date; // Añadido para que TS lo reconozca
 }
 
 const postSchema: Schema<IPost> = new Schema(
@@ -42,6 +44,6 @@ const postSchema: Schema<IPost> = new Schema(
 
 // To prevent model recompilation on hot-reloads
 const Post: Model<IPost> =
-  mongoose.models.Post || mongoose.model<IPost>('Post', postSchema)
+  mongoose.models?.Post || mongoose.model<IPost>('Post', postSchema)
 
 export default Post

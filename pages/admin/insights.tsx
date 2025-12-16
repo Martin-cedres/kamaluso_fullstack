@@ -77,8 +77,8 @@ const ChatInsightsPage = () => {
     try {
       const res = await fetch(`/api/admin/chat-insights?${params.toString()}`);
       if (res.ok) {
-        const data: Insight[] = await res.json();
-        setInsights(data);
+        const data = await res.json();
+        setInsights(data.conversations || []);
       }
     } catch (error) {
       console.error('Error fetching insights:', error);

@@ -43,6 +43,8 @@ export interface IPillarPage extends Document {
   // Campos para el flujo de revisión de la IA
   proposedContent?: string; // Contenido sugerido por la IA, pendiente de aprobación
   status: 'published' | 'pending_review'; // Estado del contenido
+  createdAt: Date; // Añadido para que TS lo reconozca
+  updatedAt: Date; // Añadido para que TS lo reconozca
 }
 
 const pillarPageSchema: Schema<IPillarPage> = new Schema(
@@ -76,6 +78,6 @@ const pillarPageSchema: Schema<IPillarPage> = new Schema(
 
 // Prevenir la recompilación del modelo en hot-reloads de Next.js
 const PillarPage: Model<IPillarPage> =
-  mongoose.models.PillarPage || mongoose.model<IPillarPage>('PillarPage', pillarPageSchema);
+  mongoose.models?.PillarPage || mongoose.model<IPillarPage>('PillarPage', pillarPageSchema);
 
 export default PillarPage;
