@@ -27,7 +27,7 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/categorias/listar')
+    fetch('/api/categorias/cached-listar')
       .then((res) => res.json())
       .then((data) => {
         setCategories(data)

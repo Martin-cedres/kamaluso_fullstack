@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "postbuild": "next-sitemap",
-    "analyze": "cross-env ANALYZE=true next build",
+    "analyze": "cross-env ANALYZE=true next build --webpack",
     "lint": "next lint",
     "format": "prettier --write . --ignore-path .gitignore",
     "test": "jest",

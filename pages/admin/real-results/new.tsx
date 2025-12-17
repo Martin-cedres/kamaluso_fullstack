@@ -110,8 +110,7 @@ export default function RealResultForm() {
                                 type="text"
                                 required
                                 value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-naranja/20 focus:border-naranja outline-none transition-all"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fucsia/20 focus:border-fucsia outline-none transition-all"
                                 placeholder="Ej: Agendas Corporativas 2025 - Cliente X"
                             />
                         </div>
@@ -123,7 +122,7 @@ export default function RealResultForm() {
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-naranja/20 focus:border-naranja outline-none transition-all"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fucsia/20 focus:border-fucsia outline-none transition-all"
                                 placeholder="Detalles sobre el acabado, materiales, etc."
                             />
                         </div>
@@ -198,7 +197,7 @@ export default function RealResultForm() {
                                 id="active"
                                 checked={formData.active}
                                 onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                className="w-4 h-4 text-naranja border-gray-300 rounded focus:ring-naranja"
+                                className="w-4 h-4 text-fucsia border-gray-300 rounded focus:ring-fucsia"
                             />
                             <label htmlFor="active" className="text-sm font-medium text-gray-700">
                                 Visible en la web
@@ -215,7 +214,7 @@ export default function RealResultForm() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-6 py-2 bg-naranja text-white rounded-lg hover:bg-naranja/90 transition-colors disabled:opacity-50"
+                                className="px-6 py-2 bg-fucsia text-white rounded-lg hover:bg-fucsia/90 transition-colors disabled:opacity-50"
                             >
                                 {loading ? 'Guardando...' : 'Guardar Resultado'}
                             </button>

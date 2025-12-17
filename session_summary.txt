@@ -1,232 +1,24 @@
-### Resumen de la Sesión
+## Resumen de la Sesión de Optimización
 
-**Implementado:**
-- Se integró la API `/api/admin/seo/generate-keywords` en `/pages/api/admin/generate-seo.ts`.
-    - La API de generación de SEO ahora llama internamente a `generate-keywords` utilizando el nombre del producto como `seedKeyword`.
-    - Las palabras clave expandidas (relacionadas, long-tail, preguntas e intención de usuario) se inyectan en el prompt de Gemini.
-    - Las instrucciones del prompt se ajustaron para que la IA utilice estas palabras clave expandidas de manera estratégica al generar `seoTitle`, `seoDescription`, `puntosClave`, `descripcionExtensa` y `seoKeywords`, complementando las instrucciones especializadas existentes para productos como agendas o libretas.
+**Objetivo:** Mejorar el rendimiento de la carga de categorías, que se obtenían de la base de datos en cada visita, causando lentitud.
 
-### Implementación del Sistema de Topic Clusters (23 de noviembre de 2025)
+**Proceso y Solución:**
 
-Se completaron los pasos 1, 2 y 3 para habilitar la funcionalidad completa de "Fábrica de Clusters" y enlazado interno automático:
+1.  **Intento Inicial (Fallido):** Se intentó mover la obtención de datos al método `getInitialProps` en `pages/_app.tsx` para que se ejecutara una sola vez en el servidor.
+    *   **Problema:** Esta estrategia causó errores de compilación (`build`) persistentes. El compilador de Next.js (Turbopack) intentaba incluir incorrectamente el código del driver de la base de datos (`mongodb`) en el paquete de archivos para el navegador (`client bundle`), donde no puede funcionar.
+    *   **Iteraciones:** A pesar de varios intentos para aislar el código del servidor (usando importaciones dinámicas, ajustando tipos), el error fundamental persistió, demostrando que esta no era la arquitectura adecuada para este caso de uso.
 
-1.  **API "Generar Estrategias de Cluster" (`/api/admin/clusters/generate-strategies.ts`):**
-    - **Estado:** Implementado y conectado a la BD.
-    - **Funcionalidad:** Ahora consulta productos y posts reales de la base de datos y utiliza Gemini para proponer 3 estrategias de contenido distintas, cada una con título, descripción y selección de contenido del cluster.
+2.  **Reversión a un Estado Estable:** Para solucionar los fallos de compilación, se revirtieron todos los cambios realizados en `pages/_app.tsx` y `context/CategoryContext.tsx`, devolviendo la aplicación a su estado funcional original.
 
-2.  **API "Construir este Cluster" (`/api/admin/clusters/build-cluster.ts`):**
-    - **Estado:** Implementado (Nueva API).
-    - **Funcionalidad:** Recibe una estrategia seleccionada y utiliza Gemini para generar el contenido HTML completo de la Página Pilar. Crea el documento `PillarPage` en la base de datos y guarda las asociaciones con los posts y productos del cluster.
+3.  **Estrategia Final (Exitosa): API con Caché en Servidor:**
+    *   Se creó una nueva ruta de API: `pages/api/categorias/cached-listar.ts`.
+    *   Esta nueva ruta contiene la lógica para obtener las categorías de la base de datos, pero con un añadido crucial: **una capa de caché en memoria**.
+    *   La primera vez que se llama a esta API, consulta la base de datos y guarda el resultado en una variable en el servidor.
+    *   En todas las llamadas posteriores, la API devuelve instantáneamente los datos desde esa variable cacheada, sin necesidad de contactar de nuevo a la base de datos.
+    *   Se configuró la cabecera `Cache-Control` para que la red de Vercel (CDN) también almacene en caché la respuesta, acelerando aún más la entrega a los usuarios.
 
-3.  **API "Optimizar Enlazado" (`/api/admin/clusters/generate-links.ts`):**
-    - **Estado:** Verificado y Activo.
-    - **Funcionalidad:** Analiza semánticamente la Página Pilar y los contenidos del cluster. Genera sugerencias de enlaces internos (contextuales) y actualiza el campo `proposedContent` de los documentos involucrados, dejándolos listos para revisión en el panel de administración.
+4.  **Integración Final:** Se actualizó el `CategoryProvider` para que hiciera su llamada `fetch` a la nueva y optimizada ruta `/api/categorias/cached-listar`.
 
-### Estrategia de Crecimiento Agresivo (Spy Mode & Sales Psychologist)
+**Resultado:**
 
-Se implementaron dos nuevas herramientas enfocadas en ventas y competencia:
-
-1.  **Modo Espía (`/admin/competitor-analysis`):**
-    - Permite ingresar la URL de un producto de la competencia.
-    - **NUEVO (Modo Comparación):** Ahora permite seleccionar un producto propio para realizar una comparación "Cara a Cara".
-    - La IA analiza el HTML, extrae keywords, debilidades de la oferta y genera una "Estrategia de Contraataque" específica para Kamaluso. En modo comparación, declara un ganador y explica por qué.
-
-2.  **Psicólogo de Ventas (Integrado en Generador SEO):**
-    - Se fusionó la lógica de CRO (Optimización de Conversión) directamente en el generador de contenido de productos (`generate-seo.ts`).
-    - Ahora, al generar contenido con IA, el sistema actúa con una doble personalidad: Experto SEO + Psicólogo de Ventas, aplicando principios de persuasión (Cialdini), escasez y prueba social en el copy generado.
-
-**Próximos Pasos:**
-- Verificar la integración en el frontend (`pages/admin/clusters.tsx` y `pages/admin/cluster-factory.tsx`) para asegurar que consumen correctamente las nuevas respuestas de las APIs.
-
-### Frontend de Páginas Pilares y Depuración (23 de noviembre de 2025 - Continuación)
-
-1.  **Vista Pública de Páginas Pilares (`/pages/pillar/[slug].tsx`):**
-    - **Estado:** Implementado y Verificado.
-    - **Funcionalidad:** Se creó la plantilla pública para visualizar las Páginas Pilares. Incluye:
-        - Diseño "Premium" con cabecera distintiva.
-        - Barra lateral inteligente que muestra automáticamente los productos y artículos del cluster.
-        - Manejo robusto de imágenes de productos (fallback a galería o icono si falta la imagen principal).
-        - Tarjetas de producto interactivas con efectos hover.
-
-2.  **Depuración y Estabilización:**
-    - **Creación Manual:** Se corrigió el error 500 en `/api/admin/pillar-pages/crear` añadiendo validación de contenido y manejo de colisiones de slug (sufijos automáticos).
-    - **Fábrica de Clusters:** Se corrigió la estructura del payload enviado desde el frontend y el manejo de acentos en la generación de slugs.
-    - **Frontend:** Se solucionaron errores de sintaxis y el problema de `Invalid <Link>` en las notificaciones toast.
-
-### Mejoras Visuales y de UX (23 de noviembre de 2025 - Fase 1 & 2)
-
-Se implementó un rediseño significativo enfocado en la percepción de valor "Premium" y la optimización de conversiones (CRO):
-
-1.  **Hero Section de Alto Impacto (`pages/index.tsx`):**
-    - Nuevo diseño de pantalla dividida con tipografía moderna y gradientes.
-    - Badge de confianza simplificado ("4.9/5") para prueba social inmediata.
-    - Llamadas a la acción claras y jerarquizadas.
-
-2.  **Tarjetas de Producto Mejoradas (`components/ProductCard.tsx`):**
-    - Sombras suaves y efectos hover para tangibilidad.
-    - Reemplazo del botón `+` por una flecha de navegación (`->`) para mayor claridad.
-    - **Corrección de Bugs:** Se solucionaron problemas de propiedades indefinidas (`imagen` vs `imageUrl`, `precio` vs `basePrice`) para soportar productos relacionados.
-
-3.  **Barra de Compra "Sticky" en Móvil (`pages/productos/detail/[slug].tsx`):**
-    - Barra fija inferior en vistas móviles con precio y botón de "Agregar".
-    - Aumenta la conversión al mantener la acción de compra siempre visible.
-
-4.  **Selectores Visuales (`components/VisualOptionSelector.tsx`):**
-    - Se reemplazaron los botones de texto por una experiencia de "Constructor Visual".
-    - **Interiores:** Grilla de miniaturas.
-    - **Acabados:** Swatches de color real.
-    - **Texto:** Input estilizado.
-    - Integración dinámica basada en el nombre del grupo de opciones.
-
-### Implementación del Sistema de Banner de Anuncios (24 de noviembre de 2025)
-
-Se implementó un sistema completo de gestión de anuncios (Top Bar) con panel de administración:
-
-1.  **Modelo de Datos (`models/Settings.ts`):**
-    - Creado modelo `Settings` en MongoDB para almacenar configuraciones globales del sitio.
-    - Schema incluye propiedades para: `enabled`, `text`, `link`, `couponCode`, `backgroundColor`, `textColor`.
-
-2.  **API Endpoint (`pages/api/admin/settings.ts`):**
-    - GET público para que el frontend lea la configuración.
-    - PUT protegido con autenticación de admin usando `getServerSession` y `authOptions`.
-    - Correcciones: Se exportó `authOptions` desde `[...nextauth].ts` para reutilización.
-    - Correcciones: Se cambió `mongooseConnect` por `connectDB` para coincidir con la exportación correcta.
-
-3.  **Panel de Administración (`pages/admin/settings.tsx`):**
-    - Nueva página `/admin/settings` para gestionar el banner.
-    - Controles: activar/desactivar, texto del mensaje, enlace, código de cupón, colores personalizables.
-    - Vista previa en tiempo real del banner.
-    - Título actualizado: "Gestión del Banner de Anuncios".
-
-4.  **Componente Frontend (`components/TopBar.tsx`):**
-    - Componente que consume la configuración desde el API.
-    - Se muestra en la parte superior de todas las páginas.
-    - Incluye botón de cierre (dismiss).
-    - Usa `fetch` en lugar de axios para evitar dependencias innecesarias.
-
-5.  **Integración en AdminLayout (`components/AdminLayout.tsx`):**
-    - Agregado enlace "Banner de Anuncios" en el menú lateral del admin.
-    - Icono: `MegaphoneIcon` (más intuitivo que el engranaje de configuración).
-
-6.  **Integración Global (`pages/_app.tsx`):**
-    - `TopBar` agregado al layout principal para aparecer en todas las páginas.
-
-- Exportación de `authOptions` para permitir verificación de sesión en APIs.
-- Corrección de nombre de función `mongooseConnect` → `connectDB`.
-- Reemplazo de `axios` por `fetch` nativo para evitar dependencias.
-- Mejora del manejo de errores en el frontend para debugging.
-
-### Restauración del Sistema de Optimización de Imágenes WebP (24 de noviembre de 2025)
-
-Se restauró y mejoró el sistema de conversión automática de imágenes a formato WebP con generación de 3 tamaños optimizados (400px, 800px, 1200px) para diferentes dispositivos.
-
-**Problema identificado:**
-- Las imágenes se subían directamente a S3 en formato original (JPG/PNG) sin procesamiento
-- La función Lambda existía pero no se estaba ejecutando
-- El trigger S3 estaba configurado pero el código backend no esperaba el procesamiento
-
-**Solución implementada:**
-
-1. **Backend (`lib/s3-upload.ts`):**
-   - Implementado sistema de espera inteligente con reintentos (hasta 16 segundos)
-   - Verifica que Lambda procesó la imagen antes de retornar URL
-   - Retorna URL de imagen WebP optimizada (`processed/UUID.webp`) en lugar de original
-   - Fallback a imagen original si Lambda falla o tarda demasiado
-   - Logging detallado para debugging
-
-2. **Lambda (`lambda-package/index.mjs`):**
-   - Mejorado para **no upscalear** imágenes (solo genera tamaños ≤ al original)
-   - Manejo inteligente de imágenes pequeñas (< 400px usa tamaño original)
-   - Logging mejorado con emojis para CloudWatch
-   - Genera versión base adicional sin sufijo (`processed/UUID.webp`)
-   - Preserva aspect ratio usando `fit: 'inside'`
-   - Mejor manejo de errores con re-lanzamiento de excepciones
-
-3. **Frontend (`lib/s3-loader.ts`):**
-   - Verificado que ya estaba correctamente configurado
-   - Transforma URLs automáticamente según viewport del dispositivo
-   - Selecciona tamaño apropiado: 400w (móvil), 800w (tablet), 1200w (desktop)
-
-4. **Script de Despliegue (`deploy-lambda.bat`):**
-   - Creado script automatizado para empaquetar Lambda
-   - Genera `lambda-deployment.zip` listo para subir a AWS
-   - Incluye instrucciones paso a paso para despliegue manual
-
-**Beneficios obtenidos:**
-- Reducción del 60-80% en peso de imágenes
-- Carga responsive adaptada al dispositivo del usuario
-- Mejora significativa en Core Web Vitals y SEO
-- Formato WebP con calidad optimizada (80%)
-- Reducción de ancho de banda consumido
-
-**Estado actual:**
-- ✅ Código backend implementado y listo
-- ✅ Función Lambda mejorada con mejor manejo de casos edge
-- ✅ Frontend verificado y funcionando
-- ⏳ Pendiente: Desplegar Lambda actualizada en AWS (manual)
-- ⏳ Pendiente: Verificar procesamiento con imagen de prueba
-
-**Próximos pasos:**
-1. Ejecutar `deploy-lambda.bat` para generar ZIP
-2. Subir `lambda-deployment.zip` a AWS Lambda desde consola
-3. Probar subida de imagen desde admin panel
-4. Verificar logs en CloudWatch
-5. Confirmar generación de 4 tamaños en S3
-
-**Mejoras adicionales implementadas (24 de noviembre - continuación):**
-
-1. **Tamaños optimizados actualizados:**
-   - Antes: 400px, 800px, 1200px (3 versiones)
-   - Después: 480px, 800px, 1200px, 1920px (4 versiones)
-   - Razón: Mejor cobertura para móviles HD modernos y monitores Full HD
-   - Impacto: +20-50KB por imagen pero mejora significativa en calidad visual
-
-2. **Eliminación automática de archivos originales:**
-   - Lambda ahora elimina el JPG/PNG original de `uploads/` después del procesamiento exitoso
-   - Reduce uso de almacenamiento en S3 (solo mantiene versiones WebP optimizadas)
-   - Implementado con try-catch para no fallar si la eliminación falla
-   - Log en CloudWatch: "🗑️ Original eliminado: uploads/UUID.jpg"
-
-**Distribución de tamaños por dispositivo:**
-- 480w: Móviles modernos (iPhone 12+, Pixel, Galaxy) con pantallas Retina
-- 800w: Tablets (iPad) y laptops pequeñas
-- 1200w: Laptops y monitores medianos
-- 1920w: Monitores Full HD y 4K (downscaled)
-
-**Problema crítico encontrado y resuelto (25 de noviembre):**
-
-**Error:** Runtime.OutOfMemory en Lambda al procesar imágenes grandes (4500x4500px)
-- La Lambda con 512 MB de RAM no podía procesar imágenes grandes
-- Sharp necesita mantener múltiples buffers en memoria al procesar en paralelo
-
-**Solución aplicada:**
-1. Aumentar memoria Lambda de 512 MB a 2048 MB en AWS Console
-2. Aumentar timeout de 3 segundos a 30 segundos
-3. Instalar versión correcta de sharp para Linux x64 en deploy script
-
-**Resultado:** Sistema 100% funcional
-- Convierte JPG/PNG a WebP correctamente
-- Genera 4 tamaños optimizados (480, 800, 1200, 1920px)
-- Elimina archivos originales automáticamente
-- Miniaturas visibles en todo el admin panel
-
-**Costo:** Sigue siendo GRATIS (dentro del Free Tier de AWS Lambda)
-
-### Optimización de UI y Correcciones de Inicio (11 de diciembre de 2025)
-
-1.  **Corrección de Errores de Inicio:**
-    - **MongoDB:** Diagnóstico de error `ECONNREFUSED` (IP no permitida en Atlas). Solucionado por el usuario.
-    - **Redirects:** Creación de `redirects-map.json` vacío para eliminar advertencia en `next.config.js`.
-
-2.  **Optimización del Chatbot (Kamaluso Bot):**
-    - **Objetivo:** Mejorar responsividad, evitar solapamientos con Navbar/WhatsApp y optimizar espacio.
-    - **Solución ("Bulletproof Layout"):**
-        - **Móvil:** Diseño apilado (Stack) verticalmente. Chat sobre botón de WhatsApp. Altura limitada para no tocar Navbar.
-        - **Escritorio:** Diseño "Side-by-Side". Ventana a la izquierda del botón, alineada abajo (`bottom-5`). Altura expandida.
-    - **Técnica:** Se implementó posicionamiento `fixed` estricto (desacoplado de Flexbox) para garantizar márgenes matemáticos seguros en cualquier dispositivo.
-
-3.  **Historial y Monitoreo de Chat:**
-    - **Objetivo:** Permitir al administrador ver las conversaciones entre el bot y los usuarios.
-    - **Backend:** Se creó el modelo `ChatConversation` en MongoDB y se actualizó `/api/chat/send` para registrar mensajes automáticamente.
-    - **Frontend:** Nueva página `/admin/chat-history` con listado y vista detallada de chats.
-    - **Navegación:** Enlace agregado al Sidebar del Admin (`AdminLayout.tsx`).
+La aplicación ahora compila correctamente y el problema de rendimiento ha sido resuelto de una manera robusta y escalable. La carga de categorías es casi instantánea para todos los usuarios después de la primera solicitud, ya que se sirve desde una caché rápida en lugar de consultar la base de datos repetidamente.

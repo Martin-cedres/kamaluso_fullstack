@@ -25,6 +25,10 @@ const SeoMeta = ({
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={absoluteUrl} />
+
+      {/* Performance Hint */}
+      <link rel="preconnect" href="https://strapi-bucket-kamaluso.s3.sa-east-1.amazonaws.com" />
+
       <meta name="robots" content="index, follow" />
       <meta name="language" content="es" />
 

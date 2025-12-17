@@ -41,7 +41,7 @@ export default function RealResultCard({ title, description, mockupImage, realIm
                         fill
                         className="object-cover"
                     />
-                    <div className="absolute top-4 right-4 bg-naranja text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
+                    <div className="absolute top-4 right-4 bg-fucsia text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
                         PRODUCTO
                     </div>
                 </div>

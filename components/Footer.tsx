@@ -87,7 +87,7 @@ export default function Footer() {
               href="https://wa.me/59891090705?text=Hola%20Mart%C3%ADn,%20vi%20la%20tienda%20Kamaluso%20y%20estoy%20interesado/a%20en%20un%20sitio%20web."
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-green-500 hover:underline"
+              className="font-semibold text-green-600 hover:underline"
             >
               Contáctame por WhatsApp
             </a>

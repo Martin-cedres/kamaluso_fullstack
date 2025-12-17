@@ -73,7 +73,7 @@ export default function ImageUploader({ contextName, contextType, onUploadComple
         accept="image/png, image/jpeg, image/webp"
         onChange={handleFileChange}
         disabled={status === 'uploading' || status === 'generating'}
-        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-naranja/10 file:text-naranja hover:file:bg-naranja/20 cursor-pointer"
+        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-fucsia/10 file:text-fucsia hover:file:bg-fucsia/20 cursor-pointer"
       />
       <div className="mt-3 text-sm h-5">
         {status === 'uploading' && <p className="text-azul animate-pulse">Subiendo a S3...</p>}

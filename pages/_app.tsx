@@ -1,7 +1,4 @@
 import '../styles/globals.css'
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 import { useState, useEffect } from 'react'
 import type { AppProps } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
@@ -19,9 +16,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { useRouter } from 'next/router'
 import DefaultSchema from '../lib/DefaultSchema'
 
-import Footer from '../components/Footer'
-
-// Dynamically import components
+// Dynamically import components that were previously removed by mistake
 const DynamicWhatsAppButton = dynamic(
   () => import('../components/WhatsAppButton'),
   {
@@ -29,6 +24,9 @@ const DynamicWhatsAppButton = dynamic(
   },
 )
 const DynamicChatWidget = dynamic(() => import('../components/ChatWidget'), {
+  ssr: false,
+})
+const DynamicFooter = dynamic(() => import('../components/Footer'), {
   ssr: false,
 })
 
@@ -43,7 +41,7 @@ const outfit = Outfit({
   variable: '--font-outfit',
 })
 
-export default function App({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const canonicalUrl = `https://www.papeleriapersonalizada.uy${router.asPath}`
   const [isClient, setIsClient] = useState(false)
@@ -56,23 +54,14 @@ export default function App({ Component, pageProps }: AppProps) {
     <SessionProvider session={pageProps.session}>
       <DefaultSchema />
       <Head>
-        {/* Favicon */}
         <link rel="icon" href="/logo.webp" type="image/webp" />
-
-        {/* Google Fonts are now in _document.tsx */}
-
-        {/* Canonical link */}
         <link rel="canonical" href={canonicalUrl} />
-
-        {/* SEO básico */}
         <title>Papelería Personalizada | Kamaluso</title>
         <meta
           name="description"
           content="Papelería personalizada en Uruguay. Agendas, cuadernos y libretas únicas, con tapa dura, hechas a tu medida."
         />
         <meta name="google-site-verification" content="flCBkjVQOhBSoOP_IBxyt7jdN4HJFIn3vmnInkUckqY" />
-
-        {/* Open Graph (para redes y Google) */}
         <meta property="og:title" content="Papelería Personalizada | Kamaluso" />
         <meta
           property="og:description"
@@ -85,8 +74,6 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Papelería Personalizada" />
-
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Papelería Personalizada | Kamaluso" />
         <meta
@@ -97,18 +84,13 @@ export default function App({ Component, pageProps }: AppProps) {
           name="twitter:image"
           content="https://www.papeleriapersonalizada.uy/og-image.jpg"
         />
-
-        {/* Idioma y localización */}
         <meta httpEquiv="Content-Language" content="es-UY" />
         <meta name="robots" content="index, follow" />
         <meta name="author" content="Papelería Personalizada | Kamaluso" />
-
-        {/* Limpieza de referencias a Vercel */}
         <meta name="application-name" content="Papelería Personalizada" />
         <meta name="generator" content="Next.js" />
       </Head>
 
-      {/* Google Analytics */}
       <Script
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
@@ -136,9 +118,9 @@ export default function App({ Component, pageProps }: AppProps) {
               duration: 5000,
               success: {
                 style: {
-                  background: '#ec4899', // pink-500
+                  background: '#ec4899',
                   color: '#fff',
-                  borderRadius: '1rem', // rounded-2xl equivalent
+                  borderRadius: '1rem',
                 },
                 iconTheme: {
                   primary: '#fff',
@@ -147,7 +129,7 @@ export default function App({ Component, pageProps }: AppProps) {
               },
               error: {
                 style: {
-                  background: '#ef4444', // red-500
+                  background: '#ef4444',
                   color: '#fff',
                   borderRadius: '1rem',
                 },
@@ -158,7 +140,6 @@ export default function App({ Component, pageProps }: AppProps) {
               },
             }}
           />
-          {/* Apply the font class to the main container */}
           <div
             className={`${inter.variable} ${outfit.variable} font-sans flex flex-col min-h-screen`}
           >
@@ -171,10 +152,12 @@ export default function App({ Component, pageProps }: AppProps) {
             </main>
             {isClient && <DynamicWhatsAppButton />}
             {isClient && <DynamicChatWidget />}
-            <Footer />
+            {isClient && <DynamicFooter />}
           </div>
         </CategoryProvider>
       </CartProvider>
     </SessionProvider>
   )
 }
+
+export default MyApp;

@@ -56,7 +56,7 @@ export default function RealResultsIndex() {
                 <h1 className="text-2xl font-bold text-gray-800">Galería de Realidad</h1>
                 <Link
                     href="/admin/real-results/new"
-                    className="bg-naranja hover:bg-naranja/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    className="bg-fucsia hover:bg-fucsia/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                     <PlusIcon className="w-5 h-5" />
                     Nuevo Resultado
@@ -91,7 +91,7 @@ export default function RealResultsIndex() {
                                         fill
                                         className="object-cover"
                                     />
-                                    <span className="absolute bottom-0 right-0 bg-naranja/80 text-white text-xs px-2 py-1">Realidad</span>
+                                    <span className="absolute bottom-0 right-0 bg-fucsia/80 text-white text-xs px-2 py-1">Realidad</span>
                                 </div>
                             </div>
 
