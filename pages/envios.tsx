@@ -35,7 +35,7 @@ export default function EnviosPage() {
             <h2 className="text-2xl font-semibold">Tiempos de Entrega</h2>
             <p>
               {shippingInfo.details.production} Recuerda que los artículos personalizados llevan tiempo de
-              producción. Por cantidades mayores, consulta con nostros.
+              producción. Por cantidades mayores, consulta con nosotros.
             </p>
 
             <h2 className="text-2xl font-semibold">Costos de Envío</h2>

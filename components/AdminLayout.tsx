@@ -18,6 +18,7 @@ import {
   MegaphoneIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon, // Added for Chat History
+  ShareIcon, // <-- Icono para Redes Sociales
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Test de Email', href: '/admin/test-email', icon: BeakerIcon },
   { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
   { name: 'Blog', href: '/admin/blog', icon: NewspaperIcon },
+  { name: 'Redes Sociales', href: '/admin/redes-sociales', icon: ShareIcon },
   // --- Nuevos Enlaces SEO & Content ---
   { name: 'Centro de Mando SEO', href: '/admin/seo/strategies', icon: CircleStackIcon },
   { name: 'Páginas Pilares', href: '/admin/pillar-pages', icon: BookOpenIcon },

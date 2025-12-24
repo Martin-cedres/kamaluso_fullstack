@@ -37,19 +37,6 @@ const EventPageSchema: Schema = new Schema(
         eventType: {
             type: String,
             required: true,
-            enum: [
-                'Día de la Madre',
-                'Día del Padre',
-                'Día del Niño',
-                'Día del Maestro',
-                'Navidad',
-                'Reyes',
-                'San Valentín',
-                'Vuelta a Clases',
-                'Black Friday',
-                'Cyber Monday',
-                'Otro'
-            ],
         },
         eventDate: {
             month: {

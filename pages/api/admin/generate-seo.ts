@@ -47,116 +47,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const storeName = "Papelería Personalizada Kamaluso";
 
+    // 4. Generación del Prompt Centralizado (Híbrido / Vendedor Experto)
+    const { generateKamalusoPrompt } = await import('../../../lib/prompts');
+
     let specializedInstructions = '';
     const lowerNombre = nombre.toLowerCase();
     const lowerCategoria = (categoriaNombre || '').toLowerCase();
 
     if (lowerNombre.includes('agenda') && lowerNombre.includes('2026')) {
       specializedInstructions = `
-      **Instrucciones SEO de MÁXIMA prioridad para Agendas 2026:**
-      - El objetivo es DOMINAR el posicionamiento en Google Uruguay para "agendas 2026" y términos relacionados.
-      - **Keywords Obligatorias:** En 'seoKeywords', DEBES incluir una mezcla de estas variaciones: "agendas 2026 Uruguay", "comprar agenda 2026", "agendas personalizadas 2026", "planners 2026 Uruguay", "mejor agenda 2026", "agendas para profesionales 2026", "agendas para estudiantes Uruguay", "regalos empresariales fin de año".
-      - **Enfoque del Contenido:**
-        - 'seoDescription': Debe ser una llamada a la acción irresistible. Ejemplo: "Empieza a planificar tu éxito. Descubre las agendas 2026 personalizadas más completas de Uruguay. ¡Pide la tuya y haz que el 2026 sea tu año! Envíos a todo el país."
-        - 'descripcionExtensa': Debe ser muy persuasiva. Estructúrala con subtítulos (<h3>) como "Planificación sin Esfuerzo para tu 2026", "Un Diseño que Inspira Productividad" y "El Regalo Corporativo Perfecto". Conecta las características del producto con los beneficios de la organización y el logro de metas.
-        - 'puntosClave': Deben ser beneficios directos, no solo características. Ejemplo: "Planifica tu año completo, mes a mes" en lugar de "Vista mensual". "Diseño 100% a tu gusto" en lugar de "Personalizable".
+      **Instrucción Priority para Agendas 2026:**
+      - Foco absoluto en "Organización y Éxito".
+      - Usa keywords como "planners 2026 Uruguay", "agendas personalizadas".
       `;
-    } else if (lowerNombre.includes('libreta') || lowerNombre.includes('cuaderno') || lowerCategoria.includes('libreta') || lowerCategoria.includes('cuaderno')) {
+    } else if (lowerNombre.includes('libreta') || lowerNombre.includes('cuaderno')) {
       specializedInstructions = `
-      **Instrucciones SEO de alta prioridad para Libretas y Cuadernos:**
-      - El objetivo es posicionar este producto para búsquedas de "libretas personalizadas" y "cuadernos corporativos" en Uruguay.
-      - **Keywords Obligatorias:** En 'seoKeywords', DEBES incluir una mezcla de: "libretas personalizadas Uruguay", "cuadernos corporativos", "comprar libretas online Uruguay", "cuadernos para empresas con logo", "regalos empresariales originales", "merchandising para empresas Uruguay", "libretas para notas", "cuadernos de dibujo".
-      - **Enfoque del Contenido:**
-        - 'seoDescription': Debe resaltar la versatilidad. Ejemplo: "Desde la oficina a tus ideas personales. Descubre nuestras libretas y cuadernos personalizados en Uruguay. Calidad premium para tu marca o tu día a día. ¡Pide los tuyos!"
-        - 'descripcionExtensa': Estructúrala con subtítulos (<h3>) como "La Herramienta Perfecta para tus Ideas", "Calidad que se Siente en cada Página" y "Eleva tu Marca con Cuadernos Corporativos". Enfócate en la calidad del papel, los tipos de tapa y las infinitas posibilidades de personalización para uso personal o empresarial.
-        - 'puntosClave': Deben ser beneficios como "Ideal para notas, dibujos o journaling", "Personalización completa con tu logo o diseño", "Calidad premium, hojas que no traspasan".
+      **Instrucción Priority para Libretas:**
+      - Foco en "Versatilidad y Creatividad".
+      - Resalta "Regalos corporativos" y "Calidad de papel".
       `;
     }
 
-    // ¡NUEVO! Sección del prompt con las tendencias encontradas.
-    const trendsPromptSection = `
-      **Intel de Búsqueda en Tiempo Real:** He investigado las tendencias de búsqueda actuales en Uruguay para un producto como este. Esto es lo que encontré:
-      - **Resumen de Tendencias:** ${trends.trendsSummary}
-      - **Keywords Populares:** ${trends.keywords.join(', ')}
-      
-      **Misión Crítica:** Usa esta información de tendencias como tu guía principal para decidir el enfoque del contenido y las palabras clave a utilizar. El campo 'seoKeywords' debe inspirarse fuertemente en esta lista.
-    `;
+    // 3.5 Obtener Enlaces Válidos (Sitemap)
+    // Para evitar alucinaciones, le damos a la IA la lista real de categorías
+    const categories = await Category.find({}, 'nombre slug');
+    const validLinksList = categories.map(c => `- ${c.nombre}: /productos/${c.slug}`).join('\n');
+    const validLinksString = `\nLISTA MAESTRA DE LINKS VÁLIDOS:\n${validLinksList}\n(Home: /)`;
 
-    const prompt = `
-      Eres el Director de Marketing Digital y Estratega SEO de "Kamaluso", la papelería personalizada líder en Uruguay.
-      PERO TAMBIÉN eres un **Psicólogo de Ventas experto** (estilo Robert Cialdini + David Ogilvy).
+    // 3.6 Detectar Search Intent (TRANSACCIONAL vs INFORMATIVA)
+    const transactionalKeywords = ['comprar', 'precio', 'envío', 'costo', 'barato', 'oferta', 'venta', 'pedido'];
+    const isTransactional = trends.keywords.some(kw =>
+      transactionalKeywords.some(trigger => kw.toLowerCase().includes(trigger))
+    );
+    const searchIntent = isTransactional ? 'TRANSACCIONAL' : 'INFORMATIVA';
+    console.log(`🎯 Search Intent detectado: ${searchIntent}`);
 
-      **TU DOBLE MISIÓN:**
-      1.  **SEO (La Ciencia):** Rankear #1 en Google Uruguay para "${nombre}".
-      2.  **CRO (El Arte):** Convertir visitantes en compradores obsesionados usando persuasión psicológica.
+    const prompt = generateKamalusoPrompt({
+      type: 'PRODUCT',
+      contextData: {
+        name: nombre,
+        description: descripcion,
+        category: categoriaNombre
+      },
+      marketData: {
+        trendsSummary: trends.trendsSummary,
+        topKeywords: trends.keywords,
+        competitorAnalysis: competitorAnalysis
+      },
+      specialInstructions: specializedInstructions,
+      validLinks: validLinksString,
+      searchIntent: searchIntent
+    });
 
-      **TUS HERRAMIENTAS PSICOLÓGICAS (ÚSALAS):**
-      - **Prueba Social Implícita:** "Únete a las miles de personas organizadas..."
-      - **Escasez/Urgencia (Sutil):** "Ediciones limitadas hechas a mano..."
-      - **Autoridad:** "Diseñado por expertos en productividad..."
-      - **Pertenencia:** "Para quienes se toman sus sueños en serio..."
-      - **Justificación Lógica:** El cerebro compra por emoción pero justifica con lógica. Dales ambas.
-
-      **INTELIGENCIA DE MERCADO (TENDENCIAS):**
-      - **Resumen:** ${trends.trendsSummary}
-      - **Keywords Hot:** ${trends.keywords.join(', ')}
-
-      **INTELIGENCIA DE COMPETENCIA (TU VENTAJA):**
-      ${competitorAnalysis}
-      *Instrucción:* Ataca sus debilidades. Si ellos son "baratos", tú eres "inversión duradera". Si son "lentos", tú eres "envío flash".
-
-      ${specializedInstructions}
-
-      **INFORMACIÓN CLAVE DEL NEGOCIO KAMALUSO:**
-      - **Personalización de Tapas:** Nuestras agendas, libretas y cuadernos tienen tapas 100% personalizables (diseño, colores, logos, nombres).
-      - **Variedad de Interiores:** Ofrecemos la colección más amplia de Uruguay en interiores especializados (rayado, cuadriculado, grillas para bullet journal, hojas en blanco, calendarios mensuales/semanales, puntillado, etc.).
-      - **Propuesta de Valor Única:** El cliente diseña la tapa a su gusto Y elige el interior que mejor se adapte a su uso específico.
-      *Instrucción:* Cuando describas la personalización, enfatiza que "podés diseñar la tapa como quieras" y "elegir entre docenas de tipos de interior según tu necesidad".
-
-      **REGLAS DE ORO PARA EL OUTPUT (CRÍTICO):**
-      1. **CERO META-COMENTARIOS:** NO incluyas textos como "(justificación)", "(escasez)", "(prueba social)", etc. El output debe ser TEXTO FINAL para el cliente.
-      2. **CERO INSTRUCCIONES EN EL TEXTO:** No expliques por qué escribiste algo. Solo escríbelo.
-      3. **NATURALIDAD:** Las técnicas psicológicas deben ser invisibles en la lectura.
-      
-
-
-      **DATOS DEL PRODUCTO:**
-      - Nombre: ${nombre}
-      - Contexto base: ${descripcion}
-      - Categoría: ${categoriaNombre}
-
-      **FORMATO DE SALIDA (JSON PURO):**
-      Genera un JSON válido con esta estructura exacta.
-
-      {
-        "seoTitle": "Título SEO (máx 60 chars). Fórmula: [Keyword Principal] + [Beneficio Emocional] | Kamaluso. Ej: 'Agenda 2026: Domina tu Tiempo con Estilo | Kamaluso'",
-        "seoDescription": "Meta descripción (máx 155 chars). Debe ser un 'mini-anuncio' persuasivo. Usa verbos de acción y toca un punto de dolor.",
-        "descripcionBreve": "Elevator pitch de 2 líneas. Enfócate en la TRANSFORMACIÓN que vive el cliente al usar el producto.",
-        "puntosClave": [
-          "Beneficio Psicológico 1 (ej: 'Siente la paz mental de tener todo bajo control')",
-          "Beneficio Funcional 1 (ej: 'Papel de 100g que ama tu pluma')",
-          "Beneficio de Estatus/Identidad (ej: 'El cuaderno que te distingue en la reunión')",
-          "Beneficio de Urgencia/Exclusividad"
-        ],
-        "descripcionExtensa": "HTML puro. Escribe una CARTA DE VENTAS, no una descripción técnica. \n\n<p><strong>Gancho Emocional:</strong> Empieza con una pregunta o afirmación que toque una fibra sensible sobre organización o creatividad.</p>\n\n<h3>La Solución que Estabas Buscando</h3>\n<p>Presenta el producto como el héroe que resuelve ese problema.</p>\n\n<h3>Por qué te vas a Enamorar (Detalles)</h3>\n<p>Describe las características físicas pero tradúcelas a sensaciones (tacto, vista, durabilidad).</p>\n\n<h3>Más que una simple ${categoriaNombre}</h3>\n<p>Apela a la identidad del comprador (emprendedora, artista, estudiante de honor).</p>\n\n<p><strong>Tu Garantía de Felicidad:</strong> Menciona la calidad garantizada y la atención personalizada.</p>\n\n<p><strong>Llamada a la Acción (Cierre):</strong> ¡No esperes a que se agoten! Tu mejor versión empieza hoy.</p>",
-        "seoKeywords": ["Array de 12-15 keywords. Mezcla: Keyword Principal, Long-tail, Preguntas y Keywords de Tendencia."],
-        "faqs": [
-          {
-            "question": "Una pregunta que elimine una objeción de compra (ej: ¿El papel traspasa?)",
-            "answer": "Respuesta honesta y tranquilizadora que resalte la calidad."
-          },
-          {
-            "question": "Pregunta sobre personalización o envíos (fricción logística)",
-            "answer": "Respuesta clara que venda la comodidad y rapidez del servicio."
-          }
-        ],
-        "useCases": [
-          "Caso de uso aspiracional 1",
-          "Caso de uso aspiracional 2",
-          "Caso de uso práctico 3"
-        ]
-      }
-    `;
 
     const geminiResponseText = await generateWithFallback(prompt);
 

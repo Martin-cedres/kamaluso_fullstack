@@ -1,57 +1,57 @@
 [
   {
     "source": "/productos/agenda-semanal-horizontal-tapa-flex-personalizada-2026-kamaluso",
-    "destination": "/",
+    "destination": "/productos/detail/agenda-semanal-horizontal-tapa-dura-personalizada-2026",
     "permanent": true
   },
   {
     "source": "/productos/agenda-semanal-en-columnas-tapa-flex-personalizada-2026-kamaluso",
-    "destination": "/",
+    "destination": "/productos/detail/agenda-semanal-en-columnas-tapa-dura-personalizada-2026-kamaluso",
     "permanent": true
   },
   {
     "source": "/productos/agenda-2-das-por-pgina-horizontal-tapa-flex-personalizada-2026-kamaluso",
-    "destination": "/",
+    "destination": "/productos/detail/agenda-2-das-por-pagina-horizontal-tapa-dura-personalizada-2026-kamaluso",
     "permanent": true
   },
   {
     "source": "/productos/agenda-docente-primaria-perpetua-tapa-flex-personalizable-papelera-personalizada-kamaluso",
-    "destination": "/",
+    "destination": "/productos/detail/agenda-docente-primaria-perpetua-personalizable-tapa-dura-con-espiral-premium",
     "permanent": true
   },
   {
     "source": "/productos/agenda-2026-de-2-das-por-pgina-en-columnas-tapa-flex",
-    "destination": "/",
+    "destination": "/productos/detail/agenda-2-das-por-pagina-en-columnas-tapa-dura-personalizada-2026-kamaluso",
     "permanent": true
   },
   {
     "source": "/productos/agenda-un-da-por-pgina-flex",
-    "destination": "/",
+    "destination": "/productos/detail/agenda-diaria",
     "permanent": true
   },
   {
     "source": "/productos/libreta-de-notas-tapa-flex",
-    "destination": "/",
+    "destination": "/productos/detail/libreta-de-notas",
     "permanent": true
   },
   {
     "source": "/productos/agendas-tapa-flex",
-    "destination": "/",
+    "destination": "/productos/agendas-tapa-dura",
     "permanent": true
   },
   {
     "source": "/productos/libretas-y-cuadernos-tapa-flex",
-    "destination": "/",
+    "destination": "/productos/detail/libretas-y-cuadernos",
     "permanent": true
   },
   {
     "source": "/productos/tapa-flex",
-    "destination": "/",
+    "destination": "/productos/agendas-tapa-dura",
     "permanent": true
   },
   {
     "source": "/productos/tapa-dura",
-    "destination": "/",
+    "destination": "/productos/agendas-tapa-dura",
     "permanent": true
   },
   {
@@ -62,6 +62,36 @@
   {
     "source": "/blog/tapa-dura-vs-tapa-flexible-la-guia-definitiva-para-elegir-tu-proxima-agenda",
     "destination": "/blog/guia-definitiva-ventajas-agenda-tapa-dura",
+    "permanent": true
+  },
+  {
+    "source": "/productos/detail/agenda-2-das-por-pgina-horizontal-tapa-dura-personalizada-2026-kamaluso",
+    "destination": "/productos/detail/agenda-2-das-por-pagina-horizontal-tapa-dura-personalizada-2026-kamaluso",
+    "permanent": true
+  },
+  {
+    "source": "/productos/agendas-tapa-dura/agenda-2-das-por-pgina-horizontal-tapa-dura-personalizada-2026-kamaluso",
+    "destination": "/productos/detail/agenda-2-das-por-pagina-horizontal-tapa-dura-personalizada-2026-kamaluso",
+    "permanent": true
+  },
+  {
+    "source": "/productos/detail/agenda-2-das-por-pgina-en-columnas-tapa-dura-personalizada-2026-kamaluso",
+    "destination": "/productos/detail/agenda-2-das-por-pagina-en-columnas-tapa-dura-personalizada-2026-kamaluso",
+    "permanent": true
+  },
+  {
+    "source": "/productos/agendas-tapa-dura/agenda-2-das-por-pgina-en-columnas-tapa-dura-personalizada-2026-kamaluso",
+    "destination": "/productos/detail/agenda-2-das-por-pagina-en-columnas-tapa-dura-personalizada-2026-kamaluso",
+    "permanent": true
+  },
+  {
+    "source": "/blog/elegir-tapa-flex-vs-dura",
+    "destination": "/blog/tapa-dura-eleccion-inteligente-estilo-vida",
+    "permanent": true
+  },
+  {
+    "source": "/productos/tapa-dura/agendas-tapa-dura",
+    "destination": "/productos/agendas-tapa-dura",
     "permanent": true
   }
 ]

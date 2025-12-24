@@ -10,7 +10,7 @@ interface SeoMetaProps {
 
 const SeoMeta = ({
   title = 'Papelería Personalizada | Kamaluso',
-  description = 'Encuentra agendas, libretas, recetarios y planners, en tapa dura laminada, 100% personalizados en papeleria personalizada Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo Uruguay!.',
+  description = 'Encuentra agendas, libretas, recetarios y planners, en tapa dura laminada, 100% personalizados en papelería personalizada Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo Uruguay!.',
   image = '/logo.webp',
   url = '/',
   type = 'website',

@@ -1,24 +1,5 @@
-## Resumen de la Sesión de Optimización
+He creado el archivo `.gemini/conductor.md` según tu solicitud. Contiene información sobre el contexto del proyecto, arquitectura, flujos de trabajo recomendados y consideraciones específicas para el proyecto Kamaluso, diseñada para guiar mis futuras interacciones.
 
-**Objetivo:** Mejorar el rendimiento de la carga de categorías, que se obtenían de la base de datos en cada visita, causando lentitud.
+El archivo está ubicado en: `C:\Users\LENOVO\Desktop\kamaluso_fullstack\.gemini\conductor.md`
 
-**Proceso y Solución:**
-
-1.  **Intento Inicial (Fallido):** Se intentó mover la obtención de datos al método `getInitialProps` en `pages/_app.tsx` para que se ejecutara una sola vez en el servidor.
-    *   **Problema:** Esta estrategia causó errores de compilación (`build`) persistentes. El compilador de Next.js (Turbopack) intentaba incluir incorrectamente el código del driver de la base de datos (`mongodb`) en el paquete de archivos para el navegador (`client bundle`), donde no puede funcionar.
-    *   **Iteraciones:** A pesar de varios intentos para aislar el código del servidor (usando importaciones dinámicas, ajustando tipos), el error fundamental persistió, demostrando que esta no era la arquitectura adecuada para este caso de uso.
-
-2.  **Reversión a un Estado Estable:** Para solucionar los fallos de compilación, se revirtieron todos los cambios realizados en `pages/_app.tsx` y `context/CategoryContext.tsx`, devolviendo la aplicación a su estado funcional original.
-
-3.  **Estrategia Final (Exitosa): API con Caché en Servidor:**
-    *   Se creó una nueva ruta de API: `pages/api/categorias/cached-listar.ts`.
-    *   Esta nueva ruta contiene la lógica para obtener las categorías de la base de datos, pero con un añadido crucial: **una capa de caché en memoria**.
-    *   La primera vez que se llama a esta API, consulta la base de datos y guarda el resultado en una variable en el servidor.
-    *   En todas las llamadas posteriores, la API devuelve instantáneamente los datos desde esa variable cacheada, sin necesidad de contactar de nuevo a la base de datos.
-    *   Se configuró la cabecera `Cache-Control` para que la red de Vercel (CDN) también almacene en caché la respuesta, acelerando aún más la entrega a los usuarios.
-
-4.  **Integración Final:** Se actualizó el `CategoryProvider` para que hiciera su llamada `fetch` a la nueva y optimizada ruta `/api/categorias/cached-listar`.
-
-**Resultado:**
-
-La aplicación ahora compila correctamente y el problema de rendimiento ha sido resuelto de una manera robusta y escalable. La carga de categorías es casi instantánea para todos los usuarios después de la primera solicitud, ya que se sirve desde una caché rápida en lugar de consultar la base de datos repetidamente.
+Si tienes alguna instrucción o contenido adicional que te gustaría añadir o modificar en este archivo, házmelo saber.

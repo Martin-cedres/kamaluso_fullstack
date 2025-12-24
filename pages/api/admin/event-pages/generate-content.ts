@@ -3,6 +3,9 @@ import { getToken } from 'next-auth/jwt';
 import { generateWithFallback } from '../../../../lib/gemini-agent';
 import connectDB from '../../../../lib/mongoose';
 import Product from '../../../../models/Product';
+// Nuevos imports para inteligencia de mercado
+import { getSearchTrends } from '../../../../lib/keyword-research';
+import { generateKamalusoPrompt } from '../../../../lib/prompts';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -15,129 +18,91 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
     }
 
-    const { eventType, selectedProducts } = req.body;
+    const { mainKeyword, selectedProducts, eventType } = req.body;
 
-    if (!eventType || !selectedProducts || selectedProducts.length === 0) {
-        return res.status(400).json({ message: 'eventType y selectedProducts son requeridos.' });
+    // Si mainKeyword existe y no es "Otro", lo usamos. Si no, usamos eventType.
+    let rawKeyword = mainKeyword || eventType;
+    if (rawKeyword?.toLowerCase() === 'otro') {
+        rawKeyword = ''; // Forzamos que esté vacío para activar la deducción
+    }
+
+    const isGenericKeyword = !rawKeyword || rawKeyword.toLowerCase() === 'otro';
+
+    console.log('📦 [AI Content Generation] Request Body:', JSON.stringify(req.body, null, 2));
+
+    // Validamos: si no hay keyword y NO vamos a deducir (isGenericKeyword), y tampoco hay productos -> Error.
+    // La lógica original era un poco confusa.
+    // Nuevo enfoque: Siempre intentamos.
+
+    if ((!rawKeyword && !isGenericKeyword) || !selectedProducts || selectedProducts.length === 0) {
+        return res.status(400).json({
+            message: 'Se requiere un título o al menos elegir productos para deducir un tema.',
+            details: { hasKeyword: !!rawKeyword, productsCount: selectedProducts?.length || 0 }
+        });
     }
 
     try {
         await connectDB();
 
-        // Obtener detalles de los productos seleccionados
+        // 1. Obtener detalles de productos (Contexto Interno)
         const products = await Product.find({ _id: { $in: selectedProducts } }, 'nombre descripcion slug basePrice');
-
         const productsContext = products.map(p => `
       - ${p.nombre} (${p.slug})
         Precio: $${p.basePrice}
         Desc: ${(p.descripcion || '').substring(0, 150)}...
     `).join('\n');
 
-        // Prompt OPTIMIZADO: Breve, enfocado en conversión y persuasión emocional
-        const contentPrompt = `
-TAREA: Generar contenido breve, emotivo y persuasivo para landing page de evento.
+        // 2. Investigación de Mercado en Tiempo Real (Contexto Externo) - ¡NUEVO!
+        // Usamos la keyword o el tipo de evento para buscar tendencias
+        const searchTerm = rawKeyword || eventType || 'regalos personalizados uruguay';
+        console.log(`🔎 Iniciando investigación de mercado para: "${searchTerm}"`);
 
-CONTEXTO:
-- Evento: "${eventType}"
-- País: Uruguay  
-- Productos: ${products.length} opciones personalizables y únicas
+        const trends = await getSearchTrends(searchTerm, 'Eventos');
 
-ESTRUCTURA HTML REQUERIDA:
-<h2>🎁 El Regalo Único que Recordarán de ${eventType}</h2>
-<p>[2-3 párrafos EMOTIVOS: Conectar con el significado del evento. Por qué un regalo personalizado demuestra más amor/aprecio que algo genérico. Hablar de la emoción de recibir algo hecho especialmente para ti.]</p>
+        // Análisis de Competencia (Dynamic Import para optimizar)
+        const { analyzeCompetitors } = await import('../../../../lib/competitor-research');
+        const competitorAnalysis = await analyzeCompetitors(searchTerm, 'Eventos');
 
-<h2>✨ Por Qué Papelería Kamaluso es Tu Mejor Elección</h2>
-<ul>
-  <li><strong>100% Personalizable:</strong> [Nombres, logos, diseños - tu idea hecha realidad]</li>
-  <li><strong>Calidad que Se Siente:</strong> [Materiales premium, hecho en Uruguay con amor]</li>
-  <li><strong>Entrega Garantizada:</strong> [Envíos a todo Uruguay en 3-5 días]</li>
-  <li><strong>Regalo con Significado:</strong> [Útil + emotivo = recuerdo duradero]</li>
-</ul>
+        console.log('✅ Investigación completada. Generando prompt centralizado...');
 
-<h2>💝 Cómo Personalizar Tu Regalo Perfecto</h2>
-<p>[1-2 párrafos: Ideas concretas de personalización - nombres, fechas especiales, mensajes inspiradores. Hacer que visualicen el regalo terminado y la reacción de quien lo recibe.]</p>
+        // 3. Generar Prompt con el Cerebro Central
+        const prompt = generateKamalusoPrompt({
+            type: 'EVENT',
+            contextData: {
+                name: rawKeyword || eventType || 'Evento Estacional',
+                description: `Productos Seleccionados para este evento:\n${productsContext}`,
+                // No hay categoría ni precio base único para un evento
+            },
+            marketData: {
+                trendsSummary: trends.trendsSummary,
+                topKeywords: trends.keywords,
+                competitorAnalysis: competitorAnalysis
+            },
+            specialInstructions: isGenericKeyword
+                ? "DEDUCE el tema del evento basándote en los productos seleccionados. NO uses 'Otro' ni 'Desconocido'."
+                : undefined
+        });
 
-REGLAS ESTRICTAS:
-1. Máximo 300-400 palabras total
-2. HTML limpio (sin <html>, <body>, <div>)
-3. NUNCA mencionar años específicos (2025, 2026)
-4. Usar lenguaje evergreen: "cada año", "en ${eventType}"
-5. Tono uruguayo emotivo (voseo: "hacé", "elegí", "regalá")
-6. NO insertar {{PRODUCT_CARD}} - productos se muestran arriba
-7. Keywords naturales: "${eventType} uruguay", "regalos únicos personalizados"
-8. CTAs emocionales: "Creá algo único", "Sorprendé con amor", "Hacé memorable este ${eventType}"
-9. NO introducción conversacional ("Aquí tienes")
-10. Comenzar directo con <h2>
-11. URGENCIA SUTIL: Mencionar plazos ("pedí con tiempo", "asegurá tu regalo único")
-12. BENEFICIO EMOCIONAL > característica técnica
+        console.log(`Generando contenido con Gemini...`);
 
-TONO: Cálido, cercano, emotivo sin ser cursi. Como una amiga que te da un consejo valioso.
-
-OBJETIVO: Contenido que conecte emocionalmente, genere urgencia sutil y complemente la visualización de productos arriba.
-
-SALIDA: Solo HTML limpio. Primera línea = <h2>
-    `;
-
-        const seoTitlePrompt = `
-Genera un título SEO perfecto para una landing page de "${eventType}" en Uruguay.
-
-REQUISITOS:
-- Máximo 60 caracteres
-- Incluir: "${eventType}", "Uruguay", "regalos personalizados"
-- Atractivo y con gancho emocional
-- NO mencionar año
-
-Solo devuelve el título, sin explicaciones.
-    `;
-
-        const seoDescriptionPrompt = `
-Genera una meta descripción SEO para landing page de "${eventType}" en Uruguay.
-
-REQUISITOS:
-- Entre 150-160 caracteres
-- Incluir keywords: "${eventType}", "regalos", "uruguay"
-- Llamado a acción
-- Beneficio claro
-
-Solo devuelve la descripción, sin explicaciones.
-    `;
-
-        const seoKeywordsPrompt = `
-Genera 8-10 keywords SEO separadas por comas para "${eventType}" en Uruguay.
-
-FORMATO: keyword1, keyword2, keyword3, ...
-
-Incluir variaciones:
-- Con y sin "uruguay"
-- Con y sin "personalizados"
-- Long-tail específicas
-
-Solo devuelve las keywords, sin explicaciones.
-    `;
-
-        console.log(`Generando contenido para evento: ${eventType}`);
-
-        const [generatedContent, generatedSeoTitle, generatedSeoDescription, generatedKeywords] = await Promise.all([
-            generateWithFallback(contentPrompt),
-            generateWithFallback(seoTitlePrompt),
-            generateWithFallback(seoDescriptionPrompt),
-            generateWithFallback(seoKeywordsPrompt),
-        ]);
-
-        // Limpieza del contenido
-        const cleanContent = generatedContent
-            .replace(/```html/gi, '')
+        const generatedResponse = await generateWithFallback(prompt);
+        const cleanResponse = generatedResponse
+            .replace(/```json/gi, '')
             .replace(/```/g, '')
-            .replace(/^[\s\S]*?(?=<h)/i, '') // Eliminar todo antes del primer <h
-            .replace(/Aquí tienes[\s\S]*?(?=<)/gi, '')
-            .replace(/Claro,?[\s\S]*?(?=<)/gi, '')
             .trim();
+        const parsedResponse = JSON.parse(cleanResponse);
+
+        // Mapeamos o devolvemos tal cual según lo que espera el frontend
+        // El frontend espera: content, seoTitle, seoDescription, seoKeywords
+
+        // REVISAR: generateKamalusoPrompt para EVENT devuelve: html_content, meta_title, meta_description, seo_keywords
 
         res.status(200).json({
-            content: cleanContent,
-            seoTitle: generatedSeoTitle.trim(),
-            seoDescription: generatedSeoDescription.trim(),
-            seoKeywords: generatedKeywords.trim(),
+            content: parsedResponse.html_content.trim(),
+            seoTitle: parsedResponse.meta_title.trim(),
+            seoDescription: parsedResponse.meta_description.trim(),
+            seoKeywords: parsedResponse.seo_keywords, // Ahora viene del centralizado
+            trends // Devolvemos tendencias para visualización si se requiere
         });
 
     } catch (error: any) {

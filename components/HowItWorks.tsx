@@ -13,7 +13,7 @@ const steps = [
     {
         id: 2,
         title: 'Personaliza tu Tapa',
-        description: 'Elige diseño de nuestro catálogo, acabado (brillo/mate), con o sin elástico, agrega tu nombre, texto, etc... o envianos tu propio diseño por WhatsApp.',
+        description: 'Elige diseño de nuestro catálogo, acabado (brillo/mate), con o sin elástico, agrega tu nombre, texto, etc... o envíanos tu propio diseño por WhatsApp.',
         icon: PaintBrushIcon,
         color: 'from-purple-500 to-indigo-500',
         delay: '100'

@@ -8,7 +8,7 @@ const flashApiKeys: string[] = (process.env.GEMINI_FLASH_API_KEYS || "").split("
 
 // Prioridad de modelos a utilizar. IMPORTANTE: Solo gemini-2.5-flash está disponible sin cuenta de pago.
 // Si actualizas a Google AI Studio de pago o Vertex AI, podrás usar gemini-2.5-pro.
-const PRO_MODELS = ["gemini-2.5-flash"]; // Ajustado a lo que realmente está disponible
+const PRO_MODELS = ["gemini-2.5-pro"]; // Ajustado a lo que realmente está disponible
 const FLASH_MODEL = "gemini-2.5-flash"; // Flash también es multimodal
 
 // --- GESTIÓN DE ESTADO ---

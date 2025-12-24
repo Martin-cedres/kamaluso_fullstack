@@ -15,49 +15,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         const prompt = `
-Eres un experto en marketing digital y ventas en Uruguay.
+Actuás como un redactor SEO profesional especializado en e-commerce.
 
-TAREA: Genera una lista de 10 Event Pages recomendadas para un negocio de papelería personalizada en Uruguay, basadas en el calendario comercial anual.
+OBJETIVO PRINCIPAL:
+Sugerir ideas de Landing Pages estacionales que:
+1) Posicionen en buscadores tradicionales (Google Search)
+2) Sean fácilmente interpretadas por buscadores con IA (AI Overviews, SGE)
+3) Tengan un alto potencial de conversión de visitas en ventas
 
 CONTEXTO:
-- Negocio: Papelería Personalizada Kamaluso (agendas, cuadernos, libretas personalizadas)
-- País: Uruguay
-- Objetivo: Captar ventas en fechas clave del año
+- E-commerce de papelería personalizada
+- Marca: Kamaluso
+- País objetivo: Uruguay
+- Público: personas que buscan regalos personalizados con intención de compra
 
-FORMATO DE SALIDA (JSON válido):
+PRINCIPIOS OBLIGATORIOS:
+- Claridad > creatividad
+- Información concreta > metáforas
+- Lenguaje natural y directo
+- Propuestas escaneables y bien estructuradas
+
+TAREA:
+Genera una lista de 10 ideas de Event Pages (páginas de aterrizaje estacionales) recomendadas para este negocio, basadas en el calendario comercial anual de Uruguay.
+
+FORMATO DE SALIDA (JSON VÁLIDO - SIN MARKDOWN):
 [
   {
     "eventType": "Nombre del Evento",
-    "month": número del mes (1-12),
-    "day": número del día,
-    "suggestedTitle": "Título SEO optimizado para la landing page",
-    "suggestedSlug": "url-amigable-sin-año",
-    "reason": "Por qué es importante esta fecha para ventas en Uruguay"
+    "month": "Número del mes (1-12)",
+    "day": "Número del día",
+    "suggestedTitle": "Título SEO optimizado (Máx. 60 caracteres, keyword principal al inicio)",
+    "suggestedSlug": "url-amigable-sin-tildes-ni-año",
+    "reason": "Justificación concisa de por qué esta fecha es una oportunidad comercial clave en Uruguay."
   }
 ]
 
-REGLAS:
-1. Incluir fechas clave uruguayas: Día de la Madre, Día del Padre, Día del Niño, Día del Maestro, Navidad, Reyes, San Valentín, Vuelta a Clases, Black Friday, etc.
-2. Los títulos deben ser atractivos pero profesionales
-3. Los slugs sin acentos, solo minúsculas y guiones
-4. NO incluir años en títulos ni slugs (evergreen)
-5. Ordenar por fecha (mes y día)
-6. Máximo 10 eventos
-7. Solo devolver el array JSON, sin texto adicional
+REGLAS Y OPTIMIZACIÓN:
+1. Incluir fechas clave de Uruguay: Día de la Madre, Día del Padre, Día del Niño, Día del Maestro, Navidad, Reyes, San Valentín, Vuelta a Clases, Black Friday, Cyber Lunes.
+2. Los títulos deben ser declarativos, precisos y enfocados en la intención de compra.
+3. Los slugs deben estar en minúsculas, sin acentos y usar guiones.
+4. NUNCA incluyas años en títulos o slugs (contenido evergreen).
+5. Ordena la lista por fecha cronológica (mes y día).
+6. Solo devuelve el array JSON, sin explicaciones ni texto adicional.
 
-EJEMPLO:
-[
-  {
-    "eventType": "San Valentín",
-    "month": 2,
-    "day": 14,
-    "suggestedTitle": "Regalos Personalizados para San Valentín - Ideas Únicas",
-    "suggestedSlug": "regalos-san-valentin",
-    "reason": "Fecha clave para regalos románticos. Alta demanda de productos personalizados."
-  }
-]
+EJEMPLO DE UN ELEMENTO DEL ARRAY:
+{
+  "eventType": "San Valentín",
+  "month": "2",
+  "day": "14",
+  "suggestedTitle": "Regalos de San Valentín en Uruguay - Sorpresas Personalizadas",
+  "suggestedSlug": "regalos-san-valentin-uruguay",
+  "reason": "Alta demanda de regalos románticos y únicos. Pico de búsquedas transaccionales."
+}
 
-RESPUESTA SOLO JSON:
+GENERAR RESPUESTA ÚNICAMENTE EN FORMATO JSON.
 `;
 
         const aiResponse = await generateWithFallback(prompt);

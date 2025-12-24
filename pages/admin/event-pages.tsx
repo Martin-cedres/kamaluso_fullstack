@@ -105,21 +105,35 @@ export default function EventPagesAdmin() {
             toast.error('Selecciona al menos un producto');
             return;
         }
+        if (!form.title) {
+            toast.error('Por favor, escribe un título para la landing page.');
+            return;
+        }
 
         setGenerating(true);
         const toastId = toast.loading('Generando contenido con IA...');
+
+        console.log('🔮 [Frontend] Generating AI Content with:', {
+            title: form.title,
+            eventType: form.eventType,
+            productsSelected: form.selectedProducts.length
+        });
 
         try {
             const res = await fetch('/api/admin/event-pages/generate-content', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    mainKeyword: form.title,
                     eventType: form.eventType,
                     selectedProducts: form.selectedProducts,
                 }),
             });
 
-            if (!res.ok) throw new Error('Error al generar');
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Error al generar');
+            }
 
             const data = await res.json();
 
@@ -133,6 +147,7 @@ export default function EventPagesAdmin() {
 
             toast.success('Contenido generado con éxito', { id: toastId });
         } catch (error: any) {
+            console.error('Error generating content:', error);
             toast.error(error.message, { id: toastId });
         } finally {
             setGenerating(false);
@@ -331,15 +346,31 @@ export default function EventPagesAdmin() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Evento</label>
-                                <select
-                                    value={form.eventType}
-                                    onChange={(e) => setForm({ ...form, eventType: e.target.value })}
-                                    className="w-full p-2 border rounded-lg"
-                                >
-                                    {EVENT_TYPES.map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </select>
+                                <div className="space-y-2">
+                                    <select
+                                        value={EVENT_TYPES.includes(form.eventType) ? form.eventType : 'Otro'}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setForm({ ...form, eventType: val === 'Otro' ? '' : val });
+                                        }}
+                                        className="w-full p-2 border rounded-lg"
+                                    >
+                                        {EVENT_TYPES.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+
+                                    {(!EVENT_TYPES.includes(form.eventType) || form.eventType === 'Otro' || form.eventType === '') && (
+                                        <input
+                                            type="text"
+                                            value={form.eventType}
+                                            onChange={(e) => setForm({ ...form, eventType: e.target.value })}
+                                            className="w-full p-2 border rounded-lg border-purple-300 focus:ring-purple-500 focus:border-purple-500"
+                                            placeholder="Escribe el nombre del evento (ej: Día del Amigo)"
+                                            required
+                                        />
+                                    )}
+                                </div>
                             </div>
 
                             <div>
@@ -382,164 +413,171 @@ export default function EventPagesAdmin() {
                             {generating ? 'Generando...' : 'Generar Contenido con IA'}
                         </button>
 
-                        {form.content && (
-                            <>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contenido Generado</label>
-                                    <textarea
-                                        value={form.content}
-                                        onChange={(e) => setForm({ ...form, content: e.target.value })}
-                                        className="w-full p-2 border rounded-lg font-mono text-xs"
-                                        rows={10}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
+                        {
+                            form.content && (
+                                <>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">SEO Title</label>
-                                        <input
-                                            type="text"
-                                            value={form.seoTitle}
-                                            onChange={(e) => setForm({ ...form, seoTitle: e.target.value })}
-                                            className="w-full p-2 border rounded-lg"
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contenido Generado</label>
+                                        <textarea
+                                            value={form.content}
+                                            onChange={(e) => setForm({ ...form, content: e.target.value })}
+                                            className="w-full p-2 border rounded-lg font-mono text-xs"
+                                            rows={10}
                                         />
                                     </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">SEO Title</label>
+                                            <input
+                                                type="text"
+                                                value={form.seoTitle}
+                                                onChange={(e) => setForm({ ...form, seoTitle: e.target.value })}
+                                                className="w-full p-2 border rounded-lg"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">SEO Keywords</label>
+                                            <input
+                                                type="text"
+                                                value={form.seoKeywords}
+                                                onChange={(e) => setForm({ ...form, seoKeywords: e.target.value })}
+                                                className="w-full p-2 border rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">SEO Keywords</label>
-                                        <input
-                                            type="text"
-                                            value={form.seoKeywords}
-                                            onChange={(e) => setForm({ ...form, seoKeywords: e.target.value })}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">SEO Description</label>
+                                        <textarea
+                                            value={form.seoDescription}
+                                            onChange={(e) => setForm({ ...form, seoDescription: e.target.value })}
                                             className="w-full p-2 border rounded-lg"
+                                            rows={2}
                                         />
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">SEO Description</label>
-                                    <textarea
-                                        value={form.seoDescription}
-                                        onChange={(e) => setForm({ ...form, seoDescription: e.target.value })}
-                                        className="w-full p-2 border rounded-lg"
-                                        rows={2}
-                                    />
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        type="submit"
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold"
-                                    >
-                                        {editId ? 'Actualizar Event Page' : 'Guardar Event Page'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => { setShowForm(false); resetForm(); setEditId(null); }}
-                                        className="px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold"
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </form>
-                </div>
-            )}
-
-            {loading ? (
-                <div className="text-center py-10">Cargando...</div>
-            ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Evento</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {eventPages.map(page => (
-                                <tr key={page._id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{page.title}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{page.eventType}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${page.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {page.status === 'published' ? 'Publicado' : 'Borrador'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm space-x-3">
+                                    <div className="flex gap-3">
                                         <button
-                                            onClick={() => handleEdit(page._id)}
-                                            className="text-purple-600 hover:text-purple-800 font-medium"
+                                            type="submit"
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold"
                                         >
-                                            Editar
+                                            {editId ? 'Actualizar Event Page' : 'Guardar Event Page'}
                                         </button>
-                                        <Link href={`/eventos/${page.slug}`} target="_blank" className="text-blue-600 hover:text-blue-800">
-                                            Ver
-                                        </Link>
-                                        <button onClick={() => handleDelete(page._id)} className="text-red-600 hover:text-red-800">
-                                            Eliminar
+                                        <button
+                                            type="button"
+                                            onClick={() => { setShowForm(false); resetForm(); setEditId(null); }}
+                                            className="px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold"
+                                        >
+                                            Cancelar
                                         </button>
-                                    </td>
+                                    </div>
+                                </>
+                            )
+                        }
+                    </form >
+                </div >
+            )
+            }
+
+            {
+                loading ? (
+                    <div className="text-center py-10">Cargando...</div>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Título</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Evento</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+                            </thead>
+                            <tbody className="divide-y">
+                                {eventPages.map(page => (
+                                    <tr key={page._id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{page.title}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{page.eventType}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${page.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                {page.status === 'published' ? 'Publicado' : 'Borrador'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm space-x-3">
+                                            <button
+                                                onClick={() => handleEdit(page._id)}
+                                                className="text-purple-600 hover:text-purple-800 font-medium"
+                                            >
+                                                Editar
+                                            </button>
+                                            <Link href={`/eventos/${page.slug}`} target="_blank" className="text-blue-600 hover:text-blue-800">
+                                                Ver
+                                            </Link>
+                                            <button onClick={() => handleDelete(page._id)} className="text-red-600 hover:text-red-800">
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )
+            }
 
             {/* Suggestions Modal */}
-            {showSuggestions && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Sugerencias de Event Pages</h2>
-                                <p className="text-sm text-gray-600 mt-1">Click en una sugerencia para autocompletar el formulario</p>
+            {
+                showSuggestions && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Sugerencias de Event Pages</h2>
+                                    <p className="text-sm text-gray-600 mt-1">Click en una sugerencia para autocompletar el formulario</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowSuggestions(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    ✕
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setShowSuggestions(false)}
-                                className="text-gray-400 hover:text-gray-600"
-                            >
-                                ✕
-                            </button>
-                        </div>
 
-                        <div className="p-6 overflow-y-auto max-h-[70vh]">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {suggestions.map((suggestion, index) => (
-                                    <div
-                                        key={index}
-                                        onClick={() => handleApplySuggestion(suggestion)}
-                                        className="border border-gray-200 rounded-lg p-4 hover:border-purple-500 hover:shadow-lg cursor-pointer transition-all group"
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-600">
-                                                {suggestion.eventType}
-                                            </h3>
-                                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                                {suggestion.day}/{suggestion.month}
-                                            </span>
+                            <div className="p-6 overflow-y-auto max-h-[70vh]">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {suggestions.map((suggestion, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={() => handleApplySuggestion(suggestion)}
+                                            className="border border-gray-200 rounded-lg p-4 hover:border-purple-500 hover:shadow-lg cursor-pointer transition-all group"
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-600">
+                                                    {suggestion.eventType}
+                                                </h3>
+                                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                    {suggestion.day}/{suggestion.month}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-700 font-medium mb-2">
+                                                {suggestion.suggestedTitle}
+                                            </p>
+                                            <p className="text-sm text-gray-500 mb-2">
+                                                <span className="font-semibold">Slug:</span> /eventos/{suggestion.suggestedSlug}
+                                            </p>
+                                            <p className="text-xs text-gray-600 italic">
+                                                {suggestion.reason}
+                                            </p>
                                         </div>
-                                        <p className="text-sm text-gray-700 font-medium mb-2">
-                                            {suggestion.suggestedTitle}
-                                        </p>
-                                        <p className="text-xs text-gray-500 mb-2">
-                                            <span className="font-semibold">Slug:</span> /eventos/{suggestion.suggestedSlug}
-                                        </p>
-                                        <p className="text-xs text-gray-600 italic">
-                                            {suggestion.reason}
-                                        </p>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </AdminLayout>
+                )
+            }
+        </AdminLayout >
     );
 }
