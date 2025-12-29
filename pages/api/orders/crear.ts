@@ -23,6 +23,7 @@ type OrderRequestBody = {
   notes?: string
   couponCode?: string // Added coupon code
   paymentDetails?: any // Added for Mercado Pago details
+  source?: 'web' | 'webnode' | 'whatsapp' | 'manual' // New field for stats
 }
 
 // This will be the shape of the object stored in the DB
@@ -95,9 +96,8 @@ const generatePriceSummaryHTML = (order: OrderForDB) => {
     2,
   )}</p>`
   if (order.discountAmount && order.discountAmount > 0) {
-    html += `<p style="text-align:right; color: #2ecc71;">Descuento (${
-      order.couponCode
-    }): -$U ${order.discountAmount.toFixed(2)}</p>`
+    html += `<p style="text-align:right; color: #2ecc71;">Descuento (${order.couponCode
+      }): -$U ${order.discountAmount.toFixed(2)}</p>`
   }
   if (order.surcharge && order.surcharge > 0) {
     html += `<p style="text-align:right; color: #e67e22;">Recargo por Mercado Pago: +$U ${order.surcharge.toFixed(2)}</p>`
@@ -160,9 +160,8 @@ const generateEmailContent = (order: OrderForDB) => {
     subject: `Gracias por tu compra en Papeleria Personalizada Kamaluso`,
     html: `
       <div style="font-family: Arial, sans-serif; color:#333; line-height:1.5; max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border-radius:8px;">
-        <h1 style="text-align:center; color:#e91e63;">¡Gracias por tu compra, ${
-          order.name
-        }!</h1>
+        <h1 style="text-align:center; color:#e91e63;">¡Gracias por tu compra, ${order.name
+      }!</h1>
         <p style="text-align:center;">Hemos recibido tu pedido y lo estamos preparando.</p>
         
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles del Cliente</h2>
@@ -186,9 +185,8 @@ const generateEmailContent = (order: OrderForDB) => {
         ${priceSummary}
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Método de Pago</h2>
-        <p><strong>Método:</strong> ${
-          paymentMethodText[order.paymentMethod] || 'No especificado'
-        }</p>
+        <p><strong>Método:</strong> ${paymentMethodText[order.paymentMethod] || 'No especificado'
+      }</p>
         ${paymentInstructions}
 
         <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
@@ -268,9 +266,8 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
             
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles del Cliente</h2>
             <p><strong>Nombre:</strong> ${order.name}</p>
-            <p><strong>Email:</strong> ${
-              order.email || 'No proporcionado'
-            }</p>
+            <p><strong>Email:</strong> ${order.email || 'No proporcionado'
+      }</p>
             <p><strong>Teléfono:</strong> ${order.phone}</p>
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Resumen del Pedido</h2>
@@ -289,9 +286,8 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
             ${priceSummary}
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Método de Pago</h2>
-            <p><strong>Método:</strong> ${
-              paymentMethodText[order.paymentMethod] || 'No especificado'
-            }</p>
+            <p><strong>Método:</strong> ${paymentMethodText[order.paymentMethod] || 'No especificado'
+      }</p>
             ${paymentInstructions}
 
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles de Envío</h2>
@@ -378,10 +374,11 @@ export default async function handler(
         total: finalTotal, // Use the final, server-calculated total
         createdAt: new Date(),
         status: 'pendiente',
+        source: orderDetails.source || 'web', // Default to web if not provided
         ...(orderDetails.paymentMethod === 'mercado_pago_online' &&
           orderDetails.paymentDetails && {
-            externalReference: orderDetails.paymentDetails.tempOrderId,
-          }),
+          externalReference: orderDetails.paymentDetails.tempOrderId,
+        }),
       }
       console.log(
         '[CREAR ORDEN] newOrder object prepared for insertion:',

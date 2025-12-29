@@ -8,12 +8,14 @@ export default async function handler(
 ) {
   if (req.method === 'POST') {
     try {
-      const { orderId, status } = req.body
+      const { orderId, ...updateData } = req.body
 
-      if (!orderId || !status) {
-        return res
-          .status(400)
-          .json({ message: 'orderId and status are required' })
+      if (!orderId) {
+        return res.status(400).json({ message: 'orderId is required' })
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: 'Nothing to update' })
       }
 
       if (!ObjectId.isValid(orderId)) {
@@ -25,17 +27,15 @@ export default async function handler(
 
       const result = await db
         .collection('orders')
-        .updateOne({ _id: new ObjectId(orderId) }, { $set: { status: status } })
+        .updateOne({ _id: new ObjectId(orderId) }, { $set: updateData })
 
-      if (result.modifiedCount === 0) {
-        return res
-          .status(404)
-          .json({ message: 'Order not found or status not changed' })
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ message: 'Order not found' })
       }
 
-      res.status(200).json({ message: 'Order status updated successfully' })
+      res.status(200).json({ message: 'Order updated successfully' })
     } catch (error) {
-      console.error('Error updating order status:', error)
+      console.error('Error updating order:', error)
       res.status(500).json({ message: 'Internal Server Error' })
     }
   } else {

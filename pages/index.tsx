@@ -99,6 +99,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
       <SeoMeta
         title="Papelería Personalizada en Uruguay | Agendas y Libretas | Kamaluso"
         description="Encuentra agendas, libretas y planners 100% personalizados en Kamaluso. Diseños únicos y materiales de alta calidad. ¡Enviamos a todo el Uruguay!"
+        keywords="agendas personalizadas, agendas 2026, papelería personalizada uruguay, libretas corporativas, regalos empresariales, planners"
       />
 
 
@@ -263,38 +264,62 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
 
         {/* Categorías Dinámicas */}
-        <ScrollReveal>
-          <section className="px-6 py-16 bg-gray-50">
-            <div className="text-center mb-16">
-              <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Explorá</p>
-              <h2 className="text-4xl md:text-6xl font-bold text-textoPrimario tracking-tight">
-                Categorías
-              </h2>
-            </div>
-            <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
-              {categories.map((cat) => (
-                <Link
-                  key={cat._id}
-                  href={`/productos/${cat.slug}`}
-                  className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
-                >
-                  <div className="relative w-full h-64">
-                    <OptimizedImage
-                      src={cat.imagen || '/placeholder.png'}
-                      alt={cat.nombre}
-                      fill
-                      sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  </div>
-                  <div className="p-4 text-center">
-                    <h3 className="text-xl font-semibold">{cat.nombre}</h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </ScrollReveal>
+        <section className="px-6 py-16 bg-gray-50">
+          <div className="text-center mb-16">
+            <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Explorá</p>
+            <h2 className="text-4xl md:text-6xl font-bold text-textoPrimario tracking-tight">
+              Categorías
+            </h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+
+
+            {categories.map((cat) => (
+              <Link
+                key={cat._id}
+                href={`/productos/${cat.slug}`}
+                className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+              >
+                <div className="relative w-full h-64">
+                  <OptimizedImage
+                    src={cat.imagen || '/placeholder.png'}
+                    alt={cat.nombre}
+                    fill
+                    sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                <div className="p-4 text-center">
+                  <h3 className="text-xl font-semibold">{cat.nombre}</h3>
+                </div>
+              </Link>
+            ))}
+
+            {/* --- Acceso directo a Empresas (Al final) --- */}
+            <Link
+              href="/regalos-empresariales"
+              className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col group cursor-pointer"
+            >
+              <div className="relative w-full h-64 flex items-center justify-center bg-transparent">
+                <OptimizedImage
+                  src="/regalo-agenda-empresarial.webp"
+                  alt="Regalos Empresariales - Kamaluso"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  className="transform group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-colors duration-300"></div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 p-6">
+                  <span className="text-xs tracking-[0.2em] uppercase font-light mb-2 border-b border-white/30 pb-1">Soluciones</span>
+                  <h3 className="text-2xl font-serif font-bold text-center leading-tight">Corporativo</h3>
+                </div>
+              </div>
+              <div className="p-4 text-center bg-gray-900 border-t border-gray-800">
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider group-hover:text-white transition-colors">Solicitar Cotización</p>
+              </div>
+            </Link>
+          </div>
+        </section>
 
         {/* Productos Destacados - MOVED UP to show products earlier */}
         {destacados.length > 0 && (

@@ -14,7 +14,8 @@ const SeoMeta = ({
   image = '/logo.webp',
   url = '/',
   type = 'website',
-}: SeoMetaProps) => {
+  keywords, // Prop opcional
+}: SeoMetaProps & { keywords?: string }) => {
   const siteUrl = 'https://www.papeleriapersonalizada.uy'
   const absoluteUrl = url.startsWith('http') ? url : `${siteUrl}${url}`
   const absoluteImage = image.startsWith('http') ? image : `${siteUrl}${image}`
@@ -24,6 +25,7 @@ const SeoMeta = ({
       {/* SEO básico */}
       <title>{title}</title>
       <meta name="description" content={description} />
+      {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={absoluteUrl} />
 
       {/* Performance Hint */}

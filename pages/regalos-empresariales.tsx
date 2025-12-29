@@ -3,35 +3,15 @@ import SeoMeta from '../components/SeoMeta'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import connectDB from '../lib/mongoose'
+import Product from '../models/Product'
+import Category from '../models/Category'
 
-export default function RegalosEmpresarialesPage() {
-  // Datos de ejemplo para productos sugeridos
-  const suggestedProducts = [
-    {
-      name: 'Agendas Personalizadas',
-      value: 'Agendas', // Valor para el select
-      description:
-        'Agendas diarias, dos días por página o semanales. Tapas duras o flexibles, 100% personalizables con tu logo, colores y valores de marca.',
-      imageUrl: '/regalo-agenda-empresarial.webp', // Reemplazar con imagen de ejemplo
-      features: ['Logo en tapa', 'Insertos publicitarios', 'Elástico de cierre'],
-    },
-    {
-      name: 'Libretas Corporativas',
-      value: 'Libretas', // Valor para el select
-      description:
-        'Libretas versátiles para eventos, onboarding o merchandising. Disponibles en A5, A6 y medidas especiales.',
-      imageUrl: '/logo.webp', // Reemplazar con imagen de ejemplo
-      features: ['Tapa full color', 'Hojas rayadas, lisas o punteadas', 'Elástico de cierre'],
-    },
-    {
-      name: 'Planners y Anotadores',
-      value: 'Planners', // Valor para el select
-      description:
-        'Herramientas de organización que tus clientes usarán todos los días. Mantén tu marca presente en sus escritorios.',
-      imageUrl: '/logo.webp', // Reemplazar con imagen de ejemplo
-      features: ['Diseño de hojas exclusivo', 'Encolados o anillados', 'Imán para heladera opcional'],
-    },
-  ]
+interface Props {
+  suggestedProducts: any[]
+}
+
+export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -145,6 +125,7 @@ export default function RegalosEmpresarialesPage() {
         title="Regalos Empresariales y Agendas Personalizadas Uruguay | Kamaluso"
         description="Potencia tu marca con agendas y libretas personalizadas. Regalos corporativos de alta calidad, diseño exclusivo y envíos a todo Uruguay. ¡Cotiza online!"
         url="/regalos-empresariales"
+        keywords="regalos empresariales, agendas corporativas, merchandising uruguay, libretas con logo, regalos fin de año empresas, papelería institucional"
       />
       <script
         type="application/ld+json"
@@ -223,38 +204,41 @@ export default function RegalosEmpresarialesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {suggestedProducts.map((product) => (
                 <div
-                  key={product.name}
+                  key={product._id}
                   className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col overflow-hidden border border-gray-100"
                 >
                   <div className="relative w-full h-72 bg-gray-100 overflow-hidden">
                     <Image
-                      src={product.imageUrl}
-                      alt={product.name}
+                      src={product.imageUrl || '/placeholder.png'}
+                      alt={product.nombre}
                       fill
                       sizes="(max-width: 767px) 90vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                      <span className="text-white font-medium">Ver detalles</span>
+                      <Link href={`/productos/detail/${product.slug}`} className="text-white font-medium hover:underline">
+                        Ver detalles producto original
+                      </Link>
                     </div>
                   </div>
                   <div className="p-8 flex flex-col flex-grow">
-                    <h3 className="font-bold text-2xl mb-3 text-gray-800">{product.name}</h3>
-                    <p className="text-gray-600 mb-6 flex-grow leading-relaxed">
-                      {product.description}
+                    <h3 className="font-bold text-2xl mb-3 text-gray-800">{product.nombre}</h3>
+                    <p className="text-gray-600 mb-6 flex-grow leading-relaxed line-clamp-3">
+                      {product.descripcionBreve || product.descripcion}
                     </p>
                     <ul className="space-y-2 mb-6">
-                      {product.features?.map((feature, i) => (
-                        <li key={i} className="flex items-center text-sm text-gray-500">
-                          <span className="text-pink-500 mr-2">✓</span> {feature}
-                        </li>
-                      ))}
+                      <li className="flex items-center text-sm text-gray-500">
+                        <span className="text-pink-500 mr-2">✓</span> Personalización con Logo
+                      </li>
+                      <li className="flex items-center text-sm text-gray-500">
+                        <span className="text-pink-500 mr-2">✓</span> Descuentos por volumen
+                      </li>
                     </ul>
                     <button
-                      onClick={() => handleProductSelect(product.value)}
+                      onClick={() => handleProductSelect(product.nombre)}
                       className="block w-full text-center py-3 rounded-lg border-2 border-pink-500 text-pink-600 font-bold hover:bg-pink-50 transition cursor-pointer"
                     >
-                      Cotizar {product.name}
+                      Cotizar {product.nombre}
                     </button>
                   </div>
                 </div>
@@ -504,8 +488,71 @@ export default function RegalosEmpresarialesPage() {
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  return {
-    props: {},
-    revalidate: 86400,
+  try {
+    await connectDB()
+
+    // 1. Buscar productos específicos en el orden solicitado: Semanal, 2 Días, 1 Día (Diaria)
+    const weekly = await Product.findOne({ status: 'activo', nombre: { $regex: /semana a la vista/i } }).lean();
+    const twoDays = await Product.findOne({ status: 'activo', nombre: { $regex: /dos d[íi]as por/i } }).lean();
+    const daily = await Product.findOne({ status: 'activo', nombre: { $regex: /un d[íi]a por/i } }).lean();
+
+    let products = [weekly, twoDays, daily].filter(p => p !== null && p !== undefined);
+
+    // Fallback: Si no se encuentran los específicos, usar lógica anterior
+    if (products.length === 0) {
+      // Intentar buscar productos de la categoría "Empresarial"
+      let category = await Category.findOne({ slug: 'regalos-empresariales' })
+      if (category) {
+        products = await Product.find({ category: category._id, status: 'activo' }).limit(3).lean()
+      }
+    }
+
+    if (products.length === 0) {
+      // Fallback 2: Búsqueda general
+      products = await Product.find({
+        status: 'activo',
+        $or: [
+          { nombre: { $regex: /agenda/i } },
+          { nombre: { $regex: /libreta/i } },
+          { nombre: { $regex: /planner/i } }
+        ]
+      }).limit(3).lean()
+    }
+
+    if (products.length === 0) {
+      // Fallback 3: Cualquier activo
+      products = await Product.find({ status: 'activo' }).limit(3).lean()
+    }
+
+    // Serializar para evitar errores con ObjectIds y fechas
+    const serializedProducts = products.map(doc => {
+      const product = JSON.parse(JSON.stringify(doc));
+      // Asegurar que imageUrl, precio, etc. estén disponibles
+      return {
+        _id: product._id,
+        nombre: product.nombre,
+        slug: product.slug,
+        imageUrl: product.imageUrl || (product.images && product.images[0]) || '',
+        descripcion: product.descripcion,
+        descripcionBreve: product.descripcionBreve || '',
+        basePrice: product.basePrice || 0
+      }
+    })
+
+
+    return {
+      props: {
+        suggestedProducts: serializedProducts
+      },
+      revalidate: 3600, // Revalidar cada hora
+    }
+  } catch (error) {
+    console.error('Error fetching B2B products:', error)
+    return {
+      props: {
+        suggestedProducts: []
+      },
+      revalidate: 60,
+    }
   }
 }

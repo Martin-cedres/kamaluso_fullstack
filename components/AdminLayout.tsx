@@ -19,6 +19,7 @@ import {
   DocumentTextIcon,
   ChatBubbleLeftRightIcon, // Added for Chat History
   ShareIcon, // <-- Icono para Redes Sociales
+  TruckIcon, // <-- Icono para Pedidos
 } from '@heroicons/react/24/outline'
 
 interface AdminLayoutProps {
@@ -29,7 +30,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Productos', href: '/admin/productos', icon: ShoppingCartIcon },
   { name: 'Categorías', href: '/admin/categorias', icon: TagIcon },
-  { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingCartIcon },
+  { name: 'Pedidos', href: '/admin/pedidos', icon: TruckIcon },
   { name: 'Presupuestos', href: '/admin/quotes', icon: DocumentTextIcon },
   { name: 'Test de Email', href: '/admin/test-email', icon: BeakerIcon },
   { name: 'Reseñas', href: '/admin/reviews', icon: StarIcon },
