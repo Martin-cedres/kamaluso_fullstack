@@ -5,7 +5,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     const { companyName, yourName, email, phone, productInterest, quantity, message } = req.body;
 
-    if (!companyName || !yourName || !email || !productInterest || !quantity || !message) {
+    if (!companyName || !yourName || !email || !quantity || !message) {
       return res.status(400).json({ message: 'Faltan campos obligatorios.' });
     }
 

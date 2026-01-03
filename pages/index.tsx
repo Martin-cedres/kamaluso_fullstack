@@ -294,32 +294,81 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                 </div>
               </Link>
             ))}
-
-            {/* --- Acceso directo a Empresas (Al final) --- */}
-            <Link
-              href="/regalos-empresariales"
-              className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50 flex flex-col group cursor-pointer"
-            >
-              <div className="relative w-full h-64 flex items-center justify-center bg-transparent">
-                <OptimizedImage
-                  src="/regalo-agenda-empresarial.webp"
-                  alt="Regalos Empresariales - Kamaluso"
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className="transform group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-colors duration-300"></div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 p-6">
-                  <span className="text-xs tracking-[0.2em] uppercase font-light mb-2 border-b border-white/30 pb-1">Soluciones</span>
-                  <h3 className="text-2xl font-serif font-bold text-center leading-tight">Corporativo</h3>
-                </div>
-              </div>
-              <div className="p-4 text-center bg-gray-900 border-t border-gray-800">
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider group-hover:text-white transition-colors">Solicitar Cotización</p>
-              </div>
-            </Link>
           </div>
         </section>
+
+        {/* ========== SECCIÓN B2B EMPRESARIAL DEDICADA ========== */}
+        <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-20 px-6 overflow-hidden">
+          {/* Patrón sutil de fondo */}
+          <div
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)',
+              backgroundSize: '32px 32px'
+            }}
+          />
+
+          <div className="max-w-6xl mx-auto relative z-10">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-4">
+                Soluciones Corporativas
+              </span>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                ¿Buscás regalos para tu
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200"> empresa</span>?
+              </h2>
+              <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                Agendas, libretas y papelería personalizada con el logo de tu empresa.
+                Sin mínimo de compra. Envíos a todo Uruguay.
+              </p>
+            </div>
+
+            {/* Features Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+              {[
+                { icon: '🎨', title: 'Tu Logo', desc: 'Personalización total' },
+                { icon: '📦', title: 'Sin Mínimo', desc: 'Desde 1 unidad' },
+                { icon: '⚡', title: 'Respuesta 24hs', desc: 'Cotización rápida' },
+                { icon: '🇺🇾', title: 'Todo Uruguay', desc: 'Envíos a cualquier punto' },
+              ].map((feature, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6 text-center hover:border-amber-500/30 transition-colors"
+                >
+                  <div className="text-2xl md:text-3xl mb-2">{feature.icon}</div>
+                  <h3 className="text-white font-semibold text-sm md:text-base">{feature.title}</h3>
+                  <p className="text-slate-500 text-xs md:text-sm">{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                href="/regalos-empresariales"
+                className="group relative px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-900 rounded-xl font-bold text-lg shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3"
+              >
+                Solicitar Cotización
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+              <Link
+                href="/preguntas-frecuentes-b2b"
+                className="px-8 py-4 border border-slate-600 text-slate-300 rounded-xl font-semibold hover:bg-slate-800 hover:text-white hover:border-slate-500 transition-all duration-300"
+              >
+                Ver Preguntas Frecuentes
+              </Link>
+            </div>
+
+            {/* Trust indicator */}
+            <p className="text-center text-slate-500 text-sm mt-8">
+              ✓ Facturación oficial &nbsp;•&nbsp; ✓ Mockup gratis &nbsp;•&nbsp; ✓ Calidad premium
+            </p>
+          </div>
+        </section>
+
 
         {/* Productos Destacados - MOVED UP to show products earlier */}
         {destacados.length > 0 && (

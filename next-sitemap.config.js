@@ -22,11 +22,29 @@ module.exports = {
   exclude: ['/admin', '/admin/*'], // Exclude admin index and all sub-routes
   additionalPaths: async (config) => {
     const dynamicUrls = await getDynamicUrlsSync()
-    return dynamicUrls.map((url) => ({
-      loc: `${config.siteUrl}${url}`,
-      changefreq: 'weekly',
-      priority: 0.8,
-    }))
+
+    // Páginas B2B con alta prioridad
+    const b2bPaths = [
+      {
+        loc: `${config.siteUrl}/regalos-empresariales`,
+        changefreq: 'weekly',
+        priority: 0.9,
+      },
+      {
+        loc: `${config.siteUrl}/preguntas-frecuentes-b2b`,
+        changefreq: 'weekly',
+        priority: 0.8,
+      },
+    ]
+
+    return [
+      ...b2bPaths,
+      ...dynamicUrls.map((url) => ({
+        loc: `${config.siteUrl}${url}`,
+        changefreq: 'weekly',
+        priority: 0.8,
+      })),
+    ]
   },
   // Add a transform function to remove duplicates
   transform: async (config, path) => {
