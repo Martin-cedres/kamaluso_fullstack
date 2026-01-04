@@ -72,8 +72,15 @@ export default function ContentPage({ content }: Props) {
 
   const pageTitle = `${content.title} | Blog de Kamaluso`;
   const pageDescription = content.excerpt || content.content.substring(0, 155);
-  const canonicalUrl = `/blog/${content.slug}`;
-  const pageImage = content.coverImage || '/logo.webp';
+  const siteUrl = 'https://www.papeleriapersonalizada.uy';
+  const getAbsoluteUrl = (path: string | undefined) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${siteUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  };
+
+  const articleUrl = getAbsoluteUrl(`/blog/${content.slug}`);
+  const imageUrl = getAbsoluteUrl(content.coverImage) || getAbsoluteUrl('/logo.webp');
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -81,10 +88,14 @@ export default function ContentPage({ content }: Props) {
     headline: content.title,
     description: pageDescription,
     datePublished: content.createdAt,
-    image: pageImage,
+    image: imageUrl,
     author: {
       '@type': 'Organization',
       name: 'Kamaluso',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': articleUrl,
     },
   };
 
@@ -93,8 +104,8 @@ export default function ContentPage({ content }: Props) {
       <SeoMeta
         title={pageTitle}
         description={pageDescription}
-        url={canonicalUrl}
-        image={pageImage}
+        url={articleUrl || ''}
+        image={imageUrl || ''}
         type="article"
       />
       <Head>

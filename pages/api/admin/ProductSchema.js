@@ -12,7 +12,19 @@ const ProductSchema = ({ product }) => {
     return null;
   }
 
-  const productUrl = `${siteConfig.baseUrl}/productos/${product.slug}`;
+  const getAbsoluteUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const baseUrl = siteConfig.baseUrl.endsWith('/') ? siteConfig.baseUrl.slice(0, -1) : siteConfig.baseUrl;
+    return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  };
+
+  const productUrl = getAbsoluteUrl(`/productos/${product.slug}`);
+
+  // Asegurar que todas las imágenes sean URLs absolutas
+  const images = Array.isArray(product.images)
+    ? product.images.map(img => getAbsoluteUrl(img))
+    : (product.images ? [getAbsoluteUrl(product.images)] : []);
 
   const schema = {
     '@context': 'https://schema.org',
@@ -22,7 +34,7 @@ const ProductSchema = ({ product }) => {
         '@id': `${productUrl}#product`,
         name: product.name,
         description: product.description,
-        image: product.images || [],
+        image: images,
         sku: product.sku,
         brand: {
           '@type': 'Brand',
@@ -48,19 +60,19 @@ const ProductSchema = ({ product }) => {
       // Si hay FAQs, generamos el schema FAQPage correspondiente
       ...(product.faqs && product.faqs.length > 0
         ? [
-            {
-              '@type': 'FAQPage',
-              '@id': `${productUrl}#faqpage`,
-              mainEntity: product.faqs.map((faq) => ({
-                '@type': 'Question',
-                name: faq.question,
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: faq.answer,
-                },
-              })),
-            },
-          ]
+          {
+            '@type': 'FAQPage',
+            '@id': `${productUrl}#faqpage`,
+            mainEntity: product.faqs.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.answer,
+              },
+            })),
+          },
+        ]
         : []),
     ],
   };

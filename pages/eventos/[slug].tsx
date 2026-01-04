@@ -95,6 +95,12 @@ export default function EventLandingPage({ eventPage }: Props) {
     const pageTitle = eventPage.seoTitle || eventPage.title;
     const pageDescription = eventPage.seoDescription || `Descubrí los mejores regalos personalizados para ${eventPage.eventType} en Uruguay.`;
 
+    const getAbsoluteUrl = (path: string | undefined) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+    };
+
     // Schema.org structured data
     const structuredData = {
         '@context': 'https://schema.org',
@@ -111,7 +117,7 @@ export default function EventLandingPage({ eventPage }: Props) {
                     '@type': 'Product',
                     name: product.nombre,
                     description: product.descripcion || product.nombre,
-                    image: product.imageUrl,
+                    image: getAbsoluteUrl(product.imageUrl),
                     offers: {
                         '@type': 'Offer',
                         price: product.basePrice,
