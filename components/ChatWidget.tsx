@@ -23,19 +23,20 @@ const ChatWidget = () => {
 
     // Auto-open chat after 10 seconds (ONLY ONCE PER SESSION)
     useEffect(() => {
-        const timer = setTimeout(() => {
-            // Check session storage to see if chat has already been shown/interacted with
-            const hasSeenChat = typeof window !== 'undefined' ? sessionStorage.getItem('kamaluso_chat_seen') : false;
+        // Solo ejecutar esta lógica una vez al montar el componente
+        const hasSeenChat = typeof window !== 'undefined' ? sessionStorage.getItem('kamaluso_chat_seen') : null;
 
-            if (!hasSeenChat && history.length === 0 && !isOpen && !hasClosed) {
+        if (!hasSeenChat) {
+            const timer = setTimeout(() => {
                 setIsOpen(true);
                 if (typeof window !== 'undefined') {
                     sessionStorage.setItem('kamaluso_chat_seen', 'true');
                 }
-            }
-        }, 12000); // 12 seconds to be less intrusive
-        return () => clearTimeout(timer);
-    }, [history, isOpen, hasClosed]);
+            }, 12000); // 12 seconds to be less intrusive
+
+            return () => clearTimeout(timer);
+        }
+    }, []); // Array vacío = solo se ejecuta una vez al montar
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();

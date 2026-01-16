@@ -16,8 +16,9 @@ import NewsletterForm from '../components/NewsletterForm'; // Importar Newslette
 import HowItWorks from '../components/HowItWorks'; // Importar HowItWorks
 import RealResultsGallery from '../components/RealResultsGallery'; // Importar RealResultsGallery
 import ProductCarousel from '../components/ProductCarousel'; // Importar ProductCarousel
-import { useState, useEffect } from 'react'; // Import hooks
-import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
+import HeroTextRotator from '../components/HeroTextRotator'; // Importar HeroTextRotator
+import { useState, useEffect } from 'react'; // Import hooks (needed later?)
+import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion (needed later?)
 import Marquee from '../components/Marquee'; // Import Marquee
 import ScrollReveal from '../components/ScrollReveal'; // Import ScrollReveal
 import OptimizedImage from '../components/OptimizedImage'; // Import OptimizedImage
@@ -57,21 +58,15 @@ interface HomeProps {
 }
 
 export default function Home({ destacados, categories, reviews }: HomeProps) {
-  // Hero Text Animation State
-  const [heroTextIndex, setHeroTextIndex] = useState(0);
-  const heroTexts = ["vos", "tu empresa", "regalar"];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeroTextIndex((prev) => (prev + 1) % heroTexts.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  // ELIMINADO: Estado de Hero Text que causaba re-renders globales
+  // const [heroTextIndex, setHeroTextIndex] = useState(0);
+  // ... useEffect logic ...
 
   // Calculate real average rating from reviews
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length)
     : 0;
+  // ...
   const totalReviews = reviews.length;
 
   const getCardPrice = (product: Product) => {
@@ -148,18 +143,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                     con productos para
                   </span>
                   <span className="block overflow-visible">
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={heroTextIndex}
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: -20, opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="inline-block"
-                      >
-                        {heroTexts[heroTextIndex]}.
-                      </motion.span>
-                    </AnimatePresence>
+                    <HeroTextRotator />
                   </span>
                 </span>
               </h1>

@@ -279,8 +279,37 @@ export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
         </section>
 
 
+        {/* CTA Segmentador Premium - NUEVO */}
+        <section className="px-6 py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-[40%] h-full opacity-10">
+            <div className="absolute top-0 right-0 w-full h-full bg-amber-500 blur-[100px]"></div>
+          </div>
+
+          <div className="max-w-5xl mx-auto text-center relative z-10">
+            <span className="text-amber-400 font-bold tracking-widest text-xs uppercase mb-4 block">Calidad Premium</span>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+              ¿Buscás la <span className="text-amber-400">máxima durabilidad</span>?
+            </h2>
+            <p className="text-slate-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-light leading-relaxed">
+              Conocé nuestra línea exclusiva de <strong className="text-white">Tapa Dura Premium</strong>: agendas y libretas con laminado brillo/mate, papel 80g y construcción artesanal que resiste todo el año.
+            </p>
+            <Link
+              href="/regalos-empresariales/tapa-dura-premium"
+              className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 text-lg font-bold rounded-xl shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 hover:-translate-y-1 transition-all duration-300"
+            >
+              Explorar Línea Tapa Dura
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
+
+
         {/* Productos Sugeridos Premium */}
-        <section id="productos" className="px-6 py-24 bg-white">
+        < section id="productos" className="px-6 py-24 bg-white" >
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
               <div className="max-w-2xl">
@@ -344,12 +373,12 @@ export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
               ))}
             </div>
           </div>
-        </section>
+        </section >
 
         {/* Proceso Corporativo Premium */}
-        <section className="px-6 py-28 bg-slate-950 text-white overflow-hidden relative">
+        < section className="px-6 py-28 bg-slate-950 text-white overflow-hidden relative" >
           {/* Decorative blur */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+          < div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none" ></div >
 
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center mb-20 text-balance">
@@ -408,10 +437,10 @@ export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
               ))}
             </div>
           </div>
-        </section>
+        </section >
 
         {/* Sección de Cobertura Geográfica */}
-        <section className="bg-slate-50 py-16 px-6 border-y border-slate-100">
+        < section className="bg-slate-50 py-16 px-6 border-y border-slate-100" >
           <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6 font-heading">
               Llevamos tu marca a <span className="text-pink-600">todo Uruguay</span>
@@ -437,10 +466,10 @@ export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
               Envíos diarios coordinados desde San José de Mayo
             </p>
           </div>
-        </section>
+        </section >
 
         {/* Sección de Preguntas Frecuentes */}
-        <section className="px-6 py-20 bg-white">
+        < section className="px-6 py-20 bg-white" >
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
               Preguntas Frecuentes
@@ -466,10 +495,10 @@ export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
               </Link>
             </div>
           </div>
-        </section>
+        </section >
 
         {/* Formulario de Contacto B2B Premium */}
-        <section id="contacto" className="px-6 py-28 bg-slate-50 relative overflow-hidden">
+        < section id="contacto" className="px-6 py-28 bg-slate-50 relative overflow-hidden" >
           <div className="absolute top-0 right-0 w-[30%] h-[30%] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none"></div>
 
           <div className="max-w-6xl mx-auto">
@@ -649,8 +678,8 @@ export default function RegalosEmpresarialesPage({ suggestedProducts }: Props) {
               </div>
             </div>
           </div>
-        </section>
-      </main>
+        </section >
+      </main >
     </>
   )
 }

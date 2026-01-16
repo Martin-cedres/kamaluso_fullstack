@@ -20,7 +20,7 @@ async function generateSitemap() {
 
   const products = await db
     .collection('products')
-    .find({}, { projection: { _id: 1 } })
+    .find({}, { projection: { slug: 1 } })
     .toArray()
   const categories = await db
     .collection('categories')
@@ -41,10 +41,28 @@ async function generateSitemap() {
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>${BASE_URL}/regalos-empresariales</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${BASE_URL}/regalos-empresariales/tapa-dura-premium</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${BASE_URL}/preguntas-frecuentes-b2b</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 
   ${categories
-    .map(({ slug }) => {
-      return `
+      .map(({ slug }) => {
+        return `
   <url>
     <loc>${BASE_URL}/productos/${slug}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
@@ -52,20 +70,20 @@ async function generateSitemap() {
     <priority>0.9</priority>
   </url>
       `
-    })
-    .join('')}
+      })
+      .join('')}
 
   ${products
-    .map(({ _id }) => {
-      return `
+      .map(({ slug }) => {
+        return `
   <url>
             <loc>${BASE_URL}/productos/detail/${slug}</loc>    <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
       `
-    })
-    .join('')}
+      })
+      .join('')}
 </urlset>
   `
 
