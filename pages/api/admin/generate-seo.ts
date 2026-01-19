@@ -54,7 +54,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const lowerNombre = nombre.toLowerCase();
     const lowerCategoria = (categoriaNombre || '').toLowerCase();
 
-    if (lowerNombre.includes('agenda') && lowerNombre.includes('2026')) {
+    // *** NUEVO: Lógica especializada para productos de sublimación ***
+    if (lowerCategoria.includes('sublimable') || lowerCategoria.includes('sublimacion')) {
+      specializedInstructions = `
+      **CONTEXTO B2B - INSUMO PARA SUBLIMADORES (CRÍTICO):**
+      Este producto NO es una agenda terminada para el consumidor final.
+      Es un INSUMO para talleres de sublimación y pequeñas empresas de reventa.
+
+      **DEFINICIÓN DEL PRODUCTO:**
+      - Agendas SEMI-TERMINADAS con interiores pre-impresos (papel de 80gr).
+      - Tapas de Cartón Cristal de 350gr con superficie sublimable de alta calidad.
+      - Todo viene PRE-PERFORADO, listo para enrular con ESPIRAL PLÁSTICO (NO metálico).
+      - El comprador sublima la tapa con su diseño y arma el producto final.
+
+      **PÚBLICO OBJETIVO:**
+      - Sublimadores profesionales y aficionados.
+      - Pequeñas empresas de personalización y reventa.
+      - Emprendedores que venden regalos personalizados.
+
+      **TONO DE VENTA (TÉCNICO EXPERTO Y FABRICANTE):**
+      - **SOMOS FABRICANTES**: Menciona que garantizamos **STOCK PERMANENTE TODO EL AÑO**.
+      - **ENFOQUE EN ESPECIFICACIONES**: En lugar de química, habla de lo que importa al armar:
+        - **Interiores**: Papel de 80gr (no traspasa) y diseño claro (Semana a la vista, vertical/horizontal según corresponda).
+        - **Tapas**: Cartón Cristal 350gr rígido y listo para sublimar con colores vibrantes.
+        - **Calidad**: Terminación profesional y durabilidad.
+      - **RENTABILIDAD**: "Insumo técnico de gran calidad que optimiza tu línea de producción".
+
+      **CASOS DE USO SUGERIDOS (para el cliente B2B):**
+      - Regalos para docentes/maestras (agendas docentes).
+      - Regalos empresariales con logo corporativo.
+      - Recuerdos para fechas especiales (Día de la Madre, Navidad).
+      - Souvenirs personalizados para eventos.
+      - Kits de emprendedoras (regalos para ferias y mercados).
+
+      **REGLAS DE KEYWORDS Y REDACCIÓN (Estrictas):**
+      - **PROHIBIDO USAR COMILLAS EN KEYWORDS**: NUNCA encierres las palabras clave entre comillas simples (' ') ni dobles (" ").
+        - MAL: ...mercado de la 'papeleria-sublimable 2026 Uruguay'...
+        - BIEN: ...mercado de la papelería sublimable en Uruguay este 2026...
+      - **INTEGRACIÓN NATURAL**: Si la keyword no tiene sentido gramatical (ej: 'comprar agenda San José'), adáptala: "comprar tu agenda en San José".
+      - **NO ROBÓTICO**: Evita frases forzadas. Escribe para humanos, Google entenderá igual.
+
+      **PALABRAS PROHIBIDAS (Evitar alucinaciones):**
+      - NO mencionar "Tapa Dura" a menos que el nombre del producto lo indique.
+      - NO mencionar "Espiral Metálico" - el estándar es espiral plástico.
+      - NO mencionar "Encuadernación cosida".
+      - NO hablar de "organiza tu semana" como beneficio final, sino como "interior pre-impreso semanal".
+      - NO inventar diseños ni cantidades.
+      - NO usar frases entre comillas simples '' para resaltar keywords.
+
+      **FORMATO DE FAQs:**
+      Las preguntas deben ser las que haría un SUBLIMADOR, no un consumidor final:
+      - "¿A qué temperatura sublimo las tapas?"
+      - "¿Las agendas vienen con espiral incluido?"
+      - "¿Puedo sublimar ambas caras de la tapa?"
+      `;
+    } else if (lowerNombre.includes('agenda') && lowerNombre.includes('2026')) {
       specializedInstructions = `
       **Instrucción Priority para Agendas 2026:**
       - Foco absoluto en "Organización y Éxito".

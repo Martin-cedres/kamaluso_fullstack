@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useCategories } from '../context/CategoryContext';
 import MegaMenu from './MegaMenu';
 import MiniCart from './MiniCart';
+import NavSchema from '../lib/NavSchema';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -92,6 +93,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-md fixed w-full z-50 transition-all duration-300" style={{ top: 'var(--topbar-height, 0px)' }}>
+      <NavSchema />
       <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16 relative">
         <Link href="/" className="flex items-center" onClick={closeAllMenus}>
           <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" unoptimized />
@@ -140,6 +142,12 @@ export default function Navbar() {
           <Link href="/blog" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
             Blog
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
+          </Link>
+          <Link
+            href="/productos/papeleria-sublimable"
+            className="py-1 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1"
+          >
+            Sublimación
           </Link>
           {isClient && status === 'authenticated' && (
             <>
@@ -204,6 +212,7 @@ export default function Navbar() {
           <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Regalos Empresariales</Link>
           <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Contacto</Link>
           <Link href="/blog" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Blog</Link>
+          <Link href="/productos/papeleria-sublimable" className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg transition" onClick={closeAllMenus}>Sublimación</Link>
           <Link href="/cart" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Carrito ({cartCount})</Link>
           {status === 'authenticated' && (
             <>

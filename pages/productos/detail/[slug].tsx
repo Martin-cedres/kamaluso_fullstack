@@ -28,6 +28,14 @@ import FaqSection from '../../../components/FaqSection';
 import UseCasesSection from '../../../components/UseCasesSection';
 import s3Loader from '../../../lib/s3-loader';
 import ProductSchema from '../../../lib/ProductSchema';
+import PriceLock from '../../../components/PriceLock';
+import SublimationAccessModal from '../../../components/SublimationAccessModal';
+
+// Helper para detectar cookie de acceso mayorista
+const hasWholesalerCookie = (): boolean => {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.includes('kamaluso_wholesaler_access=true');
+};
 
 
 // This interface is for the props passed to the component
@@ -118,6 +126,18 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const [activeTab, setActiveTab] = useState('descripcion');
 
   const [tapaSeleccionada, setTapaSeleccionada] = useState<any>(null);
+
+  // Estado para Lead Magnet de sublimación
+  const [sublimationModalOpen, setSublimationModalOpen] = useState(false);
+  const [hasWholesalerAccess, setHasWholesalerAccess] = useState(false);
+
+  // Detectar si es producto sublimable
+  const isSublimable = product?.categoria === 'papeleria-sublimable';
+
+  // Detectar cookie de acceso mayorista
+  useEffect(() => {
+    setHasWholesalerAccess(hasWholesalerCookie());
+  }, []);
 
   // Establecer el tab activo después del montaje para evitar diferencias de hidratación
   useEffect(() => {
@@ -578,7 +598,20 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
             </div>
             <div className="hidden md:flex items-center justify-between">
-              <p className="text-3xl font-semibold text-pink-500">$U {totalPrice}</p>
+              {isSublimable && !hasWholesalerAccess ? (
+                <PriceLock
+                  price={totalPrice}
+                  productName={product.nombre}
+                  productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
+                  productImage={activeImage}
+                  productDescription={product.descripcionBreve}
+                  hasAccess={hasWholesalerAccess}
+                  onUnlockRequest={() => setSublimationModalOpen(true)}
+                  size="lg"
+                />
+              ) : (
+                <p className="text-3xl font-semibold text-pink-500">$U {totalPrice}</p>
+              )}
               <ShareProductButton
                 productName={product.nombre}
                 productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
@@ -885,14 +918,24 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       }
 
       {/* --- Botón de Compra Pegajoso para Móviles --- */}
-
-      {/* --- Botón de Compra Pegajoso para Móviles --- */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
         <div className="flex justify-between items-center gap-3">
           {/* Precio a la izquierda */}
           <div className="text-left flex-1">
             <p className="text-xs text-gray-500 -mb-1">Total</p>
-            <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
+            {isSublimable && !hasWholesalerAccess ? (
+              <button
+                onClick={() => setSublimationModalOpen(true)}
+                className="font-bold text-xl text-naranja flex items-center gap-1"
+              >
+                <span className="blur-sm">$U {totalPrice}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </button>
+            ) : (
+              <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
+            )}
           </div>
           {/* Botón de Compartir */}
           <ShareProductButton
@@ -903,16 +946,37 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             size="md"
           />
           {/* Botón de Añadir a la derecha (principal) */}
-          <button
-            onClick={handleAddToCart}
-            className="bg-pink-500 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition text-lg whitespace-nowrap"
-          >
-            Agregar al carrito
-          </button>
+          {isSublimable && !hasWholesalerAccess ? (
+            <button
+              onClick={() => setSublimationModalOpen(true)}
+              className="bg-gradient-to-r from-naranja to-amarillo text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoWarm transition text-lg whitespace-nowrap flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Desbloquear
+            </button>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              className="bg-pink-500 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition text-lg whitespace-nowrap"
+            >
+              Agregar al carrito
+            </button>
+          )}
         </div>
       </div>
 
 
+      {/* Modal de acceso sublimación */}
+      <SublimationAccessModal
+        isOpen={sublimationModalOpen}
+        onClose={() => setSublimationModalOpen(false)}
+        onSuccess={() => {
+          setHasWholesalerAccess(true);
+          setSublimationModalOpen(false);
+        }}
+      />
     </>
   )
 }

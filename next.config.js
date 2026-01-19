@@ -29,7 +29,7 @@ const nextConfig = {
   },
 
   images: {
-    loaderFile: './lib/s3-loader.ts',
+    // loaderFile: './lib/s3-loader.ts', // Global loader disabled to allow Vercel Optimization fallback
     remotePatterns: [
       {
         protocol: 'https',

@@ -258,26 +258,49 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
 
 
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/productos/${cat.slug}`}
-                className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
-              >
-                <div className="relative w-full h-64">
-                  <OptimizedImage
-                    src={cat.imagen || '/placeholder.png'}
-                    alt={cat.nombre}
-                    fill
-                    sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
-                    style={{ objectFit: 'cover' }}
-                  />
+            {categories
+              .filter(cat => cat.slug !== 'papeleria-sublimable')
+              .map((cat) => (
+                <Link
+                  key={cat._id}
+                  href={`/productos/${cat.slug}`}
+                  className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+                >
+                  <div className="relative w-full h-64">
+                    <OptimizedImage
+                      src={cat.imagen || '/placeholder.png'}
+                      alt={cat.nombre}
+                      fill
+                      sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div className="p-4 text-center">
+                    <h3 className="text-xl font-semibold">{cat.nombre}</h3>
+                  </div>
+                </Link>
+              ))}
+
+            {/* Tarjeta Especial: Sublimación */}
+            <Link
+              href="/productos/papeleria-sublimable"
+              className="w-full sm:w-64 md:w-80 bg-gradient-to-br from-naranja via-orange-500 to-amarillo rounded-2xl overflow-hidden transform transition hover:-translate-y-2 hover:shadow-xl hover:shadow-orange-500/40 relative group"
+            >
+              <div className="absolute top-4 right-4 bg-white text-naranja text-xs font-bold px-3 py-1 rounded-full z-10">
+                Exclusivo Sublimadores
+              </div>
+              <div className="relative w-full h-64 flex items-center justify-center">
+                <div className="text-center text-white p-6">
+                  {/* Icono textual o SVG si se prefiere, por ahora texto simple o nada para evitar emojis conflictivos */}
+                  <span className="text-6xl mb-4 block group-hover:scale-110 transition-transform font-sans">📦</span>
+                  <p className="text-lg font-medium opacity-90">Insumos para</p>
                 </div>
-                <div className="p-4 text-center">
-                  <h3 className="text-xl font-semibold">{cat.nombre}</h3>
-                </div>
-              </Link>
-            ))}
+              </div>
+              <div className="p-4 text-center bg-white/10 backdrop-blur-sm">
+                <h3 className="text-xl font-bold text-gray-900">Sublimación</h3>
+                <p className="text-gray-800 text-sm mt-1">Insumos Premium</p>
+              </div>
+            </Link>
           </div>
         </section>
 

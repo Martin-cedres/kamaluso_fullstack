@@ -232,12 +232,42 @@ export default function CategoryPage({
           <div className="mb-8 flex md:hidden">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
-          <h1 className="text-3xl md:text-4xl font-semibold text-center mb-4">
-            {category.nombre}
-          </h1>
-          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
-            {category.descripcion}
-          </p>
+
+          {/* Custom Header para Sublimación u otros */}
+          {category.slug === 'papeleria-sublimable' ? (
+            <div
+              className="relative rounded-3xl overflow-hidden mb-12 shadow-xl"
+              style={{ background: 'linear-gradient(135deg, #f97316 0%, #fbbf24 100%)' }}
+            >
+              {/* Fallback solid background just in case */}
+              <div className="absolute inset-0 bg-orange-500 -z-10"></div>
+
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+              <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+
+              <div className="relative z-10 px-8 py-16 text-center text-white">
+                <span className="inline-block py-1 px-3 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-wider mb-4 border border-white/20">
+                  🔥 Exclusivo Sublimadores
+                </span>
+                <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight drop-shadow-sm text-white">
+                  {category.nombre}
+                </h1>
+                <p className="text-lg md:text-xl text-white/95 max-w-2xl mx-auto font-medium drop-shadow-sm">
+                  {category.descripcion}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Header Default
+            <>
+              <h1 className="text-3xl md:text-4xl font-semibold text-center mb-4 text-slate-800">
+                {category.nombre}
+              </h1>
+              <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+                {category.descripcion}
+              </p>
+            </>
+          )}
 
           {/* Sub-Categories Section */}
           {subCategories && subCategories.length > 0 && (

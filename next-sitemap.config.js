@@ -23,22 +23,42 @@ module.exports = {
   additionalPaths: async (config) => {
     const dynamicUrls = await getDynamicUrlsSync()
 
-    // Páginas B2B con alta prioridad
-    const b2bPaths = [
+    // Páginas Core con máxima prioridad
+    const corePaths = [
       {
-        loc: `${config.siteUrl}/regalos-empresariales`,
+        loc: `${config.siteUrl}/productos/agendas`,
         changefreq: 'weekly',
         priority: 0.9,
       },
       {
-        loc: `${config.siteUrl}/preguntas-frecuentes-b2b`,
+        loc: `${config.siteUrl}/productos/libretas-y-cuadernos`,
+        changefreq: 'weekly',
+        priority: 0.9,
+      },
+    ]
+
+    // Páginas B2B y Sublimación
+    const additionalPaths = [
+      {
+        loc: `${config.siteUrl}/regalos-empresariales`,
+        changefreq: 'weekly',
+        priority: 0.85,
+      },
+      {
+        loc: `${config.siteUrl}/sublimacion`,
         changefreq: 'weekly',
         priority: 0.8,
+      },
+      {
+        loc: `${config.siteUrl}/preguntas-frecuentes-b2b`,
+        changefreq: 'weekly',
+        priority: 0.7,
       },
     ]
 
     return [
-      ...b2bPaths,
+      ...corePaths,
+      ...additionalPaths,
       ...dynamicUrls.map((url) => ({
         loc: `${config.siteUrl}${url}`,
         changefreq: 'weekly',

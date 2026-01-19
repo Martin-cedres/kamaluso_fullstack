@@ -39,6 +39,8 @@ module.exports = {
         kamalusoSoft: '0 4px 14px rgba(0,0,0,0.1)',
         kamalusoPink: '0 4px 16px rgba(232, 67, 147, 0.2)',
         kamalusoPinkXl: '0 20px 25px -5px rgba(232, 67, 147, 0.1), 0 8px 10px -6px rgba(232, 67, 147, 0.1)',
+        kamalusoWarm: '0 4px 16px rgba(255, 107, 53, 0.25)',
+        kamalusoWarmXl: '0 20px 25px -5px rgba(255, 107, 53, 0.15), 0 8px 10px -6px rgba(255, 107, 53, 0.1)',
       },
       borderRadius: {
         xl: '1rem',
@@ -63,14 +65,29 @@ module.exports = {
           '50%': { transform: 'scale(0.9)' },
           '75%': { transform: 'scale(1.1)' },
         },
+        'shimmer': {
+          '100%': { transform: 'translateX(100%)' },
+        },
+        'float-slow': {
+          '0%, 100%': { transform: 'translateY(0) rotate(-6deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(-6deg)' },
+        },
+        'pulse-slow': {
+          '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
+          '50%': { opacity: 0.7, transform: 'scale(1.05)' },
+        }
       },
       animation: {
-        'pulse-once': 'pulse-once 0.5s ease-in-out',
+        'pulse-once': 'pulse-once 2s ease-in-out infinite',
         'slideInRight': 'slideInRight 0.3s ease-out',
         'fadeIn': 'fadeIn 0.2s ease-out',
         'cartBounce': 'cartBounce 0.5s ease-in-out',
+        'shimmer': 'shimmer 2.5s infinite',
+        'float-slow': 'float-slow 6s ease-in-out infinite',
+        'pulse-slow': 'pulse-slow 4s ease-in-out infinite',
       },
     },
   },
   plugins: [require('@tailwindcss/typography')],
 }
+
