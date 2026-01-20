@@ -93,7 +93,7 @@ const PriceLock: React.FC<PriceLockProps> = ({
             <div className={`flex flex-col gap-2 ${classes.container}`}>
                 {/* Precio con blur */}
                 <div className="relative inline-flex items-center gap-2">
-                    <span className={`${classes.price} font-bold text-textoSecundario blur-sm select-none`}>
+                    <span className={`${classes.price} font-bold text-textoSecundario blur-md select-none`}>
                         $U {price}
                     </span>
                     <span className="text-xs text-naranja font-medium">Mayorista</span>

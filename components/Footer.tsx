@@ -83,7 +83,7 @@ export default function Footer() {
           </p>
           <p className="text-sm text-gray-500 mt-4">
             Tienda online desarrollada por <strong>Martín Cedrés</strong>. ¿Quieres la tuya?{' '}
-            <a 
+            <a
               href="https://wa.me/59891090705?text=Hola%20Mart%C3%ADn,%20vi%20la%20tienda%20Kamaluso%20y%20estoy%20interesado/a%20en%20un%20sitio%20web."
               target="_blank"
               rel="noopener noreferrer"
