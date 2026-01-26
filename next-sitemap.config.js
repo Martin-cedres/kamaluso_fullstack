@@ -45,6 +45,11 @@ module.exports = {
         priority: 0.85,
       },
       {
+        loc: `${config.siteUrl}/imprimeya`,
+        changefreq: 'weekly',
+        priority: 0.85,
+      },
+      {
         loc: `${config.siteUrl}/sublimacion`,
         changefreq: 'weekly',
         priority: 0.8,

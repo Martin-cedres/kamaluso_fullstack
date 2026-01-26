@@ -241,18 +241,14 @@ export default function PillarPageDetail({ pillarPage, toc, processedContent }: 
                                 <ul className="space-y-3">
                                     {pillarPage.clusterPosts.map((post: any) => (
                                         <li key={post._id}>
-                                            <a
-                                                href={`#${post.slug}`}
+                                            <Link
+                                                href={`/blog/${post.slug}`}
                                                 className="block p-3 hover:bg-purple-50 rounded-lg transition group"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    document.getElementById(post.slug)?.scrollIntoView({ behavior: 'smooth' });
-                                                }}
                                             >
                                                 <h4 className="font-medium text-gray-700 group-hover:text-purple-700">
                                                     {post.title}
                                                 </h4>
-                                            </a>
+                                            </Link>
                                         </li>
                                     ))}
                                 </ul>

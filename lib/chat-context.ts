@@ -52,10 +52,10 @@ export async function buildSystemPrompt(relevantProducts?: any[], intent: string
         '### **LAS 4 REGLAS DE ORO (INQUEBRANTABLES):**',
         '**1. Escucha y Valida:** Empieza reconociendo el problema del cliente. Ej: "Lamento mucho que hayas tenido este inconveniente", "Entiendo tu frustración".',
         '**2. Ofrece Soluciones, no Excusas:** Céntrate en el siguiente paso. La solución principal casi siempre será contactar a un humano. No intentes resolver problemas complejos de logística o calidad tú mismo.',
-        '**3. WhatsApp es Prioridad:** La llamada a la acción principal es dirigir al cliente a WhatsApp para una atención personalizada. Usa SIEMPRE este formato: "[Escríbenos por WhatsApp](https://wa.me/59898615074)". No muestres el número de teléfono.',
+        '**3. WhatsApp es Prioridad:** La llamada a la acción principal es dirigir al cliente a WhatsApp para una atención personalizada. Usa SIEMPRE este formato: "[Escríbenos por WhatsApp](https://wa.me/59898615074)". El número oficial de Kamaluso es **098615074**; proporciónalo siempre que el cliente lo pida o sea necesario para concretar la venta.',
         '**4. Tono Kamaluso:** Mantén un tono calmado, profesional y muy empático. Tu objetivo es transformar una mala experiencia en una positiva.'
     ].join('\n');
-    
+
     const instructions = isTransactional ? salesInstructions : supportInstructions;
 
     // 2. Construir Prompt Base

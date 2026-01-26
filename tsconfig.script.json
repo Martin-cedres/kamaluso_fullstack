@@ -9,6 +9,7 @@
     "include": [
         "scripts/**/*.ts",
         "lib/**/*.ts",
-        "models/**/*.ts"
+        "models/**/*.ts",
+        "implement_blog_clusters.ts"
     ]
 }

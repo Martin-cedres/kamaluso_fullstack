@@ -7,28 +7,28 @@ const QuoteSchema = new Schema({
         unique: true,
     },
     customer: {
-        name: { type: String, required: true },
-        email: { type: String, required: true },
+        name: { type: String },
+        email: { type: String },
         phone: { type: String },
         company: { type: String },
     },
     items: [{
-        productName: { type: String, required: true },
+        productName: { type: String },
         productLink: { type: String }, // URL opcional al producto en la web
         imageUrl: { type: String }, // URL de la imagen del producto
         description: { type: String },
-        quantity: { type: Number, required: true },
-        unitPrice: { type: Number, required: true },
-        subtotal: { type: Number, required: true },
+        quantity: { type: Number },
+        unitPrice: { type: Number },
+        subtotal: { type: Number },
         customizations: [{ type: String }],
     }],
-    subtotal: { type: Number, required: true },
+    subtotal: { type: Number },
     discount: { type: Number, default: 0 },
     discountType: { type: String, enum: ['fixed', 'percentage'], default: 'fixed' }, // Tipo de descuento
     discountDescription: { type: String }, // Descripción del descuento (opcional)
     tax: { type: Number, default: 0 },
     shipping: { type: Number, default: 0 },
-    total: { type: Number, required: true },
+    total: { type: Number },
     status: {
         type: String,
         enum: ['draft', 'sent', 'accepted', 'rejected', 'expired'],

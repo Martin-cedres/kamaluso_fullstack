@@ -42,11 +42,22 @@ export default function NewQuote() {
 
     const handleItemChange = (index: number, field: string, value: any) => {
         const newItems: any = [...formData.items];
-        newItems[index] = { ...newItems[index], [field]: value };
+
+        // Validar entradas numéricas
+        let processedValue = value;
+        if (field === 'quantity') {
+            processedValue = parseInt(value) || 0;
+            if (processedValue < 0) processedValue = 0;
+        } else if (field === 'unitPrice') {
+            processedValue = parseFloat(value) || 0;
+            if (processedValue < 0) processedValue = 0;
+        }
+
+        newItems[index] = { ...newItems[index], [field]: processedValue };
 
         // Recalculate subtotal
         if (field === 'quantity' || field === 'unitPrice') {
-            newItems[index].subtotal = newItems[index].quantity * newItems[index].unitPrice;
+            newItems[index].subtotal = (newItems[index].quantity || 0) * (newItems[index].unitPrice || 0);
         }
 
         setFormData({ ...formData, items: newItems });
@@ -211,7 +222,6 @@ export default function NewQuote() {
                                 <input
                                     type="text"
                                     name="name"
-                                    required
                                     value={formData.customer.name}
                                     onChange={handleCustomerChange}
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
@@ -222,7 +232,6 @@ export default function NewQuote() {
                                 <input
                                     type="email"
                                     name="email"
-                                    required
                                     value={formData.customer.email}
                                     onChange={handleCustomerChange}
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-pink-500 focus:border-transparent"
@@ -272,8 +281,7 @@ export default function NewQuote() {
                                                 />
                                                 <input
                                                     type="text"
-                                                    placeholder="Nombre del producto *"
-                                                    required
+                                                    placeholder="Nombre del producto"
                                                     value={item.productName}
                                                     onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
                                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
@@ -343,7 +351,6 @@ export default function NewQuote() {
                                                 type="number"
                                                 min="1"
                                                 placeholder="Cant."
-                                                required
                                                 value={item.quantity}
                                                 onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center"
@@ -354,7 +361,6 @@ export default function NewQuote() {
                                                 type="number"
                                                 min="0"
                                                 placeholder="Precio Unit."
-                                                required
                                                 value={item.unitPrice}
                                                 onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))}
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-right"
@@ -469,8 +475,8 @@ export default function NewQuote() {
                                     <input
                                         type="number"
                                         min="0"
-                                        value={formData.tax}
-                                        onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) })}
+                                        value={formData.tax || ''}
+                                        onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
                                         className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-right"
                                     />
                                 </div>
@@ -479,8 +485,8 @@ export default function NewQuote() {
                                     <input
                                         type="number"
                                         min="0"
-                                        value={formData.shipping}
-                                        onChange={(e) => setFormData({ ...formData, shipping: parseFloat(e.target.value) })}
+                                        value={formData.shipping || ''}
+                                        onChange={(e) => setFormData({ ...formData, shipping: parseFloat(e.target.value) || 0 })}
                                         className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-right"
                                     />
                                 </div>

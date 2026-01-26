@@ -144,6 +144,12 @@ export default function Navbar() {
             <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
           </Link>
           <Link
+            href="/imprimeya"
+            className="py-1 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1"
+          >
+            🖨️ ImprimeYa
+          </Link>
+          <Link
             href="/productos/papeleria-sublimable"
             className="py-1 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1"
           >
@@ -212,6 +218,7 @@ export default function Navbar() {
           <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Regalos Empresariales</Link>
           <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Contacto</Link>
           <Link href="/blog" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Blog</Link>
+          <Link href="/imprimeya" className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg transition" onClick={closeAllMenus}>🖨️ ImprimeYa</Link>
           <Link href="/productos/papeleria-sublimable" className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg transition" onClick={closeAllMenus}>Sublimación</Link>
           <Link href="/cart" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Carrito ({cartCount})</Link>
           {status === 'authenticated' && (

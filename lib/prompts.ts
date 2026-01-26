@@ -1,27 +1,27 @@
 export interface KamalusoPromptOptions {
-    type: 'PRODUCT' | 'EVENT';
-    contextData: {
-        name: string;
-        description: string;
-        category?: string;
-        basePrice?: number;
-        // Para eventos, 'description' puede ser el contexto de productos o vacío
-    };
-    marketData: {
-        trendsSummary: string;
-        topKeywords: string[];
-        competitorAnalysis: string;
-    };
-    specialInstructions?: string;
-    validLinks?: string; // Lista de links válidos para evitar alucinaciones
-    searchIntent?: 'TRANSACCIONAL' | 'INFORMATIVA'; // Intención de búsqueda detectada
+  type: 'PRODUCT' | 'EVENT';
+  contextData: {
+    name: string;
+    description: string;
+    category?: string;
+    basePrice?: number;
+    // Para eventos, 'description' puede ser el contexto de productos o vacío
+  };
+  marketData: {
+    trendsSummary: string;
+    topKeywords: string[];
+    competitorAnalysis: string;
+  };
+  specialInstructions?: string;
+  validLinks?: string; // Lista de links válidos para evitar alucinaciones
+  searchIntent?: 'TRANSACCIONAL' | 'INFORMATIVA'; // Intención de búsqueda detectada
 }
 
 export const generateKamalusoPrompt = (options: KamalusoPromptOptions): string => {
-    const { type, contextData, marketData, specialInstructions } = options;
+  const { type, contextData, marketData, specialInstructions } = options;
 
-    // 1. Definición de Identidad (El "Vendedor Experto")
-    const roleDefinition = `
+  // 1. Definición de Identidad (El "Vendedor Experto")
+  const roleDefinition = `
 Actúas como el EXPERTO EN VENTAS DIGITALES de Kamaluso (Uruguay).
 TU PERFIL:
 - No eres un vendedor agresivo ni "pesado".
@@ -31,12 +31,13 @@ TU PERFIL:
 - Tu objetivo final es doble: POSICIONAR EN GOOGLE (SEO Técnico) y CERRAR LA VENTA (Persuasión).
 `;
 
-    // 2. Contexto del Negocio (Inmutable)
-    const businessContext = `
+  // 2. Contexto del Negocio (Inmutable)
+  const businessContext = `
 DATOS DEL NEGOCIO (INMUTABLES):
 - Marca: Papelería Personalizada Kamaluso (papeleriapersonalizada.uy).
 - Nombre Corto Permitido: "Kamaluso" solo si ya se mencionó el nombre completo antes.
 - Ubicación: San José de Mayo, Uruguay.
+- Teléfono/WhatsApp: 098615074.
 - Envíos: A todo el país por DAC o Correo Uruguayo. A Montevideo también por COTMI. (Costo a cargo del cliente).
 - Tiempos: Producción hasta 5 días hábiles tras pago/diseño (puede estar antes).
 - Calidad (Tu orgullo): Papel de 80g (no transparenta), Tapas Duras Premium con laminado extra-resistente (Brillo/Mate), Espiral metálico duradero.
@@ -50,8 +51,8 @@ DATOS DEL NEGOCIO (INMUTABLES):
   - NO inventes cantidades ("docenas", "miles"). Usa "variedad de opciones" o "nuestros diseños disponibles".
 `;
 
-    // 3. Inyección de Datos de Mercado (La Inteligencia)
-    const marketIntelligence = `
+  // 3. Inyección de Datos de Mercado (La Inteligencia)
+  const marketIntelligence = `
 INTELIGENCIA DE MERCADO EN TIEMPO REAL (ÚSALA):
 - Tendencias actuales: ${marketData.trendsSummary}
 - Oportunidad SEO (Keywords Hot): ${marketData.topKeywords.join(', ')}
@@ -59,30 +60,30 @@ INTELIGENCIA DE MERCADO EN TIEMPO REAL (ÚSALA):
 INSTRUCCIÓN: Usa estas keywords de forma natural. Si hay debilidades en la competencia, destaca NUESTRAS fortalezas de forma positiva sin atacar directamente (ej: en lugar de "otros son genéricos", usa "personalización real y artesanal").
 `;
 
-    // 3.5 Search Intent (Intención de Búsqueda)
-    const searchIntentContext = options.searchIntent ? `
+  // 3.5 Search Intent (Intención de Búsqueda)
+  const searchIntentContext = options.searchIntent ? `
 INTENCIÓN DE BÚSQUEDA DETECTADA: ${options.searchIntent}
 ${options.searchIntent === 'TRANSACCIONAL'
-            ? `- ESTRATEGIA: El usuario está listo para comprar. Prioriza:
+      ? `- ESTRATEGIA: El usuario está listo para comprar. Prioriza:
   * CTAs directos y claros ("Pedilo hoy", "Asegurá el tuyo").
   * Información de precio/envío visible.
   * Urgencia honesta ("Producción en 5 días").
   * Garantías y confianza ("Envío seguro", "Calidad garantizada").`
-            : `- ESTRATEGIA: El usuario busca información. Prioriza:
+      : `- ESTRATEGIA: El usuario busca información. Prioriza:
   * Educación ("Qué buscar en una agenda personalizada").
   * Casos de uso detallados.
   * Comparativas sutiles (Kamaluso vs opciones genéricas).
   * CTA suave al final ("Conocé nuestras opciones").`
-        }
+    }
 ` : '';
 
 
-    // 4. Instrucciones Específicas por Tipo
-    let taskSpecifics = '';
-    let jsonFormat = '';
+  // 4. Instrucciones Específicas por Tipo
+  let taskSpecifics = '';
+  let jsonFormat = '';
 
-    if (type === 'PRODUCT') {
-        taskSpecifics = `
+  if (type === 'PRODUCT') {
+    taskSpecifics = `
 OBJETO A VENDER: Producto "${contextData.name}"
 CATEGORÍA: ${contextData.category || 'General'}
 CONTEXTO: ${contextData.description}
@@ -108,7 +109,7 @@ REGLAS DE ORO PARA PRODUCTOS:
 ${specialInstructions || ''}
 `;
 
-        jsonFormat = `
+    jsonFormat = `
 FORMATO DE SALIDA (JSON ÚNICO Y VÁLIDO):
 {
   "seoTitle": "Título SEO optimizado (Máx 60 chars). Fórmula: [Keyword] + [Beneficio] | Kamaluso",
@@ -136,8 +137,8 @@ FORMATO DE SALIDA (JSON ÚNICO Y VÁLIDO):
   "useCases": ["Caso de uso 1", "Caso de uso 2", "Caso de uso 3"]
 }
 `;
-    } else if (type === 'EVENT') {
-        taskSpecifics = `
+  } else if (type === 'EVENT') {
+    taskSpecifics = `
 OBJETO: Landing Page Estacional para "${contextData.name}"
 PRODUCTOS DESTACADOS: ${contextData.description} (Úsalos como inspiración y enlázalos).
 
@@ -150,7 +151,7 @@ REGLAS DE ORO PARA EVENTOS:
 ${specialInstructions || ''}
 `;
 
-        jsonFormat = `
+    jsonFormat = `
 FORMATO DE SALIDA (JSON ÚNICO Y VÁLIDO):
 {
   "meta_title": "Título SEO (Máx 60 chars). Keyword del evento al inicio.",
@@ -159,20 +160,20 @@ FORMATO DE SALIDA (JSON ÚNICO Y VÁLIDO):
   "seo_keywords": "string de keywords separadas por comas"
 }
 `;
-    }
+  }
 
-    // 5. Diccionario de Marca (Restricciones Negativas y Positivas)
-    const brandDictionary = `
+  // 5. Diccionario de Marca (Restricciones Negativas y Positivas)
+  const brandDictionary = `
 DICCIONARIO DE MARCA (PALABRAS PROHIBIDAS Y PREFERIDAS):
-- PROHIBIDO (Estilo Genérico/Spam/Mentiras): "Increíble", "Fantástico", "único en su clase", "solución perfecta", "barato", "herramienta de diseño online", "editor web", "subí tu imagen aquí", "tú", "docenas", "miles de", "sublimar", "sublimación", "tapas para sublimar".
-- PREFERIDO (Vendedor Experto): "Práctico", "Durable", "Premium", "Exclusivo", "Personalizado", "A medida", "Estratégico", "Inversión", "Accesible".
+- PROHIBIDO (Estilo Genérico/Spam/Mentiras): "Increíble", "Fantástico", "único en su clase", "solución perfecta", "barato", "herramienta de diseño online", "editor web", "subí tu imagen aquí", "tú", "docenas", "miles de"${contextData.category?.toLowerCase().includes('sublimacion') || contextData.category?.toLowerCase().includes('sublimadores') ? '' : ', "sublimar", "sublimación", "tapas para sublimar"'}.
+- PREFERIDO (Vendedor Experto): "Práctico", "Durable", "Premium", "Exclusivo", "Personalizado", "A medida", "Estratégico", "Inversión", "Accesible"${contextData.category?.toLowerCase().includes('sublimacion') || contextData.category?.toLowerCase().includes('sublimadores') ? ', "Insumo técnico", "Aliado para tu taller", "Calidad mayorista"' : ''}.
 - SUBSTITUCIONES:
   - En lugar de "¡Compra ahora!", usa "Asegurá el tuyo" o "Pedilo hoy".
   - En lugar de "Alta calidad", usa "Calidad artesanal certificada" o detalles específicos (ej: "tapa extra dura").
 `;
 
-    // 6. Few-Shot Examples (Ejemplos "One-Shot" para calibrar tono)
-    const fewShotExamples = `
+  // 6. Few-Shot Examples (Ejemplos "One-Shot" para calibrar tono)
+  const fewShotExamples = `
 EJEMPLO DE SALIDA IDEAL (IMITA ESTE ESTILO, PERO NO COPIES EL TEXTO):
 Input: Agenda 2026 (Producto)
 Output JSON (Parcial):
@@ -190,7 +191,7 @@ Output JSON (Parcial):
 }
 `;
 
-    return `
+  return `
 ${roleDefinition}
 ${businessContext}
 ${brandDictionary}
