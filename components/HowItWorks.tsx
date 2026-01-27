@@ -39,8 +39,8 @@ const HowItWorks = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4 font-outfit">
-                        Crea tu Papelería Ideal en <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600">3 Pasos Simples</span>
+                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 font-heading tracking-tight">
+                        Crea tu Papelería Ideal en <span className="text-slate-900 underline decoration-4 decoration-amber-400/50 underline-offset-4">3 Pasos Simples</span>
                     </h2>
                     <p className="text-base md:text-lg text-gray-600">
                         Transformamos tus ideas en productos tangibles de alta calidad. Sin complicaciones.
@@ -57,13 +57,13 @@ const HowItWorks = () => {
                             className="group relative flex flex-col items-center text-center"
                             style={{ animationDelay: `${step.delay}ms` }}
                         >
-                            {/* Icon Circle - Smaller on mobile */}
+                            {/* Icon Circle - Original Gradient Style */}
                             <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br ${step.color} p-0.5 shadow-lg md:shadow-xl shadow-gray-200 mb-4 md:mb-6 transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3 relative`}>
                                 <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center relative">
                                     <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
                                     <step.icon className={`w-8 h-8 md:w-10 md:h-10 text-gray-800 relative z-10`} />
 
-                                    {/* Number Badge - Smaller on mobile */}
+                                    {/* Number Badge - Original */}
                                     <div className="absolute -top-2 -right-2 md:-top-3 md:-right-3 w-7 h-7 md:w-8 md:h-8 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm border-3 md:border-4 border-white shadow-md">
                                         {step.id}
                                     </div>

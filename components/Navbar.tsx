@@ -7,6 +7,7 @@ import { useCategories } from '../context/CategoryContext';
 import MegaMenu from './MegaMenu';
 import MiniCart from './MiniCart';
 import NavSchema from '../lib/NavSchema';
+import SearchBar from './SearchBar';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,7 +59,7 @@ export default function Navbar() {
     }
 
     // This function is now only for the mobile menu's accordion
-    return categories.map((cat) => (
+    return categories.filter(cat => cat.slug !== 'papeleria-sublimable').map((cat) => (
       <div key={cat._id}>
         {cat.children && cat.children.length > 0 ? (
           <>
@@ -94,17 +95,19 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md fixed w-full z-50 transition-all duration-300" style={{ top: 'var(--topbar-height, 0px)' }}>
       <NavSchema />
-      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16 relative">
-        <Link href="/" className="flex items-center" onClick={closeAllMenus}>
+      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16 relative gap-4">
+        <Link href="/" className="flex items-center flex-shrink-0" onClick={closeAllMenus}>
           <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" unoptimized />
         </Link>
 
+        {/* Search Bar - Desktop Centered (Expanded) */}
+        <div className="hidden md:block flex-grow max-w-2xl mx-8">
+          <SearchBar />
+        </div>
+
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
-            Inicio
-            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
-          </Link>
+
 
           {/* Mega Menu Container */}
           <div
@@ -119,7 +122,7 @@ export default function Navbar() {
 
             {openDropdown === 'productos' && !loading && (
               <MegaMenu
-                categories={categories}
+                categories={categories.filter(cat => cat.slug !== 'papeleria-sublimable')}
                 closeAllMenus={closeAllMenus}
                 handleMouseEnter={handleMenuEnter}
                 handleMouseLeave={handleMenuLeave}
@@ -127,27 +130,18 @@ export default function Navbar() {
             )}
           </div>
 
-          <Link href="/nuestros-trabajos-entregados" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
-            Nuestros Trabajos
-            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
-          </Link>
-          <Link href="/regalos-empresariales" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
-            Regalos Empresariales
-            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
-          </Link>
-          <Link href="/contacto" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
-            Contacto
-            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
-          </Link>
-          <Link href="/blog" className="relative py-1 text-gray-900 font-medium transition group hover:text-pink-500">
-            Blog
-            <span className="absolute bottom-0 left-0 h-0.5 bg-pink-500 w-0 transition-all duration-300 group-hover:w-full"></span>
+
+          <Link
+            href="/regalos-empresariales"
+            className="py-1 px-4 text-white font-bold bg-gradient-to-r from-gray-700 to-black rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center"
+          >
+            Empresas
           </Link>
           <Link
             href="/imprimeya"
             className="py-1 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1"
           >
-            🖨️ ImprimeYa
+            ImprimeYa
           </Link>
           <Link
             href="/productos/papeleria-sublimable"
@@ -212,14 +206,28 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {isClient && (
         <div className={`md:hidden bg-white shadow-md px-6 space-y-2 overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-screen py-4' : 'max-h-0'}`}>
-          <Link href="/" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Inicio</Link>
           {renderCategoryLinks(true)}
-          <Link href="/nuestros-trabajos-entregados" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Nuestros Trabajos</Link>
-          <Link href="/regalos-empresariales" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Regalos Empresariales</Link>
-          <Link href="/contacto" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Contacto</Link>
-          <Link href="/blog" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Blog</Link>
-          <Link href="/imprimeya" className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg transition" onClick={closeAllMenus}>🖨️ ImprimeYa</Link>
-          <Link href="/productos/papeleria-sublimable" className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg transition" onClick={closeAllMenus}>Sublimación</Link>
+          <Link
+            href="/regalos-empresariales"
+            className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-gray-700 to-black rounded-lg transition text-center mt-2"
+            onClick={closeAllMenus}
+          >
+            Empresas
+          </Link>
+          <Link
+            href="/imprimeya"
+            className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg transition text-center"
+            onClick={closeAllMenus}
+          >
+            ImprimeYa
+          </Link>
+          <Link
+            href="/productos/papeleria-sublimable"
+            className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg transition text-center"
+            onClick={closeAllMenus}
+          >
+            Sublimación
+          </Link>
           <Link href="/cart" className="block text-gray-900 font-medium py-2 hover:text-pink-500 transition" onClick={closeAllMenus}>Carrito ({cartCount})</Link>
           {status === 'authenticated' && (
             <>

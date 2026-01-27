@@ -77,6 +77,8 @@ const OptimizedImage = (props: ImageProps) => {
             onError={handleError}
             // Eliminamos unoptimized para permitir que Vercel actúe en el fallback
             {...restProps}
+            loading={restProps.priority ? undefined : restProps.loading || 'lazy'}
+            decoding={restProps.priority ? undefined : 'async'}
         />
     );
 };

@@ -11,7 +11,7 @@ const WhatsAppButton = ({ customMessage }: WhatsAppButtonProps) => {
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultText)}`
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 group">
+    <div className="fixed bottom-5 right-5 z-50 group hidden md:block">
       {/* Tooltip al hover */}
       <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl">

@@ -19,6 +19,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/imprimeya"
+                  className="text-gray-600 hover:text-pink-500 transition-colors font-medium text-blue-600"
+                >
+                  ImprimeYa (Fotocopias PDF)
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/regalos-empresariales"
                   className="text-gray-600 hover:text-pink-500 transition-colors"
                 >
@@ -31,6 +39,14 @@ export default function Footer() {
                   className="text-gray-600 hover:text-pink-500 transition-colors"
                 >
                   Blog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/nuestros-trabajos-entregados"
+                  className="text-gray-600 hover:text-pink-500 transition-colors font-medium"
+                >
+                  Nuestros Trabajos
                 </Link>
               </li>
             </ul>
@@ -82,14 +98,14 @@ export default function Footer() {
             Todos los derechos reservados.
           </p>
           <p className="text-sm text-gray-500 mt-4">
-            Tienda online desarrollada por <strong>Martín Cedrés</strong>. ¿Quieres la tuya?{' '}
+            Desarrollo Web & Estrategia Digital. ¿Tienes una idea en mente?{' '}
             <a
-              href="https://wa.me/59891090705?text=Hola%20Mart%C3%ADn,%20vi%20la%20tienda%20Kamaluso%20y%20estoy%20interesado/a%20en%20un%20sitio%20web."
+              href="https://wa.me/59891090705?text=Hola,%20vi%20la%20tienda%20Kamaluso%20y%20me%20gustar%C3%ADa%20cotizar%20un%20proyecto%20web."
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-green-600 hover:underline"
             >
-              Contáctame por WhatsApp
+              Hablemos de tu próximo proyecto
             </a>
           </p>
         </div>

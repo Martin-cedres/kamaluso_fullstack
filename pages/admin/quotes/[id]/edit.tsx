@@ -12,6 +12,7 @@ export default function EditQuote() {
     const [sending, setSending] = useState(false);
 
     const [formData, setFormData] = useState<any>(null);
+    const [uploadingImage, setUploadingImage] = useState<number | null>(null);
 
     useEffect(() => {
         if (id) {
@@ -184,6 +185,32 @@ export default function EditQuote() {
         }
     };
 
+    const handleImageUpload = async (index: number, file: File) => {
+        setUploadingImage(index);
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+
+        try {
+            const res = await fetch('/api/admin/upload-quote-image', {
+                method: 'POST',
+                body: uploadData,
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                handleItemChange(index, 'imageUrl', data.imageUrl);
+                toast.success('Imagen subida correctamente');
+            } else {
+                toast.error(data.message || 'Error al subir imagen');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al subir imagen');
+        } finally {
+            setUploadingImage(null);
+        }
+    };
+
     const handleSendEmail = async () => {
         if (!confirm('¿Estás seguro de enviar este presupuesto por email al cliente?')) return;
 
@@ -343,15 +370,49 @@ export default function EditQuote() {
                                             </div>
                                             <div className="w-32">
                                                 <label className="block text-xs text-gray-600 mb-1">📸 Imagen</label>
+
+                                                {/* Input file para subir imagen */}
+                                                <div className="mb-1">
+                                                    <label className="block">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) handleImageUpload(index, file);
+                                                            }}
+                                                            className="hidden"
+                                                            id={`file-upload-${index}`}
+                                                            disabled={uploadingImage === index}
+                                                        />
+                                                        <div className="cursor-pointer bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-2 py-1 text-xs text-center transition-colors">
+                                                            {uploadingImage === index ? '⏳ Subiendo...' : '📤 Subir foto'}
+                                                        </div>
+                                                    </label>
+                                                </div>
+
+                                                {/* Input para pegar URL */}
                                                 <input
                                                     type="text"
                                                     placeholder="URL de imagen"
                                                     value={item.imageUrl || ''}
                                                     onChange={(e) => handleItemChange(index, 'imageUrl', e.target.value)}
-                                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs mb-1"
+                                                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs mb-1"
                                                 />
+
+                                                {/* Preview */}
                                                 {item.imageUrl ? (
-                                                    <Image src={item.imageUrl} alt="Preview" width={64} height={64} className="h-16 w-full object-cover rounded border" unoptimized />
+                                                    <div className="relative">
+                                                        <Image src={item.imageUrl} alt="Preview" width={64} height={64} className="h-16 w-full object-cover rounded border" unoptimized />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleItemChange(index, 'imageUrl', '')}
+                                                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+                                                            title="Eliminar imagen"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
                                                 ) : (
                                                     <div className="h-16 w-full bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center">
                                                         <span className="text-xs text-gray-400">Sin imagen</span>
@@ -453,75 +514,102 @@ export default function EditQuote() {
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                                 />
                             </div>
+                            <div className="pt-2">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.hideTotal}
+                                        onChange={(e) => setFormData({ ...formData, hideTotal: e.target.checked })}
+                                        className="w-5 h-5 rounded border-gray-300 text-pink-500 focus:ring-pink-500"
+                                    />
+                                    <span className="text-sm font-semibold text-gray-700 group-hover:text-pink-600 transition-colors">
+                                        🚫 Ocultar Total General (Cotización por artículo)
+                                    </span>
+                                </label>
+                                <p className="text-xs text-gray-500 mt-1 ml-7">
+                                    Útil cuando el cliente debe elegir entre varias opciones y no quieres que se sumen todas.
+                                </p>
+                            </div>
                         </div>
 
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                             <h2 className="text-lg font-semibold mb-4 text-gray-700">Totales</h2>
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Subtotal</span>
-                                    <span>$U {subtotal.toLocaleString('es-UY')}</span>
+
+                            {formData.hideTotal ? (
+                                <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-8 text-center">
+                                    <div className="text-4xl mb-3">🏷️</div>
+                                    <p className="text-gray-600 font-medium">El Total General está oculto</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Solo se mostrarán los precios individuales por artículo en el presupuesto final.
+                                    </p>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Descuento</span>
-                                    <div className="flex gap-2 items-center">
-                                        <select
-                                            value={formData.discountType || 'fixed'}
-                                            onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-                                        >
-                                            <option value="fixed">$U</option>
-                                            <option value="percentage">%</option>
-                                        </select>
-                                        <input
-                                            type="text"
-                                            placeholder="Descripción (opcional)"
-                                            value={formData.discountDescription || ''}
-                                            onChange={(e) => setFormData({ ...formData, discountDescription: e.target.value })}
-                                            className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-sm"
-                                        />
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Subtotal</span>
+                                        <span>$U {subtotal.toLocaleString('es-UY')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Descuento</span>
+                                        <div className="flex gap-2 items-center">
+                                            <select
+                                                value={formData.discountType || 'fixed'}
+                                                onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
+                                                className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
+                                            >
+                                                <option value="fixed">$U</option>
+                                                <option value="percentage">%</option>
+                                            </select>
+                                            <input
+                                                type="text"
+                                                placeholder="Descripción (opcional)"
+                                                value={formData.discountDescription || ''}
+                                                onChange={(e) => setFormData({ ...formData, discountDescription: e.target.value })}
+                                                className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-sm"
+                                            />
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder={formData.discountType === 'percentage' ? '0.00' : '0'}
+                                                value={formData.discount}
+                                                onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                                                className="w-24 border border-gray-300 rounded-lg px-2 py-1 text-right"
+                                            />
+                                        </div>
+                                    </div>
+                                    {formData.discount > 0 && (
+                                        <div className="flex justify-between text-sm text-gray-500 pl-4">
+                                            <span>Descuento aplicado:</span>
+                                            <span>- $U {discountAmount.toLocaleString('es-UY')}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">IVA / Impuestos</span>
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.01"
-                                            placeholder={formData.discountType === 'percentage' ? '0.00' : '0'}
-                                            value={formData.discount}
-                                            onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                                            className="w-24 border border-gray-300 rounded-lg px-2 py-1 text-right"
+                                            value={formData.tax || ''}
+                                            onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
+                                            className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-right"
                                         />
                                     </div>
-                                </div>
-                                {formData.discount > 0 && (
-                                    <div className="flex justify-between text-sm text-gray-500 pl-4">
-                                        <span>Descuento aplicado:</span>
-                                        <span>- $U {discountAmount.toLocaleString('es-UY')}</span>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-600">Envío</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.shipping || ''}
+                                            onChange={(e) => setFormData({ ...formData, shipping: parseFloat(e.target.value) || 0 })}
+                                            className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-right"
+                                        />
                                     </div>
-                                )}
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">IVA / Impuestos</span>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.tax || ''}
-                                        onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
-                                        className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-right"
-                                    />
+                                    <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-center">
+                                        <span className="text-xl font-bold text-gray-800">TOTAL</span>
+                                        <span className="text-xl font-bold text-pink-600">$U {total.toLocaleString('es-UY')}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Envío</span>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.shipping || ''}
-                                        onChange={(e) => setFormData({ ...formData, shipping: parseFloat(e.target.value) || 0 })}
-                                        className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-right"
-                                    />
-                                </div>
-                                <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-center">
-                                    <span className="text-xl font-bold text-gray-800">TOTAL</span>
-                                    <span className="text-xl font-bold text-pink-600">$U {total.toLocaleString('es-UY')}</span>
-                                </div>
-                            </div>
+                            )}
 
                             <div className="mt-8">
                                 <button

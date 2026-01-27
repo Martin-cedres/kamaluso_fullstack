@@ -41,42 +41,49 @@ const NewsletterForm = () => {
   };
 
   return (
-    <section className="bg-gray-100 py-16">
+    <section className="bg-slate-50 py-20 border-t border-slate-100">
       <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-3xl font-semibold mb-4">Te regalamos 10% OFF en tu primer compra. </h2>
-        <p className="text-gray-700 mb-8">¡Acceso a beneficios y regalos exclusivos, solo para suscriptores!</p>
-        
-        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-          <div className="flex items-center">
+        <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-bold tracking-widest uppercase mb-6">
+          Beneficio Exclusivo
+        </div>
+        <h2 className="text-4xl md:text-5xl font-bold font-heading text-slate-900 mb-6 tracking-tighter">Te regalamos <span className="text-amber-600">10% OFF</span> en tu primer compra</h2>
+        <p className="text-slate-600 text-lg mb-10 max-w-2xl mx-auto">Únete a nuestra comunidad y recibe un cupón de regalo inmediato, además de acceso a preventas y diseños nuevos.</p>
+
+        <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Tu correo electrónico"
+              placeholder="Escribe tu mejor email..."
               required
-              className="w-full px-4 py-3 rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full px-6 py-4 rounded-full border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white shadow-sm transition-all"
             />
-            <button 
+            <button
               type="submit"
               disabled={loading}
-              className="bg-pink-500 text-white px-6 py-3 rounded-r-md font-semibold hover:bg-pink-600 disabled:bg-gray-400 transition-colors flex-shrink-0"
+              className="w-full sm:w-auto bg-slate-900 text-white px-8 py-4 rounded-full font-bold hover:bg-black disabled:bg-slate-400 transition-all shadow-lg hover:shadow-xl flex-shrink-0"
             >
-              {loading ? 'Enviando...' : 'Quiero mi cupón'}
+              {loading ? 'Enviando...' : 'Obtener mi 10% OFF'}
             </button>
           </div>
         </form>
 
         {message && (
-          <div className="mt-6 p-4 bg-green-100 text-green-800 rounded-md">
-            <p>{message}</p>
+          <div className="mt-8 p-6 bg-white border border-green-100 shadow-sm rounded-2xl animate-in fade-in zoom-in duration-300">
+            <p className="text-green-800 font-medium">✓ {message}</p>
             {coupon && (
-              <p className="font-bold mt-2">Tu código de cupón es: <span className="bg-white px-2 py-1 rounded">{coupon}</span></p>
+              <div className="mt-4 flex flex-col items-center">
+                <span className="text-xs text-slate-400 uppercase font-bold tracking-widest mb-1">Código de Cupón</span>
+                <span className="bg-slate-900 text-white px-6 py-2 rounded-lg font-mono text-xl font-bold tracking-widest shadow-inner">{coupon}</span>
+                <p className="text-xs text-slate-500 mt-2">Úsalo al finalizar tu compra</p>
+              </div>
             )}
           </div>
         )}
 
         {error && (
-          <div className="mt-6 p-4 bg-red-100 text-red-800 rounded-md">
+          <div className="mt-8 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm">
             <p>{error}</p>
           </div>
         )}

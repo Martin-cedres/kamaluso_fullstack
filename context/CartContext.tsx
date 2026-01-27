@@ -36,6 +36,10 @@ interface CartContextType {
   appliedCoupon?: AppliedCoupon | null
   setAppliedCoupon: (coupon: AppliedCoupon | null) => void
   cartIconAnimate: boolean
+  // New fields for promotion logic
+  totalBeforeDiscount: number
+  discountAmount: number
+  finalTotal: number
 }
 
 // Create the context
@@ -158,6 +162,22 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0)
 
+  // Calculate totals and automatic discount (10% if 2+ items)
+  const totalBeforeDiscount = cartItems.reduce((sum, item) => sum + item.precio * item.quantity, 0)
+  const isDiscountEligible = cartCount >= 2;
+  // Apply 10% discount if eligible
+  const automaticDiscount = isDiscountEligible ? totalBeforeDiscount * 0.10 : 0;
+
+  // Also consider applied coupon (if any)
+  const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+
+  // Total discount (automatic + coupon, though usually one overrides the other, let's sum them or prioritize automatic?)
+  // For now, let's sum them but maybe the user wants automatic OR coupon. 
+  // Given the instruction "Aplica un 10%", let's imply it serves as a base.
+  const discountAmount = automaticDiscount + couponDiscount;
+
+  const finalTotal = Math.max(0, totalBeforeDiscount - discountAmount);
+
   const value = {
     cartItems,
     addToCart,
@@ -168,6 +188,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     appliedCoupon,
     setAppliedCoupon,
     cartIconAnimate,
+    totalBeforeDiscount,
+    discountAmount,
+    finalTotal
   }
 
   return (

@@ -401,36 +401,38 @@ const QuoteTemplate: React.FC<QuoteTemplateProps> = ({ quote, logoUrl }) => {
                 </View>
 
                 {/* Totals */}
-                <View style={styles.totalsSection} wrap={false}>
-                    <View style={styles.totalsTable}>
-                        <View style={styles.totalRow}>
-                            <Text style={{ color: '#64748b' }}>Subtotal:</Text>
-                            <Text>{formatCurrency(quote.subtotal)}</Text>
-                        </View>
-                        {quote.discount > 0 && (
+                {!quote.hideTotal && (
+                    <View style={styles.totalsSection} wrap={false}>
+                        <View style={styles.totalsTable}>
                             <View style={styles.totalRow}>
-                                <Text style={{ color: '#059669' }}>Descuento {quote.discountDescription ? `(${quote.discountDescription})` : ''}:</Text>
-                                <Text style={{ color: '#059669' }}>- {formatCurrency(quote.discount)}</Text>
+                                <Text style={{ color: '#64748b' }}>Subtotal:</Text>
+                                <Text>{formatCurrency(quote.subtotal)}</Text>
                             </View>
-                        )}
-                        {quote.tax > 0 && (
-                            <View style={styles.totalRow}>
-                                <Text style={{ color: '#64748b' }}>IVA / Impuestos:</Text>
-                                <Text>{formatCurrency(quote.tax)}</Text>
+                            {quote.discount > 0 && (
+                                <View style={styles.totalRow}>
+                                    <Text style={{ color: '#059669' }}>Descuento {quote.discountDescription ? `(${quote.discountDescription})` : ''}:</Text>
+                                    <Text style={{ color: '#059669' }}>- {formatCurrency(quote.discount)}</Text>
+                                </View>
+                            )}
+                            {quote.tax > 0 && (
+                                <View style={styles.totalRow}>
+                                    <Text style={{ color: '#64748b' }}>IVA / Impuestos:</Text>
+                                    <Text>{formatCurrency(quote.tax)}</Text>
+                                </View>
+                            )}
+                            {quote.shipping > 0 && (
+                                <View style={styles.totalRow}>
+                                    <Text style={{ color: '#64748b' }}>Envío:</Text>
+                                    <Text>{formatCurrency(quote.shipping)}</Text>
+                                </View>
+                            )}
+                            <View style={styles.finalTotalRow}>
+                                <Text style={styles.totalLabel}>TOTAL FINAL:</Text>
+                                <Text style={styles.totalValue}>{formatCurrency(quote.total)}</Text>
                             </View>
-                        )}
-                        {quote.shipping > 0 && (
-                            <View style={styles.totalRow}>
-                                <Text style={{ color: '#64748b' }}>Envío:</Text>
-                                <Text>{formatCurrency(quote.shipping)}</Text>
-                            </View>
-                        )}
-                        <View style={styles.finalTotalRow}>
-                            <Text style={styles.totalLabel}>TOTAL FINAL:</Text>
-                            <Text style={styles.totalValue}>{formatCurrency(quote.total)}</Text>
                         </View>
                     </View>
-                </View>
+                )}
 
                 {/* PERSUASION SECTION */}
                 <View style={styles.persuasionSection} wrap={false}>

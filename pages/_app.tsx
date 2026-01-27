@@ -29,6 +29,9 @@ const DynamicChatWidget = dynamic(() => import('../components/ChatWidget'), {
 const DynamicFooter = dynamic(() => import('../components/Footer'), {
   ssr: false,
 })
+const DynamicMobileBottomBar = dynamic(() => import('../components/MobileBottomBar'), {
+  ssr: false,
+})
 
 // Setup next/font
 const inter = Inter({
@@ -145,7 +148,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           >
             <TopBar />
             <Navbar />
-            <main className="flex-grow pb-24 transition-all duration-300" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 4rem)' }}>
+            <main className="flex-grow pb-24 md:pb-24 transition-all duration-300" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 4rem)' }}>
               <Component {...pageProps} />
               <Analytics />
               <SpeedInsights />
@@ -153,6 +156,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             {isClient && <DynamicWhatsAppButton />}
             {isClient && <DynamicChatWidget />}
             {isClient && <DynamicFooter />}
+            {isClient && <DynamicMobileBottomBar />}
           </div>
         </CategoryProvider>
       </CartProvider>

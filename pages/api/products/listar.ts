@@ -105,6 +105,20 @@ export default async function handler(
     if (_id) andConditions.push({ _id: new ObjectId(_id) });
     if (typeof destacadoFilter !== 'undefined') andConditions.push({ destacado: destacadoFilter });
 
+    // Filtro por precio máximo (para sugerencias de carrito)
+    const maxPriceParam = getQueryParam(reqQuery.maxPrice);
+    if (maxPriceParam) {
+      const maxPrice = parseFloat(maxPriceParam);
+      if (!isNaN(maxPrice)) {
+        andConditions.push({
+          $or: [
+            { basePrice: { $lte: maxPrice } },
+            { precio: { $lte: maxPrice } }
+          ]
+        });
+      }
+    }
+
     if (search) {
       const searchRegex = { $regex: search, $options: 'i' };
       andConditions.push({
@@ -139,7 +153,7 @@ export default async function handler(
             $filter: {
               input: '$reviews',
               as: 'review',
-                            cond: { $eq: ['$$review.isApproved', true] },
+              cond: { $eq: ['$$review.isApproved', true] },
             },
           },
         },

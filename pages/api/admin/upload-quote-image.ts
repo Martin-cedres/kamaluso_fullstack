@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm, File } from 'formidable';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
-import { uploadFileToS3Original } from '@/lib/s3-upload';
+import { uploadFileToS3 } from '@/lib/s3-upload';
 
 export const config = {
     api: {
@@ -47,8 +47,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ message: 'Solo se permiten imágenes (JPG, PNG, WEBP, GIF)' });
         }
 
-        // Usar la versión original para asegurar compatibilidad con PDF y evitar espera de Lambda
-        const imageUrl = await uploadFileToS3Original(uploadedFile);
+        // Usar la versión con procesamiento Lambda WebP
+        const imageUrl = await uploadFileToS3(uploadedFile);
 
         res.status(200).json({
             success: true,

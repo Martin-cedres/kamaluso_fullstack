@@ -60,10 +60,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 <td style="padding: 8px 0; color: #666; font-size: 15px;">Presupuesto N°:</td>
                 <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333; font-size: 15px;">${quote.quoteNumber}</td>
               </tr>
+              ${!quote.hideTotal ? `
               <tr>
                 <td style="padding: 8px 0; color: #666; font-size: 15px;">Total:</td>
                 <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #E84393; font-size: 20px;">$U ${quote.total.toLocaleString('es-UY')}</td>
               </tr>
+              ` : ''}
               <tr>
                 <td style="padding: 8px 0; color: #666; font-size: 15px;">Válido hasta:</td>
                 <td style="padding: 8px 0; text-align: right; color: #333; font-size: 15px;">${new Date(quote.validUntil).toLocaleDateString('es-UY')}</td>

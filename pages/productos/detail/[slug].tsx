@@ -466,12 +466,15 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
 
 
+  // Construir URL dinámica para OG Image
+  const ogImageUrl = `https://www.papeleriapersonalizada.uy/api/og/product?title=${encodeURIComponent(product.nombre)}&price=${getCardDisplayPrice(product) || product.basePrice}&image=${encodeURIComponent(product.imageUrl || '')}`;
+
   return (
     <>
       <SeoMeta
         title={product.seoTitle || product.nombre}
         description={product.seoDescription || product.descripcion}
-        image={product.imageUrl}
+        image={ogImageUrl}
       />
       <ProductSchema product={product} averageRating={averageRating} reviewCount={reviewCount} />
       <Head>

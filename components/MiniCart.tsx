@@ -1,14 +1,20 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CartItem } from '../context/CartContext';
+import { CartItem, useCart } from '../context/CartContext';
 
 interface MiniCartProps {
     cartItems: CartItem[];
     onClose: () => void;
 }
 
+import CartDiscountPromo from './CartDiscountPromo';
+import CartSuggestions from './CartSuggestions';
+
 const MiniCart = ({ cartItems, onClose }: MiniCartProps) => {
-    const total = cartItems.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+    // Usar valores del contexto en lugar de recalcular
+    const { totalBeforeDiscount, discountAmount, finalTotal } = useCart();
+    // Fallback simple por si el hook falla o SSR issue (aunque MiniCart es client-side)
+    // Nota: Mejor importar useCart arriba.
 
     if (cartItems.length === 0) {
         return (
@@ -36,10 +42,13 @@ const MiniCart = ({ cartItems, onClose }: MiniCartProps) => {
     return (
         <div className="absolute right-0 top-full mt-2 bg-white shadow-2xl rounded-xl p-4 w-96 z-50 animate-fadeIn">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
                 <h3 className="font-bold text-lg text-gray-800">Mi Carrito</h3>
-                <span className="text-sm text-gray-500">{cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'}</span>
+                <span className="text-sm text-gray-500">{cartItems.length} items</span>
             </div>
+
+            {/* Promo Area */}
+            <CartDiscountPromo />
 
             {/* Cart Items */}
             <div className="max-h-80 overflow-y-auto space-y-3 mb-4">
@@ -81,10 +90,23 @@ const MiniCart = ({ cartItems, onClose }: MiniCartProps) => {
 
             {/* Total */}
             <div className="border-t border-gray-200 pt-3 mb-3">
-                <div className="flex justify-between items-center mb-3">
-                    <span className="font-semibold text-gray-700">Total:</span>
-                    <span className="font-bold text-xl text-pink-500">${total.toFixed(2)}</span>
+                <div className="flex justify-between items-center mb-1">
+                    <span className="text-gray-500 text-sm">Subtotal:</span>
+                    <span className="text-gray-700">${totalBeforeDiscount.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-green-600 text-sm font-medium">Descuento (10%):</span>
+                        <span className="text-green-600 font-bold">-${discountAmount.toFixed(2)}</span>
+                    </div>
+                )}
+                <div className="flex justify-between items-center mb-3">
+                    <span className="font-bold text-lg text-gray-800">Total:</span>
+                    <span className="font-bold text-xl text-pink-600">${finalTotal.toFixed(2)}</span>
+                </div>
+
+                {/* Suggestions */}
+                <CartSuggestions />
             </div>
 
             {/* Actions */}

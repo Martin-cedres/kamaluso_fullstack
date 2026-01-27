@@ -37,6 +37,7 @@ const QuoteSchema = new Schema({
     validUntil: { type: Date, required: true },
     notes: { type: String }, // Notas internas
     terms: { type: String }, // Términos y condiciones específicos
+    hideTotal: { type: Boolean, default: false }, // Si es true, no muestra el total general
     sentAt: { type: Date },
     acceptedAt: { type: Date },
     createdBy: { type: String }, // Email del admin que lo creó

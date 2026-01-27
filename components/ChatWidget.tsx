@@ -126,7 +126,7 @@ const ChatWidget = () => {
 
 
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-4 flex justify-between items-center text-white">
+                    <div className="bg-slate-900 p-4 flex justify-between items-center text-white border-b border-white/10">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 bg-white/20 rounded-full">
                                 <ChatBubbleLeftRightIcon className="w-5 h-5" />
@@ -163,7 +163,7 @@ const ChatWidget = () => {
                             >
                                 <div
                                     className={`max-w-[85%] p-3 rounded-2xl text-sm break-words ${msg.role === 'user'
-                                        ? 'bg-pink-600 text-white rounded-br-none'
+                                        ? 'bg-slate-700 text-white rounded-br-none'
                                         : 'bg-white border border-gray-200 text-black rounded-bl-none shadow-sm'
                                         }`}
                                 >
@@ -248,7 +248,7 @@ const ChatWidget = () => {
                         <button
                             type="submit"
                             disabled={isLoading || !message.trim()}
-                            className="p-2 bg-pink-600 text-white rounded-full hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                            className="p-2 bg-slate-900 text-white rounded-full hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                         >
                             <PaperAirplaneIcon className="w-5 h-5" />
                         </button>
@@ -261,10 +261,10 @@ const ChatWidget = () => {
                 {/* Tooltip on Hover */}
                 {!isOpen && (
                     <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl font-medium">
+                        <div className="bg-slate-900 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl font-medium border border-white/10">
                             ¡Asistente Virtual!
                             <div className="absolute top-full right-6 -mt-1">
-                                <div className="border-4 border-transparent border-t-pink-500"></div>
+                                <div className="border-4 border-transparent border-t-slate-900"></div>
                             </div>
                         </div>
                     </div>
@@ -272,7 +272,7 @@ const ChatWidget = () => {
 
                 <button
                     onClick={handleToggle}
-                    className="p-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 relative"
+                    className="p-4 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-black/20 hover:scale-110 transition-all duration-300 relative border border-white/10"
                     aria-label="Chat con soporte"
                 >
                     {isOpen ? (

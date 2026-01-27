@@ -4,13 +4,92 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 export default function ImprimeYaPage() {
-    const pageTitle = "ImprimeYa | Imprimí tu PDF en Uruguay - Papelería Personalizada";
-    const pageDescription = "Servicio de impresión de documentos PDF con encuadernación en espiral. Los mejores precios en blanco y negro, color y encuadernados. Envíos a todo Uruguay.";
-    const canonicalUrl = "/imprimeya";
+    // SEO Strategy: Attack "Fotocopias San José" (Local) and "Imprimir PDF Uruguay" (National)
+    const pageTitle = "Fotocopias e Impresiones PDF San José y todo Uruguay | ImprimeYa Kamaluso";
+    const pageDescription = "Servicio profesional de fotocopias e impresión de PDF en San José de Mayo y envíos a todo Uruguay. Precio por hoja, encuadernación espiral y atención por WhatsApp.";
+    const canonicalUrl = "https://www.papeleriapersonalizada.uy/imprimeya";
 
     const phoneNumber = '59898615074';
-    const whatsappMessage = '¡Hola! Quiero cotizar una impresión de documentos PDF con ImprimeYa.';
+    const whatsappMessage = '¡Hola! Quiero cotizar impresiones o fotocopias con ImprimeYa.';
     const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+
+    // Schema.org for LocalBusiness and Service
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "LocalBusiness",
+                "@id": "https://www.papeleriapersonalizada.uy/imprimeya#localbusiness",
+                "name": "Kamaluso - ImprimeYa Fotocopias",
+                "image": "https://www.papeleriapersonalizada.uy/og-imprimeya.jpg",
+                "telephone": "+598 98 615 074",
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Ramón Massini 136",
+                    "addressLocality": "San José de Mayo",
+                    "addressRegion": "San José",
+                    "postalCode": "80000",
+                    "addressCountry": "UY"
+                },
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "latitude": -34.344199,
+                    "longitude": -56.721197
+                },
+                "openingHoursSpecification": {
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": [
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday"
+                    ],
+                    "opens": "09:00",
+                    "closes": "18:00"
+                },
+                "priceRange": "$"
+            },
+            {
+                "@type": "Service",
+                "serviceType": "Printing Service",
+                "provider": {
+                    "@id": "https://www.papeleriapersonalizada.uy/imprimeya#localbusiness"
+                },
+                "areaServed": {
+                    "@type": "Country",
+                    "name": "Uruguay"
+                },
+                "hasOfferCatalog": {
+                    "@type": "OfferCatalog",
+                    "name": "Servicios de Impresión",
+                    "itemListElement": [
+                        {
+                            "@type": "Offer",
+                            "itemOffered": {
+                                "@type": "Service",
+                                "name": "Impresión de PDF Blanco y Negro"
+                            }
+                        },
+                        {
+                            "@type": "Offer",
+                            "itemOffered": {
+                                "@type": "Service",
+                                "name": "Impresión Color Láser"
+                            }
+                        },
+                        {
+                            "@type": "Offer",
+                            "itemOffered": {
+                                "@type": "Service",
+                                "name": "Encuadernación Espiral y Anillado"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    };
 
     const features = [
         {
@@ -124,7 +203,11 @@ export default function ImprimeYaPage() {
                 description={pageDescription}
                 url={canonicalUrl}
                 image="/og-imprimeya.jpg"
-                keywords="imprimir pdf uruguay, fotocopias san josé de mayo, impresión documentos, encuadernación espiral, imprimir libros digitales, fotocopiado uruguay"
+                keywords="fotocopias san jose de mayo, imprimir pdf uruguay, fotocopiadora san jose, impresion documentos, encuadernación espiral, imprimir tesis, fotocopiado barato, kamaluso imprimeya"
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
             <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -142,12 +225,13 @@ export default function ImprimeYaPage() {
                                 </div>
 
                                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                                    Imprimí tu PDF
-                                    <span className="block text-blue-200">en Uruguay</span>
+                                    Fotocopias e <br />
+                                    Impresiones PDF
+                                    <span className="block text-blue-200 text-3xl md:text-4xl mt-2">En San José y todo Uruguay</span>
                                 </h1>
 
                                 <p className="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
-                                    <strong>Los mejores precios</strong> en impresiones blanco y negro, color y encuadernados con espiral.
+                                    <strong>El mejor precio</strong> en impresiones blanco y negro, color y encuadernados. Envianos tu archivo y retirá pronto.
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-4">
@@ -374,10 +458,11 @@ export default function ImprimeYaPage() {
                         <div className="grid md:grid-cols-2 gap-12 items-center">
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                                    Retirá en San José de Mayo
+                                    Fotocopiadora en San José de Mayo
                                 </h2>
                                 <p className="text-lg text-gray-600 mb-6">
-                                    Podés retirar tu pedido en nuestro taller coordinando previamente. También realizamos envíos a todo Uruguay.
+                                    Ubicados en el centro de San José. Podés retirar tu pedido en nuestro taller coordinando previamente. <br />
+                                    <strong>¿Estás en otro lado?</strong> También realizamos envíos a todo el interior de Uruguay por DAC o Correo.
                                 </p>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3 text-gray-700">

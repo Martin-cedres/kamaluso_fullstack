@@ -66,7 +66,7 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
       </Head>
       <div className="text-center mb-16">
         <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Testimonios</p>
-        <h2 className="text-4xl md:text-6xl font-bold text-textoPrimario tracking-tight">
+        <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
           Lo que dicen nuestros clientes
         </h2>
       </div>
