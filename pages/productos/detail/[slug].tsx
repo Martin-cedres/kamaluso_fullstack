@@ -31,6 +31,7 @@ import ProductSchema from '../../../lib/ProductSchema';
 import PriceLock from '../../../components/PriceLock';
 import SublimationAccessModal from '../../../components/SublimationAccessModal';
 import ProductDetailedContent from '../../../components/ProductDetailedContent';
+import SeoMeta from '../../../components/SeoMeta';
 
 // Helper para detectar cookie de acceso mayorista
 const hasWholesalerCookie = (): boolean => {
