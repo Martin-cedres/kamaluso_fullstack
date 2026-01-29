@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
 import Marquee from '../components/Marquee'; // Import Marquee
 import ScrollReveal from '../components/ScrollReveal'; // Import ScrollReveal
 import OptimizedImage from '../components/OptimizedImage'; // Import OptimizedImage
+import OrganicBlob from '../components/OrganicBlob'; // Import OrganicBlob
 
 // Interfaces
 interface Categoria {
@@ -102,9 +103,13 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         {/* Hero Section - Rediseñado para Impacto */}
         <ScrollReveal>
           <section className="relative bg-fondoClaro overflow-hidden">
-            {/* Patrón de fondo sutil */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{ backgroundImage: 'radial-gradient(#0F172A 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+            {/* Organic Animated Background Blobs */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <OrganicBlob color="#E84393" size="xl" className="top-0 left-0 -translate-x-1/2 -translate-y-1/2" animationSpeed="slow" blur="3xl" />
+              <OrganicBlob color="#FF6B35" size="lg" className="top-1/4 right-0 translate-x-1/3" animationSpeed="medium" blur="3xl" />
+              <OrganicBlob color="#FFD100" size="md" className="bottom-1/4 left-1/4" animationSpeed="fast" blur="2xl" />
+              <OrganicBlob color="#2ECC71" size="lg" className="bottom-0 right-1/4 translate-y-1/2" animationSpeed="slow" blur="3xl" />
+              <OrganicBlob color="#1F75FE" size="md" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" animationSpeed="medium" blur="3xl" />
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-12 md:py-20 lg:py-28 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12 relative z-10">
@@ -143,9 +148,9 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                     <span className="block overflow-visible mb-1 text-slate-900">
                       con productos para
                     </span>
-                    <span className="inline-block overflow-visible text-slate-900 relative">
+                    <span className="inline-block overflow-visible relative">
                       <HeroTextRotator />
-                      <span className="absolute bottom-1 left-0 w-full h-3 bg-amber-400/30 -z-10"></span>
+                      {/* Subtle underline effect removed to let gradient shine */}
                     </span>
                   </span>
                 </h1>
@@ -157,12 +162,15 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                 <div className="flex flex-col items-center gap-4 justify-center md:justify-start pt-4">
                   <Link
                     href="/productos"
-                    className="group relative w-full sm:w-auto px-10 py-4 bg-slate-900 text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300 text-center overflow-hidden border border-slate-800"
+                    className="group relative w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-rosa via-naranja to-amarillo text-white rounded-full font-bold text-lg shadow-lg hover:shadow-2xl hover:shadow-rosa/50 hover:-translate-y-1 hover:scale-105 transition-all duration-300 text-center overflow-hidden"
                   >
+                    {/* Animated gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-amarillo via-naranja to-rosa opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
                     <span className="relative z-10 flex items-center justify-center gap-3">
                       Ver Colección
                       <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
                     </span>
                   </Link>
@@ -223,7 +231,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                         className="rounded-lg"
                         unoptimized
                       />
-                      <span className="bg-slate-900 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full shadow-sm">
+                      <span className="bg-gradient-to-r from-rosa via-naranja to-amarillo text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full shadow-md">
                         ✨ 100% Tuya
                       </span>
                     </div>
@@ -264,14 +272,20 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 
         {/* Categorías Dinámicas */}
         <ScrollReveal>
-          <section className="px-6 py-16 bg-gray-50">
-            <div className="text-center mb-16">
+          <section className="relative px-6 py-16 bg-gradient-to-br from-fondoClaro via-white to-fondoClaro overflow-hidden">
+            {/* Subtle organic background */}
+            <div className="absolute inset-0 pointer-events-none opacity-30">
+              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-organic-pink to-transparent"></div>
+              <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-organic-orange to-transparent"></div>
+            </div>
+
+            <div className="text-center mb-16 relative z-10">
               <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Explorá</p>
               <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
                 Categorías
               </h2>
             </div>
-            <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+            <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto relative z-10">
 
 
               {categories
@@ -280,19 +294,22 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                   <Link
                     key={cat._id}
                     href={`/productos/${cat.slug}`}
-                    className="w-full sm:w-64 md:w-80 bg-white rounded-2xl overflow-hidden transform transition hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/50"
+                    className="group w-full sm:w-64 md:w-80 bg-white rounded-3xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-rosa/20"
                   >
-                    <div className="relative w-full h-64">
+                    <div className="relative w-full h-64 overflow-hidden">
                       <OptimizedImage
                         src={cat.imagen || '/placeholder.png'}
                         alt={cat.nombre}
                         fill
                         sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
                         style={{ objectFit: 'cover' }}
+                        className="group-hover:scale-110 transition-transform duration-500"
                       />
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-rosa/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     </div>
                     <div className="p-4 text-center">
-                      <h3 className="text-xl font-semibold">{cat.nombre}</h3>
+                      <h3 className="text-xl font-semibold text-slate-900 group-hover:text-rosa transition-colors">{cat.nombre}</h3>
                     </div>
                   </Link>
                 ))}
@@ -300,15 +317,14 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
               {/* Tarjeta Especial: Sublimación */}
               <Link
                 href="/productos/papeleria-sublimable"
-                className="w-full sm:w-64 md:w-80 bg-gradient-to-br from-naranja via-orange-500 to-amarillo rounded-2xl overflow-hidden transform transition hover:-translate-y-2 hover:shadow-xl hover:shadow-orange-500/40 relative group"
+                className="group w-full sm:w-64 md:w-80 bg-gradient-to-br from-naranja via-orange-500 to-amarillo rounded-3xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-naranja/40 relative"
               >
-                <div className="absolute top-4 right-4 bg-white text-naranja text-xs font-bold px-3 py-1 rounded-full z-10">
+                <div className="absolute top-4 right-4 bg-white text-naranja text-xs font-bold px-3 py-1 rounded-full z-10 shadow-lg">
                   Exclusivo Sublimadores
                 </div>
                 <div className="relative w-full h-64 flex items-center justify-center">
                   <div className="text-center text-white p-6">
-                    {/* Icono textual o SVG si se prefiere, por ahora texto simple o nada para evitar emojis conflictivos */}
-                    <span className="text-6xl mb-4 block group-hover:scale-110 transition-transform font-sans">📦</span>
+                    <span className="text-6xl mb-4 block group-hover:scale-110 transition-transform duration-500 font-sans">📦</span>
                     <p className="text-lg font-medium opacity-90">Insumos para</p>
                   </div>
                 </div>

@@ -75,7 +75,23 @@ module.exports = {
         'pulse-slow': {
           '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
           '50%': { opacity: 0.7, transform: 'scale(1.05)' },
+        },
+        'blob': {
+          '0%, 100%': { borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%' },
+          '50%': { borderRadius: '30% 60% 70% 40% / 50% 60% 30% 60%' }
+        },
+        'glow-pulse': {
+          '0%, 100%': { opacity: 0.5, boxShadow: '0 0 20px currentColor' },
+          '50%': { opacity: 1, boxShadow: '0 0 40px currentColor' }
         }
+      },
+      backgroundImage: {
+        'rainbow-subtle': 'linear-gradient(135deg, rgba(232,67,147,0.1) 0%, rgba(255,107,53,0.1) 25%, rgba(255,209,0,0.1) 50%, rgba(46,204,113,0.1) 75%, rgba(31,117,254,0.1) 100%)',
+        'organic-pink': 'radial-gradient(ellipse at top left, rgba(232,67,147,0.15), transparent 50%)',
+        'organic-orange': 'radial-gradient(ellipse at top right, rgba(255,107,53,0.15), transparent 50%)',
+        'organic-yellow': 'radial-gradient(ellipse at bottom left, rgba(255,209,0,0.15), transparent 50%)',
+        'organic-green': 'radial-gradient(ellipse at bottom right, rgba(46,204,113,0.15), transparent 50%)',
+        'organic-blue': 'radial-gradient(ellipse at center, rgba(31,117,254,0.15), transparent 50%)',
       },
       animation: {
         'pulse-once': 'pulse-once 2s ease-in-out infinite',
@@ -85,6 +101,8 @@ module.exports = {
         'shimmer': 'shimmer 2.5s infinite',
         'float-slow': 'float-slow 6s ease-in-out infinite',
         'pulse-slow': 'pulse-slow 4s ease-in-out infinite',
+        'blob': 'blob 8s ease-in-out infinite',
+        'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
       },
     },
   },

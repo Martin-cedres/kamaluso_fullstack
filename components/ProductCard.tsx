@@ -116,16 +116,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Schema para productos no sublimables */}
       {/* Schema movido a la página principal para optimización */}
 
-      <div className={`group flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-kamalusoSoft transition-all duration-300 ${hoverShadowClass} hover:-translate-y-1 border border-slate-100`}>
+      <div className={`group flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-kamalusoSoft transition-all duration-500 ${hoverShadowClass} hover:-translate-y-2 border border-slate-100 hover:border-slate-200`}>
         <Link href={productUrl} className="block relative w-full aspect-square min-w-0 overflow-hidden bg-fondoClaro">
           <OptimizedImage
             src={imageSrc}
             alt={product.alt || product.nombre}
             fill
             sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transform transition-transform duration-700 group-hover:scale-110"
+            className="object-cover transform transition-transform duration-700 ease-out group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/0 to-black/0 group-hover:from-black/5 group-hover:to-transparent transition-all duration-500" />
 
           {/* Badge para productos sublimables */}
           {isSublimable && (

@@ -64,6 +64,11 @@ export default async function handler(
     const query: any = {};
     const andConditions: any[] = [];
 
+    // Si no se pide una categoría específica, excluimos sublimables por defecto (retail view)
+    if (!categoriaParam) {
+      andConditions.push({ categoria: { $ne: 'papeleria-sublimable' } });
+    }
+
     if (categoria) {
       const categoryDoc = await db.collection('categories').findOne({ slug: categoria });
 
@@ -203,9 +208,110 @@ export default async function handler(
       db.collection('products').countDocuments(query),
     ]);
 
-    const totalPages = Math.ceil(total / limitNum);
+    // FUZZY SEARCH FALLBACK: Si no hay resultados y hay búsqueda activa, intentar búsqueda fuzzy
+    let finalProducts = productos;
+    let finalTotal = total;
 
-    const mapped = productos.map((p: any) => ({
+    if (search && productos.length === 0) {
+      // Importar fuzzy search utilities
+      const { fuzzySearch } = await import('../../../lib/fuzzySearch');
+
+      // Obtener todos los productos para búsqueda fuzzy (sin filtros de search)
+      const fuzzyQuery = { ...query };
+      if (fuzzyQuery.$and) {
+        // Remover el filtro de búsqueda para obtener todos los productos
+        fuzzyQuery.$and = fuzzyQuery.$and.filter((condition: any) => !condition.$or || !condition.$or.some((c: any) => c.nombre));
+        if (fuzzyQuery.$and.length === 0) delete fuzzyQuery.$and;
+      }
+
+      const allProducts = await db.collection('products')
+        .find(fuzzyQuery)
+        .limit(100) // Limitar a 100 productos para performance
+        .toArray();
+
+      // Aplicar fuzzy search con threshold más estricto
+      const fuzzyResults = fuzzySearch(search, allProducts, 'nombre', 0.65);
+
+      if (fuzzyResults.length > 0) {
+        // Tomar solo los top resultados según limit
+        const topFuzzyResults = fuzzyResults.slice(skip, skip + limitNum);
+
+        // Enriquecer con reviews usando el mismo pipeline
+        const enrichedResults = await Promise.all(
+          topFuzzyResults.map(async (product) => {
+            const [productWithReviews] = await db.collection('products').aggregate([
+              { $match: { _id: product._id } },
+              {
+                $lookup: {
+                  from: 'reviews',
+                  localField: '_id',
+                  foreignField: 'product',
+                  as: 'reviews',
+                },
+              },
+              {
+                $addFields: {
+                  approvedReviews: {
+                    $filter: {
+                      input: '$reviews',
+                      as: 'review',
+                      cond: { $eq: ['$$review.isApproved', true] },
+                    },
+                  },
+                },
+              },
+              {
+                $addFields: {
+                  averageRating: { $avg: '$approvedReviews.rating' },
+                  numReviews: { $size: '$approvedReviews' },
+                },
+              },
+              {
+                $project: {
+                  nombre: 1,
+                  slug: 1,
+                  descripcion: 1,
+                  descripcionBreve: 1,
+                  descripcionExtensa: 1,
+                  puntosClave: 1,
+                  basePrice: 1,
+                  precio: 1,
+                  precioFlex: 1,
+                  precioDura: 1,
+                  categoria: 1,
+                  subCategoria: 1,
+                  seoTitle: 1,
+                  seoDescription: 1,
+                  seoKeywords: 1,
+                  alt: 1,
+                  notes: 1,
+                  status: 1,
+                  contentStatus: 1,
+                  destacado: 1,
+                  imageUrl: 1,
+                  images: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
+                  tapa: 1,
+                  averageRating: 1,
+                  numReviews: 1,
+                  order: 1,
+                },
+              },
+            ]).toArray();
+
+            return productWithReviews;
+          })
+        );
+
+        finalProducts = enrichedResults;
+        finalTotal = fuzzyResults.length;
+      }
+    }
+
+    const totalPages = Math.ceil(finalTotal / limitNum);
+
+    const mapped = finalProducts.map((p: any) => ({
       ...p,
       averageRating: p.averageRating === null ? 0 : p.averageRating,
       numReviews: p.numReviews || 0,

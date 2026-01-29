@@ -386,6 +386,44 @@ export default function CategoryPage({
                   </button>
                 </div>
               )}
+
+              {/* SEO Content Block for Sublimation */}
+              {category.slug === 'papeleria-sublimable' && (
+                <section className="mt-20 py-12 border-t border-gray-200">
+                  <div className="prose prose-slate max-w-none">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-6">Proveedor de Insumos para Sublimación en Uruguay</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div>
+                        <p className="text-gray-700 leading-relaxed">
+                          En Kamaluso nos especializamos en la venta de <strong>insumos para sublimación por mayor</strong> y menor.
+                          Nuestro producto estrella es el <strong>cartón cristal 350 gr sublimable</strong>, una solución premium
+                          que garantiza colores vibrantes y una durabilidad superior en tapas de agendas y libretas.
+                          A diferencia del cartón gris tradicional, nuestro material está diseñado específicamente para
+                          segmentos de alta gama, permitiendo una rentabilidad de hasta el 150% para tu taller.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-700 leading-relaxed">
+                          Realizamos <strong>envíos a todo Uruguay</strong>: Montevideo, Canelones, Maldonado,
+                          Salto, Paysandú y todos los departamentos. Si buscás un <strong>mayorista de papelería
+                            en Uruguay</strong> que entienda la técnica de la sublimación, estás en el lugar correcto.
+                          Ofrecemos kits listos para sublimar, interiores de agendas impresos y asesoramiento técnico
+                          sobre <em>tiempos y temperaturas</em> para que tus acabados sean profesionales.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-8 p-6 bg-orange-50 rounded-2xl border border-orange-100 flex items-center gap-6">
+                      <div className="text-4xl">📚</div>
+                      <div>
+                        <h3 className="text-lg font-bold text-orange-900 mb-1">¿Recién empezás en la sublimación de agendas?</h3>
+                        <p className="text-orange-800 text-sm">
+                          No te pierdas nuestra <Link href="/blog/guia-completa-sublimacion-agendas" className="font-bold underline hover:text-orange-600">Guía Definitiva de Sublimación</Link> con todos los secretos técnicos.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
             </>
           )}
         </div>
@@ -435,7 +473,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
     await connectDB();
     const page = 1;
     const limit = 12; // Productos por página
-    const query = { soloDestacado: { $ne: true } };
+    const query = {
+      soloDestacado: { $ne: true },
+      categoria: { $ne: 'papeleria-sublimable' }
+    };
 
     const productsData = await Product.find(query)
       .sort({ order: 1, createdAt: -1 })

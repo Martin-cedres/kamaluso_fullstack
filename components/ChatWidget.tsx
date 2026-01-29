@@ -125,16 +125,16 @@ const ChatWidget = () => {
 
 
 
-                    {/* Header */}
-                    <div className="bg-slate-900 p-4 flex justify-between items-center text-white border-b border-white/10">
+                    {/* Header with gradient from logo colors */}
+                    <div className="bg-gradient-to-r from-rosa via-naranja to-amarillo p-4 flex justify-between items-center text-white border-b border-white/10">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 bg-white/20 rounded-full">
                                 <ChatBubbleLeftRightIcon className="w-5 h-5" />
                             </div>
                             <div>
                                 <h3 className="font-bold text-sm">Kamaluso Bot</h3>
-                                <span className="text-xs text-pink-100 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                                <span className="text-xs text-white/90 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
                                     En línea
                                 </span>
                             </div>
@@ -163,7 +163,7 @@ const ChatWidget = () => {
                             >
                                 <div
                                     className={`max-w-[85%] p-3 rounded-2xl text-sm break-words ${msg.role === 'user'
-                                        ? 'bg-slate-700 text-white rounded-br-none'
+                                        ? 'bg-gradient-to-r from-rosa to-naranja text-white rounded-br-none shadow-md'
                                         : 'bg-white border border-gray-200 text-black rounded-bl-none shadow-sm'
                                         }`}
                                 >
@@ -248,7 +248,7 @@ const ChatWidget = () => {
                         <button
                             type="submit"
                             disabled={isLoading || !message.trim()}
-                            className="p-2 bg-slate-900 text-white rounded-full hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                            className="p-2 bg-gradient-to-r from-rosa to-naranja text-white rounded-full hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md"
                         >
                             <PaperAirplaneIcon className="w-5 h-5" />
                         </button>
@@ -257,14 +257,14 @@ const ChatWidget = () => {
             )}
 
             {/* Floating Button Container */}
-            <div className={`fixed ${router.pathname.includes('/productos/') ? 'bottom-32 md:bottom-24' : 'bottom-24'} right-5 z-40 group`}>
+            <div className={`fixed ${router.pathname.includes('/productos/') ? 'bottom-40 md:bottom-28' : 'bottom-24'} right-5 z-40 group`}>
                 {/* Tooltip on Hover */}
                 {!isOpen && (
                     <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        <div className="bg-slate-900 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl font-medium border border-white/10">
+                        <div className="bg-gradient-to-r from-rosa to-naranja text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl font-medium">
                             ¡Asistente Virtual!
                             <div className="absolute top-full right-6 -mt-1">
-                                <div className="border-4 border-transparent border-t-slate-900"></div>
+                                <div className="border-4 border-transparent border-t-rosa"></div>
                             </div>
                         </div>
                     </div>
@@ -272,7 +272,7 @@ const ChatWidget = () => {
 
                 <button
                     onClick={handleToggle}
-                    className="p-4 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-black/20 hover:scale-110 transition-all duration-300 relative border border-white/10"
+                    className="p-4 bg-gradient-to-r from-rosa via-naranja to-amarillo text-white rounded-full shadow-lg hover:shadow-2xl hover:shadow-rosa/50 hover:scale-110 transition-all duration-300 relative"
                     aria-label="Chat con soporte"
                 >
                     {isOpen ? (

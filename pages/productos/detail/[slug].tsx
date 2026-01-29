@@ -9,8 +9,8 @@ import { useRouter } from 'next/router'
 import { useCart } from '../../../context/CartContext'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, ShieldCheckIcon, TruckIcon, SparklesIcon, DocumentTextIcon, CheckCircleIcon, QuestionMarkCircleIcon, LightBulbIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import SeoMeta from '../../../components/SeoMeta'
 import Breadcrumbs from '../../../components/Breadcrumbs'
+import OptimizedImage from '../../../components/OptimizedImage';
 import StarRating from '../../../components/StarRating';
 import ReviewList from '../../../components/ReviewList';
 import ReviewForm from '../../../components/ReviewForm';
@@ -30,6 +30,7 @@ import s3Loader from '../../../lib/s3-loader';
 import ProductSchema from '../../../lib/ProductSchema';
 import PriceLock from '../../../components/PriceLock';
 import SublimationAccessModal from '../../../components/SublimationAccessModal';
+import ProductDetailedContent from '../../../components/ProductDetailedContent';
 
 // Helper para detectar cookie de acceso mayorista
 const hasWholesalerCookie = (): boolean => {
@@ -122,11 +123,6 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
   const [showDesktopRightArrow, setShowDesktopRightArrow] = useState(false);
   const [showMobileLeftArrow, setShowMobileLeftArrow] = useState(false);
   const [showMobileRightArrow, setShowMobileRightArrow] = useState(false);
-  // Inicializar con 'descripcion' para evitar diferencias entre servidor y cliente
-  const [activeTab, setActiveTab] = useState('descripcion');
-
-  const [tapaSeleccionada, setTapaSeleccionada] = useState<any>(null);
-
   // Estado para Lead Magnet de sublimación
   const [sublimationModalOpen, setSublimationModalOpen] = useState(false);
   const [hasWholesalerAccess, setHasWholesalerAccess] = useState(false);
@@ -139,30 +135,9 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     setHasWholesalerAccess(hasWholesalerCookie());
   }, []);
 
-  // Establecer el tab activo después del montaje para evitar diferencias de hidratación
-  useEffect(() => {
-    if (product?.puntosClave && product.puntosClave.length > 0) {
-      setActiveTab('puntosClave');
-    }
-  }, [product]);
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [router.asPath]);
-
-  const TabButton = ({ tabName, label, icon: Icon }: { tabName: string; label: string; icon: React.FC<React.ComponentProps<'svg'>> }) => (
-    <button
-      onClick={() => setActiveTab(tabName)}
-      className={`flex items-center gap-x-2 px-4 py-2 text-sm sm:text-base font-semibold transition-colors duration-300 whitespace-nowrap ${activeTab === tabName
-        ? 'border-b-2 border-pink-500 text-pink-600'
-        : 'text-gray-500 hover:text-gray-800'
-        }`}
-    >
-      <Icon className="h-5 w-5" />
-      <span>{label}</span>
-    </button>
-  );
-
 
   const scrollThumbnails = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
     const container = ref.current;
@@ -506,91 +481,94 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
         {/* --- ESTRUCTURA PARA ESCRITORIO (md y superior) --- */}
         <div className="hidden md:grid mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid-cols-2 gap-14 mt-6">
-          {/* Columna Izquierda Pegajosa (Imagen + Miniaturas) */}
-          <div className="md:sticky top-28 self-start">
-            <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4 group mx-auto">
-              <Image
-                key={activeImage}
-                src={activeImage}
-                alt={product.alt || product.nombre}
-                fill
-                sizes="(max-width: 768px) 90vw, 50vw"
-                style={{ objectFit: 'cover' }}
-                className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
-                priority
-                onLoadingComplete={() => setIsAnimating(false)}
-              />
+          {/* Columna Izquierda (Imagen + Miniaturas + CONTENIDO ABAJO) */}
+          <div className="flex flex-col">
+            <div className="md:sticky top-28 self-start mb-12">
+              <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4 group mx-auto">
+                <OptimizedImage
+                  key={activeImage}
+                  src={activeImage}
+                  alt={product.alt || product.nombre}
+                  fill
+                  sizes="(max-width: 768px) 90vw, 50vw"
+                  style={{ objectFit: 'cover' }}
+                  className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
+                  priority
+                  onLoadingComplete={() => setIsAnimating(false)}
+                />
+                {allProductImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                      aria-label="Imagen anterior"
+                    >
+                      <ChevronLeftIcon className="h-6 w-6" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                      aria-label="Siguiente imagen"
+                    >
+                      <ChevronRightIcon className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Miniaturas para Escritorio */}
               {allProductImages.length > 1 && (
-                <>
+                <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto mt-4 group/thumbnails">
+
+                  {/* Gradient Masks */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
+                  <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopRightArrow ? 'opacity-100' : 'opacity-0'}`} />
+
+                  {/* Left Arrow */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
-                    aria-label="Imagen anterior"
+                    onClick={() => scrollThumbnails(desktopCarouselRef, 'left')}
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopLeftArrow ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'}`}
+                    aria-label="Scroll left"
                   >
-                    <ChevronLeftIcon className="h-6 w-6" />
+                    <ChevronLeftIcon className="h-5 w-5" />
                   </button>
+
+                  <div
+                    ref={desktopCarouselRef}
+                    tabIndex={0}
+                    className="flex flex-nowrap gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1 w-full scroll-smooth focus:outline-none"
+                  >
+                    {allProductImages.map((img, index) => (
+                      <div
+                        key={index}
+                        id={`thumbnail-desktop-${index}`}
+                        className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none transform ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 hover:scale-105 opacity-70'}`}
+                        onClick={() => handleImageChange(img)}
+                      >
+                        <OptimizedImage
+                          src={img}
+                          alt={`Thumbnail ${index + 1}`}
+                          fill
+                          sizes="80px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Right Arrow */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
-                    aria-label="Siguiente imagen"
+                    onClick={() => scrollThumbnails(desktopCarouselRef, 'right')}
+                    className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopRightArrow ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}
+                    aria-label="Scroll right"
                   >
-                    <ChevronRightIcon className="h-6 w-6" />
+                    <ChevronRightIcon className="h-5 w-5" />
                   </button>
-                </>
+                </div>
               )}
             </div>
 
-            {/* Miniaturas para Escritorio */}
-            {allProductImages.length > 1 && (
-              <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto mt-4 group/thumbnails">
 
-                {/* Gradient Masks */}
-                <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
-                <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopRightArrow ? 'opacity-100' : 'opacity-0'}`} />
-
-                {/* Left Arrow */}
-                <button
-                  onClick={() => scrollThumbnails(desktopCarouselRef, 'left')}
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopLeftArrow ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'}`}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeftIcon className="h-5 w-5" />
-                </button>
-
-                <div
-                  ref={desktopCarouselRef}
-                  tabIndex={0}
-                  className="flex flex-nowrap gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1 w-full scroll-smooth focus:outline-none"
-                >
-                  {allProductImages.map((img, index) => (
-                    <div
-                      key={index}
-                      id={`thumbnail-desktop-${index}`}
-                      className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none transform ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 hover:scale-105 opacity-70'}`}
-                      onClick={() => handleImageChange(img)}
-                    >
-                      <Image
-                        loader={s3Loader}
-                        src={img}
-                        alt={`Thumbnail ${index + 1}`}
-                        fill
-                        sizes="80px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Right Arrow */}
-                <button
-                  onClick={() => scrollThumbnails(desktopCarouselRef, 'right')}
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopRightArrow ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRightIcon className="h-5 w-5" />
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Columna Derecha con Scroll */}
@@ -682,7 +660,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
             {/* --- Botones de Acción --- */}
             <div className="hidden md:flex flex-col sm:flex-row gap-4 mt-8">
-              <button onClick={handleAddToCart} className="w-full sm:w-auto bg-pink-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition flex-grow">
+              <button onClick={handleAddToCart} className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoPink hover:from-pink-600 hover:to-rose-700 transition-all duration-300 flex-grow transform hover:-translate-y-0.5">
                 Agregar al carrito
               </button>
             </div>
@@ -706,11 +684,11 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         </div>
 
         {/* --- ESTRUCTURA PARA MÓVIL (hasta md) --- */}
-        <div className="md:hidden mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2">
+        <div className="md:hidden mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2 pb-8">
           {/* Contenedor de Imagen Principal Pegajosa */}
           <div className="sticky top-16 z-40 bg-white pb-4">
             <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg group mx-auto">
-              <Image
+              <OptimizedImage
                 key={activeImage}
                 src={activeImage}
                 alt={product.alt || product.nombre}
@@ -756,7 +734,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 opacity-80'}`}
                       onClick={() => handleImageChange(img)}
                     >
-                      <Image loader={s3Loader} src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
+                      <OptimizedImage src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
                     </div>
                   ))}
                 </div>
@@ -774,6 +752,22 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
             </div>
             <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
+
+            {/* Mobile Trust Badges */}
+            <div className="md:hidden flex items-center justify-between gap-2 py-4 border-y border-gray-100 bg-gray-50/50 px-2 rounded-lg">
+              <div className="flex flex-col items-center text-center gap-1 w-1/3">
+                <ShieldCheckIcon className="w-5 h-5 text-verde" />
+                <span className="text-[10px] text-gray-600 font-medium leading-tight">Compra<br />Segura</span>
+              </div>
+              <div className="flex flex-col items-center text-center gap-1 w-1/3 border-l border-gray-200">
+                <TruckIcon className="w-5 h-5 text-azul" />
+                <span className="text-[10px] text-gray-600 font-medium leading-tight">Envíos a<br />todo el país</span>
+              </div>
+              <div className="flex flex-col items-center text-center gap-1 w-1/3 border-l border-gray-200">
+                <SparklesIcon className="w-5 h-5 text-amarillo" />
+                <span className="text-[10px] text-gray-600 font-medium leading-tight">Calidad<br />Premium</span>
+              </div>
+            </div>
 
             {product.descripcionBreve && (
               <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
@@ -804,7 +798,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   let selectorType: 'grid' | 'color' | 'text' | 'button' = 'button';
                   if (group.type === 'text') selectorType = 'text';
                   else if (group.name.toLowerCase().includes('interior') || group.name.toLowerCase().includes('diseño')) selectorType = 'grid';
-                  else if (group.name.toLowerCase().includes('wire') || group.name.toLowerCase().includes('elástico') || group.name.toLowerCase().includes('color')) selectorType = 'color';
+                  else if (group.name.toLowerCase().includes('wire') || group.name.toLowerCase().includes('color')) selectorType = 'color';
 
                   return (
                     <div key={group.name}>
@@ -830,144 +824,92 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           </div>
         </div>
 
-        {/* --- CONTENIDO COMÚN (Sección de Pestañas y Relacionados) --- */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="w-full mt-8 md:mt-16">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex gap-x-4 sm:gap-x-6 overflow-x-auto scrollbar-hide" aria-label="Tabs">
-                {product.puntosClave && product.puntosClave.length > 0 && (
-                  <TabButton tabName="puntosClave" label="Puntos Clave" icon={ClipboardDocumentListIcon} />
-                )}
-                <TabButton tabName="descripcion" label="Descripción" icon={DocumentTextIcon} />
-                {product.faqs && product.faqs.length > 0 && (
-                  <TabButton tabName="faqs" label="Preguntas Frecuentes" icon={QuestionMarkCircleIcon} />
-                )}
-                {product.useCases && product.useCases.length > 0 && (
-                  <TabButton tabName="useCases" label="Casos de Uso" icon={LightBulbIcon} />
-                )}
-                <TabButton tabName="reseñas" label={`Reseñas (${reviewCount})`} icon={StarIcon} />
-              </nav>
-            </div>
-
-            <div className="py-8">
-              {/* ... content ... */}
-            </div>
+        {/* --- CONTENIDO DETALLADO COMÚN (Restaurado) --- */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-20">
+          <ProductDetailedContent product={product} reviews={reviews} reviewCount={reviewCount} />
+        </div>
 
 
 
 
-            {activeTab === 'descripcion' && (
-              <div className="prose max-w-none text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: product.descripcion || product.descripcionExtensa || '' }} />
-            )}
-            {activeTab === 'puntosClave' && (
-              <div>
-                <ul className="space-y-4">
-                  {product.puntosClave?.map((punto, index) => (
-                    <li key={index} className="flex items-start">
-                      <svg className="h-6 w-6 text-pink-500 mr-4 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-gray-700 text-lg">{punto}</span>
-                    </li>
+        {
+          relatedProducts.length > 0 && (
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <section className="mt-16">
+                <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                  {relatedProducts.map((p) => (
+                    <div key={p._id} className="h-full">
+                      <ProductCard product={p} />
+                    </div>
                   ))}
-                </ul>
-              </div>
-            )}
-            {activeTab === 'reseñas' && (
-              <div id="reviews-section" className="max-w-4xl mx-auto">
-                <div className="space-y-12">
-                  <ReviewForm productId={product._id} onReviewSubmit={() => window.location.reload()} />
-                  <ReviewList reviews={reviews} />
                 </div>
-              </div>
-            )}
-            {activeTab === 'faqs' && (
-              <FaqSection faqs={product.faqs || []} />
-            )}
-            {activeTab === 'useCases' && (
-              <UseCasesSection useCases={product.useCases || []} />
-            )}
-          </div>
-        </div >
-      </div >
+              </section>
+            </div>
+          )
+        }
 
-      {
-        relatedProducts.length > 0 && (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <section className="mt-16">
-              <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                {relatedProducts.map((p) => (
-                  <div key={p._id} className="h-full">
-                    <ProductCard product={p} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-        )
-      }
-
-      {/* --- Botón de Compra Pegajoso para Móviles --- */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 pb-safe">
-        <div className="flex justify-between items-center gap-3">
-          {/* Precio a la izquierda */}
-          <div className="text-left flex-1">
-            <p className="text-xs text-gray-500 -mb-1">Total</p>
+        {/* --- Botón de Compra Pegajoso para Móviles --- */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[60] pb-safe">
+          <div className="flex justify-between items-center gap-3">
+            {/* Precio a la izquierda */}
+            <div className="text-left flex-1">
+              <p className="text-xs text-gray-500 -mb-1">Total</p>
+              {isSublimable && !hasWholesalerAccess ? (
+                <button
+                  onClick={() => setSublimationModalOpen(true)}
+                  className="font-bold text-xl text-naranja flex items-center gap-1"
+                >
+                  <span className="blur-md">$U {totalPrice}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                </button>
+              ) : (
+                <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
+              )}
+            </div>
+            {/* Botón de Compartir */}
+            <ShareProductButton
+              productName={product.nombre}
+              productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
+              productImage={activeImage}
+              variant="icon"
+              size="md"
+            />
+            {/* Botón de Añadir a la derecha (principal) */}
             {isSublimable && !hasWholesalerAccess ? (
               <button
                 onClick={() => setSublimationModalOpen(true)}
-                className="font-bold text-xl text-naranja flex items-center gap-1"
+                className="bg-gradient-to-r from-naranja to-amarillo text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoWarm transition text-lg whitespace-nowrap flex items-center gap-2"
               >
-                <span className="blur-md">$U {totalPrice}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
+                Desbloquear
               </button>
             ) : (
-              <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
+              <button
+                onClick={handleAddToCart}
+                className="bg-gradient-to-r from-pink-500 to-rose-600 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoPink transition text-lg whitespace-nowrap"
+              >
+                Agregar al carrito
+              </button>
             )}
           </div>
-          {/* Botón de Compartir */}
-          <ShareProductButton
-            productName={product.nombre}
-            productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
-            productImage={activeImage}
-            variant="icon"
-            size="md"
-          />
-          {/* Botón de Añadir a la derecha (principal) */}
-          {isSublimable && !hasWholesalerAccess ? (
-            <button
-              onClick={() => setSublimationModalOpen(true)}
-              className="bg-gradient-to-r from-naranja to-amarillo text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoWarm transition text-lg whitespace-nowrap flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              </svg>
-              Desbloquear
-            </button>
-          ) : (
-            <button
-              onClick={handleAddToCart}
-              className="bg-pink-500 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:bg-pink-600 transition text-lg whitespace-nowrap"
-            >
-              Agregar al carrito
-            </button>
-          )}
         </div>
+
+
+        {/* Modal de acceso sublimación */}
+        <SublimationAccessModal
+          isOpen={sublimationModalOpen}
+          onClose={() => setSublimationModalOpen(false)}
+          onSuccess={() => {
+            setHasWholesalerAccess(true);
+            setSublimationModalOpen(false);
+          }}
+        />
       </div>
-
-
-      {/* Modal de acceso sublimación */}
-      <SublimationAccessModal
-        isOpen={sublimationModalOpen}
-        onClose={() => setSublimationModalOpen(false)}
-        onSuccess={() => {
-          setHasWholesalerAccess(true);
-          setSublimationModalOpen(false);
-        }}
-      />
     </>
   )
 }

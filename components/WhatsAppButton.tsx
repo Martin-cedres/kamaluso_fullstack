@@ -1,17 +1,29 @@
-import React from 'react'
+import { useRouter } from 'next/router'
 
 interface WhatsAppButtonProps {
   customMessage?: string
 }
 
 const WhatsAppButton = ({ customMessage }: WhatsAppButtonProps) => {
+  const router = useRouter()
+  // Check if we are on a product detail page
+  const isProductDetailPage = router.pathname.includes('/productos/detail/')
+
   const phoneNumber = '59898615074'
   const defaultText =
     customMessage || '¡Hola! Vi sus productos en Papelería Personalizada y quiero más info.'
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultText)}`
 
+  // Determine visibility and position
+  // 1. Mobile: Show ONLY on Product Detail (hidden otherwise)
+  // 2. Desktop: Always show (md:block)
+  // 3. Position: Higher on Product Detail (mobile only)
+
+  const visibilityClass = isProductDetailPage ? 'block' : 'hidden md:block'
+  const positionClass = isProductDetailPage ? 'bottom-24 md:bottom-5' : 'bottom-5'
+
   return (
-    <div className="fixed bottom-5 right-5 z-50 group hidden md:block">
+    <div className={`fixed right-5 z-[70] group ${visibilityClass} ${positionClass}`}>
       {/* Tooltip al hover */}
       <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg whitespace-nowrap shadow-xl">

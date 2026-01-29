@@ -170,7 +170,7 @@ const VisualOptionSelector: React.FC<VisualOptionSelectorProps> = ({
                                     }`}
                             >
                                 {opt.name}
-                                {opt.priceModifier && opt.priceModifier > 0 && (
+                                {(opt.priceModifier || 0) > 0 && (
                                     <span className={`ml-1 text-xs ${isSelected ? 'text-pink-100' : 'text-pink-500'}`}>
                                         (+$U {opt.priceModifier})
                                     </span>
