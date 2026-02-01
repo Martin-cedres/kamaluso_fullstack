@@ -350,139 +350,125 @@ export default function CheckoutPage() {
                     />
                   </div>
 
+                  {/* --- Selector Visual de Método de Envío --- */}
                   <div>
-                    <label
-                      htmlFor="shippingMethod"
-                      className="block text-sm font-medium text-gray-700"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       Método de Envío
                     </label>
-                    <select
-                      id="shippingMethod"
-                      value={shippingMethod}
-                      onChange={(e) => setShippingMethod(e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
-                    >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {Object.entries(shippingOptions).map(([key, text]) => (
-                        <option key={key} value={key}>
-                          {text}
-                        </option>
+                        <div
+                          key={key}
+                          onClick={() => setShippingMethod(key)}
+                          className={`relative flex flex-col p-4 cursor-pointer rounded-xl border-2 transition-all duration-200 ${shippingMethod === key
+                            ? 'border-pink-500 bg-pink-50/50 shadow-sm'
+                            : 'border-gray-200 hover:border-pink-200 hover:bg-gray-50'
+                            }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            {/* Icon Mapping */}
+                            {key.includes('dac') && <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${shippingMethod === key ? 'text-pink-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg>}
+                            {key.includes('correo') && <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${shippingMethod === key ? 'text-pink-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+                            {key.includes('pickup') && <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${shippingMethod === key ? 'text-pink-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+
+                            {/* Radio Circle Indicator */}
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${shippingMethod === key ? 'border-pink-500' : 'border-gray-300'}`}>
+                              {shippingMethod === key && <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />}
+                            </div>
+                          </div>
+                          <span className={`font-medium text-sm ${shippingMethod === key ? 'text-pink-900' : 'text-gray-700'}`}>
+                            {text}
+                          </span>
+                        </div>
                       ))}
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      El costo del envío es a cargo del comprador y se abona al
-                      recibir/retirar el paquete.
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      El costo del envío es a cargo del comprador y se abona al recibir/retirar.
                     </p>
                   </div>
 
                   {shippingMethod === 'dac_domicilio' && (
-                    <>
+                    <div className="bg-gray-50 p-4 rounded-xl space-y-4 animate-fadeIn">
+                      {/* Campos de Dirección (Igual que antes pero encapsulados para orden visual) */}
                       <div>
-                        <label
-                          htmlFor="address"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Dirección de Envío
-                        </label>
-                        <input
-                          type="text"
-                          id="address"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          required={shippingMethod === 'dac_domicilio'}
-                          placeholder="Calle, número, apto, etc."
-                          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
-                        />
+                        <label htmlFor="address" className="block text-sm font-medium text-gray-700">Dirección</label>
+                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} required={shippingMethod === 'dac_domicilio'} placeholder="Calle, número, apto, etc." className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 transition-shadow" />
                       </div>
-                      <div>
-                        <label
-                          htmlFor="city"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Ciudad
-                        </label>
-                        <input
-                          type="text"
-                          id="city"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          required={shippingMethod === 'dac_domicilio'}
-                          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="city" className="block text-sm font-medium text-gray-700">Ciudad</label>
+                          <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)} required={shippingMethod === 'dac_domicilio'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 transition-shadow" />
+                        </div>
+                        <div>
+                          <label htmlFor="department" className="block text-sm font-medium text-gray-700">Departamento</label>
+                          <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required={shippingMethod === 'dac_domicilio'} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 transition-shadow">
+                            {departments.map((dep) => (<option key={dep} value={dep}>{dep}</option>))}
+                          </select>
+                        </div>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="department"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Departamento
-                        </label>
-                        <select
-                          id="department"
-                          value={department}
-                          onChange={(e) => setDepartment(e.target.value)}
-                          required={shippingMethod === 'dac_domicilio'}
-                          className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
-                        >
-                          {departments.map((dep) => (
-                            <option key={dep} value={dep}>
-                              {dep}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                  {(shippingMethod === 'correo' ||
-                    shippingMethod === 'dac_agencia') && (
-                    <div>
-                      <label
-                        htmlFor="shippingNotes"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Notas de Envío
-                      </label>
-                      <textarea
-                        id="shippingNotes"
-                        value={shippingNotes}
-                        onChange={(e) => setShippingNotes(e.target.value)}
-                        rows={3}
-                        placeholder={getNotesPlaceholder()}
-                        required
-                        className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
-                      />
                     </div>
                   )}
 
+                  {(shippingMethod === 'correo' || shippingMethod === 'dac_agencia') && (
+                    <div className="bg-gray-50 p-4 rounded-xl animate-fadeIn">
+                      <label htmlFor="shippingNotes" className="block text-sm font-medium text-gray-700 mb-1">
+                        ¿En qué sucursal/agencia retiras?
+                      </label>
+                      <textarea id="shippingNotes" value={shippingNotes} onChange={(e) => setShippingNotes(e.target.value)} rows={2} placeholder={getNotesPlaceholder()} required className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 transition-shadow" />
+                    </div>
+                  )}
+
+                  {/* --- Selector Visual de Método de Pago --- */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       Método de Pago
                     </label>
-                    <select
-                      id="paymentMethod"
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500"
-                    >
+                    <div className="grid grid-cols-1 gap-3">
                       {availablePaymentOptions().map(([key, text]) => (
-                        <option key={key} value={key}>
-                          {text}
-                        </option>
+                        <div
+                          key={key}
+                          onClick={() => setPaymentMethod(key)}
+                          className={`flex items-center p-4 cursor-pointer rounded-xl border-2 transition-all duration-200 ${paymentMethod === key
+                            ? 'border-pink-500 bg-pink-50/50 shadow-sm'
+                            : 'border-gray-200 hover:border-pink-200 hover:bg-gray-50'
+                            }`}
+                        >
+                          <div className="flex-shrink-0 mr-4">
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === key ? 'border-pink-500' : 'border-gray-300'}`}>
+                              {paymentMethod === key && <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <span className={`font-medium block ${paymentMethod === key ? 'text-pink-900' : 'text-gray-900'}`}>
+                              {text}
+                            </span>
+                            {key === 'mercado_pago_online' && (
+                              <span className="text-xs text-orange-600 font-medium inline-block bg-orange-100 px-2 py-0.5 rounded mt-1">
+                                +10% recargo
+                              </span>
+                            )}
+                          </div>
+                          {/* Payment Icons */}
+                          <div className="text-gray-400 ml-2">
+                            {key === 'mercado_pago_online' ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            )}
+                          </div>
+                        </div>
                       ))}
-                    </select>
-                    {/* Dynamic Payment Instructions */}
-                    {(paymentMethod === 'brou' ||
-                      paymentMethod === 'oca_blue' ||
-                      paymentMethod === 'mi_dinero' ||
-                      paymentMethod === 'prex' ||
-                      paymentMethod === 'abitab' ||
-                      paymentMethod === 'red_pagos') && (
-                      <p className="text-sm text-gray-600 mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
-                        Recibirás las instrucciones para completar el pago en tu correo electrónico una vez que confirmes el pedido.
-                      </p>
+                    </div>
+
+                    {/* Instrucciones de Pago dinámicas */}
+                    {(paymentMethod === 'brou' || paymentMethod === 'oca_blue' || paymentMethod === 'mi_dinero' || paymentMethod === 'prex' || paymentMethod === 'abitab' || paymentMethod === 'red_pagos') && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100 flex gap-3 animate-fadeIn">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <p className="text-sm text-blue-800">
+                          Una vez confirmado el pedido, recibirás un correo con los datos de cuenta para transferir. El pedido se procesa al enviar el comprobante.
+                        </p>
+                      </div>
                     )}
                   </div>
 

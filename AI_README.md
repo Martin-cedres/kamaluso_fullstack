@@ -6,9 +6,9 @@ Este documento detalla la arquitectura del cliente de IA de Google Gemini en el 
 
 Toda la lógica de comunicación con la API de Gemini está centralizada en `lib/gemini-client.ts`. Este cliente inteligente gestiona automáticamente:
 
-- **Priorización de Modelos:** Utiliza el modelo más potente y estable disponible (`gemini-2.5-pro`) como primera opción.
-- **Fallback Automático:** Si todos los intentos con los modelos "Pro" fallan debido a errores de cuota o límite, el sistema automáticamente pasa a usar los modelos "Flash" (`gemini-2.5-flash`) como respaldo.
-- **Rotación de Claves:** El sistema rota automáticamente entre las claves de API disponibles para cada nivel (Pro y Flash) cuando detecta un error de cuota, maximizando el uso y la disponibilidad.
+- **Priorización de Modelos:** Utiliza el modelo `gemini-2.5-flash` como modelo principal y primera opción (las claves PRO actualmente no están funcionando).
+- **Fallback Automático:** Si todos los intentos con las claves "Flash" fallan, el sistema automáticamente intenta usar los modelos "Pro" (`gemini-2.5-pro`) como último recurso de emergencia.
+- **Rotación de Claves:** El sistema rota automáticamente entre las claves de API disponibles para cada nivel (Flash y Pro) cuando detecta un error de cuota, maximizando el uso y la disponibilidad.
 
 El acceso a esta lógica se realiza a través de una única función wrapper en `lib/gemini-agent.ts`.
 
@@ -16,17 +16,17 @@ El acceso a esta lógica se realiza a través de una única función wrapper en 
 
 El sistema utiliza dos grupos de claves de API que deben ser definidas en tu archivo `.env.local` como **listas separadas por comas**.
 
-- **Claves para Modelos PRO:**
+- **Claves para Modelos FLASH (PRIORIDAD):**
   ```
-  GEMINI_PRO_API_KEYS=TU_CLAVE_PRO_1,TU_CLAVE_PRO_2,TU_CLAVE_PRO_3
+  GEMINI_FLASH_API_KEYS=TU_CLAVE_FLASH_1,TU_CLAVE_FLASH_2,TU_CLAVE_FLASH_3
   ```
-  Estas son las claves para los modelos de alta gama. Se usarán como primera opción y rotarán entre sí.
+  Estas son las claves para los modelos rápidos. Se usarán como **primera opción** y rotarán entre sí. Este es el modelo principal del sistema.
 
-- **Claves para Modelos FLASH (Fallback):**
+- **Claves para Modelos PRO (Fallback de Emergencia):**
   ```
-  GEMINI_FLASH_API_KEYS=TU_CLAVE_FLASH_1,TU_CLAVE_FLASH_2
+  GEMINI_PRO_API_KEYS=TU_CLAVE_PRO_1,TU_CLAVE_PRO_2
   ```
-  Estas claves se usarán automáticamente solo si todas las claves PRO fallan. También rotan entre sí. Si no tienes claves Flash, puedes dejar la variable vacía.
+  Estas claves se usarán automáticamente **solo si todas las claves Flash fallan**. También rotan entre sí. Actualmente las claves PRO no están funcionando, pero se mantienen como respaldo de emergencia.
 
 **Importante:** El sistema antiguo de claves indexadas (`GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`, etc.) y la variable `GEMINI_MODEL` ya **no se utilizan** y deben ser eliminados de tu configuración.
 

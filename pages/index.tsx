@@ -19,7 +19,6 @@ import ProductCarousel from '../components/ProductCarousel'; // Importar Product
 import HeroTextRotator from '../components/HeroTextRotator'; // Importar HeroTextRotator
 import { useState, useEffect } from 'react'; // Import hooks (needed later?)
 import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion (needed later?)
-import Marquee from '../components/Marquee'; // Import Marquee
 import ScrollReveal from '../components/ScrollReveal'; // Import ScrollReveal
 import OptimizedImage from '../components/OptimizedImage'; // Import OptimizedImage
 import OrganicBlob from '../components/OrganicBlob'; // Import OrganicBlob
@@ -112,7 +111,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
               <OrganicBlob color="#1F75FE" size="md" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" animationSpeed="medium" blur="3xl" />
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-12 md:py-20 lg:py-28 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12 relative z-10">
+            <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 lg:py-20 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12 relative z-10">
 
               {/* Texto Hero */}
               <div className="flex-1 text-center md:text-left space-y-8">
@@ -265,14 +264,9 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           </section>
         </ScrollReveal>
 
-        {/* Marquee Section */}
-        <Marquee items={["Envíos a todo el país", "Calidad Premium", "100% Personalizado", "Hecho en Uruguay", "Compra Segura"]} />
-
-
-
         {/* Categorías Dinámicas */}
         <ScrollReveal>
-          <section className="relative px-6 py-16 bg-gradient-to-br from-fondoClaro via-white to-fondoClaro overflow-hidden">
+          <section className="relative px-6 py-12 bg-gradient-to-br from-fondoClaro via-white to-fondoClaro overflow-hidden">
             {/* Subtle organic background */}
             <div className="absolute inset-0 pointer-events-none opacity-30">
               <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-organic-pink to-transparent"></div>
@@ -337,9 +331,41 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
           </section>
         </ScrollReveal>
 
-        {/* ========== SECCIÓN B2B EMPRESARIAL DEDICADA ========== */}
+        {/* Productos Destacados - Prioridad alta para mostrar productos temprano */}
+        {destacados.length > 0 && (
+          <ScrollReveal>
+            <section className="px-6 py-12 bg-white overflow-hidden">
+              <div className="text-center mb-16">
+                <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Más vendidos</p>
+                <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
+                  Los más elegidos
+                </h2>
+              </div>
+              <div className="max-w-[1400px] mx-auto">
+                <ProductCarousel products={destacados} />
+              </div>
+            </section>
+          </ScrollReveal>
+        )}
+
+        {/* Cómo Funciona */}
         <ScrollReveal>
-          <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-20 px-6 overflow-hidden shadow-2xl">
+          <HowItWorks />
+        </ScrollReveal>
+
+        {/* Reseñas Destacadas - Prueba social */}
+        <ScrollReveal>
+          <FeaturedReviews reviews={reviews} />
+        </ScrollReveal>
+
+        {/* Expectativas hechas realidad - Galería de trabajos reales */}
+        <ScrollReveal>
+          <RealResultsGallery />
+        </ScrollReveal>
+
+        {/* ========== SECCIÓN B2B EMPRESARIAL (Movida al final) ========== */}
+        <ScrollReveal>
+          <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-16 px-6 overflow-hidden shadow-2xl">
             {/* Patrón sutil de fondo */}
             <div
               className="absolute inset-0 opacity-[0.03]"
@@ -409,39 +435,6 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
               </p>
             </div>
           </section>
-        </ScrollReveal>
-
-
-        {/* Productos Destacados - MOVED UP to show products earlier */}
-        {destacados.length > 0 && (
-          <ScrollReveal>
-            <section className="px-6 py-16 bg-white overflow-hidden">
-              <div className="text-center mb-16">
-                <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Más vendidos</p>
-                <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
-                  Los más elegidos
-                </h2>
-              </div>
-              <div className="max-w-[1400px] mx-auto">
-                <ProductCarousel products={destacados} />
-              </div>
-            </section>
-          </ScrollReveal>
-        )}
-
-        {/* Cómo Funciona - MOVED DOWN after products */}
-        <ScrollReveal>
-          <HowItWorks />
-        </ScrollReveal>
-
-        {/* Reseñas Destacadas - MOVED UP before newsletter */}
-        <ScrollReveal>
-          <FeaturedReviews reviews={reviews} />
-        </ScrollReveal>
-
-        {/* Expectativas hechas realidad */}
-        <ScrollReveal>
-          <RealResultsGallery />
         </ScrollReveal>
 
         {/* Newsletter Form */}

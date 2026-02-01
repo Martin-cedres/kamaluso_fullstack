@@ -19,8 +19,8 @@ const WhatsAppButton = ({ customMessage }: WhatsAppButtonProps) => {
   // 2. Desktop: Always show (md:block)
   // 3. Position: Higher on Product Detail (mobile only)
 
-  const visibilityClass = isProductDetailPage ? 'block' : 'hidden md:block'
-  const positionClass = isProductDetailPage ? 'bottom-24 md:bottom-5' : 'bottom-5'
+  const visibilityClass = isProductDetailPage ? 'hidden md:block' : 'hidden md:block'
+  const positionClass = isProductDetailPage ? 'bottom-5' : 'bottom-5'
 
   return (
     <div className={`fixed right-5 z-[70] group ${visibilityClass} ${positionClass}`}>

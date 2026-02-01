@@ -6,10 +6,10 @@ import { GoogleGenerativeAI, GenerativeModel, Part, HarmCategory, HarmBlockThres
 const proApiKeys: string[] = (process.env.GEMINI_PRO_API_KEYS || "").split(",").filter(k => k.trim());
 const flashApiKeys: string[] = (process.env.GEMINI_FLASH_API_KEYS || "").split(",").filter(k => k.trim());
 
-// Prioridad de modelos a utilizar. IMPORTANTE: Solo gemini-2.5-flash está disponible sin cuenta de pago.
-// Si actualizas a Google AI Studio de pago o Vertex AI, podrás usar gemini-2.5-pro.
-const PRO_MODELS = ["gemini-2.5-pro"]; // Ajustado a lo que realmente está disponible
-const FLASH_MODEL = "gemini-2.5-flash"; // Flash también es multimodal
+// PRIORIDAD ACTUAL: gemini-2.5-flash (claves Pro no funcionando)
+// Flash se usa como modelo principal. Pro se mantiene solo como fallback de emergencia.
+const FLASH_MODEL = "gemini-2.5-flash"; // PRIORIDAD 1 - Modelo principal (también multimodal)
+const PRO_MODELS = ["gemini-2.5-pro"]; // PRIORIDAD 2 - Solo fallback
 
 // --- GESTIÓN DE ESTADO ---
 
@@ -93,13 +93,31 @@ async function tryGenerate(modelName: string, prompt: string | (string | Part)[]
 /**
  * Genera contenido utilizando una estrategia de fallback y rotación de claves.
  * Acepta prompts de texto o multimodales.
- * 1. Itera sobre los modelos PRO, probando todas las claves PRO para cada uno.
- * 2. Si todos los modelos y claves PRO fallan, pasa al modelo FLASH.
- * 3. Itera sobre todas las claves FLASH con el modelo FLASH.
- * 4. Si todo falla, lanza un error.
+ * MODIFICADO: Ahora usa FLASH como primera opción porque las claves PRO no están funcionando.
+ * 1. Itera sobre todas las claves FLASH con el modelo FLASH.
+ * 2. Si todas las claves FLASH fallan, intenta con claves PRO (como fallback).
+ * 3. Si todo falla, lanza un error.
  */
 export async function generateContentSmart(prompt: string | (string | Part)[]): Promise<string> {
-  // --- FASE 1: Intentar con Modelos y Claves PRO ---
+  // --- FASE 1: Intentar primero con Claves FLASH (PRIORIDAD) ---
+  if (flashApiKeys.length > 0) {
+    console.log("🚀 Iniciando generación con modelo FLASH (prioridad)...");
+    for (let i = 0; i < flashApiKeys.length; i++) {
+      const result = await tryGenerate(FLASH_MODEL, prompt, 'flash', currentFlashKeyIndex);
+
+      if (result !== null) {
+        return result; // Éxito, devolvemos el resultado
+      }
+
+      // Rotar clave FLASH para el siguiente intento
+      currentFlashKeyIndex = (currentFlashKeyIndex + 1) % flashApiKeys.length;
+    }
+    console.log("⚠️ Todas las claves FLASH fallaron. Intentando con PRO como último recurso...");
+  } else {
+    console.log("ℹ️ No hay claves FLASH configuradas. Saltando a claves PRO.");
+  }
+
+  // --- FASE 2: Fallback a Modelos y Claves PRO (solo como último recurso) ---
   if (proApiKeys.length > 0) {
     for (const modelName of PRO_MODELS) {
       for (let i = 0; i < proApiKeys.length; i++) {
@@ -114,23 +132,7 @@ export async function generateContentSmart(prompt: string | (string | Part)[]): 
       }
     }
   } else {
-    console.log("ℹ️ No hay claves PRO configuradas. Saltando a claves FLASH.");
-  }
-
-  // --- FASE 2: Fallback a Modelos y Claves FLASH ---
-  if (flashApiKeys.length > 0) {
-    for (let i = 0; i < flashApiKeys.length; i++) {
-      const result = await tryGenerate(FLASH_MODEL, prompt, 'flash', currentFlashKeyIndex);
-
-      if (result !== null) {
-        return result; // Éxito, devolvemos el resultado
-      }
-
-      // Rotar clave FLASH para el siguiente intento
-      currentFlashKeyIndex = (currentFlashKeyIndex + 1) % flashApiKeys.length;
-    }
-  } else {
-    console.log("ℹ️ No hay claves FLASH configuradas.");
+    console.log("ℹ️ No hay claves PRO configuradas.");
   }
 
   // --- FASE 3: Fracaso total ---

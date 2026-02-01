@@ -256,8 +256,8 @@ const ChatWidget = () => {
                 </div>
             )}
 
-            {/* Floating Button Container */}
-            <div className={`fixed ${router.pathname.includes('/productos/') ? 'bottom-40 md:bottom-28' : 'bottom-24'} right-5 z-40 group`}>
+            {/* Floating Button Container - HIDDEN ON MOBILE PRODUCT PAGE to prioritize Sticky AddToCart */}
+            <div className={`fixed ${router.pathname.includes('/productos/') ? 'md:bottom-28 hidden md:block' : 'bottom-24'} right-5 z-40 group`}>
                 {/* Tooltip on Hover */}
                 {!isOpen && (
                     <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
