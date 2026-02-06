@@ -410,8 +410,12 @@ const QuoteTemplate: React.FC<QuoteTemplateProps> = ({ quote, logoUrl }) => {
                             </View>
                             {quote.discount > 0 && (
                                 <View style={styles.totalRow}>
-                                    <Text style={{ color: '#059669' }}>Descuento {quote.discountDescription ? `(${quote.discountDescription})` : ''}:</Text>
-                                    <Text style={{ color: '#059669' }}>- {formatCurrency(quote.discount)}</Text>
+                                    <Text style={{ color: '#059669' }}>
+                                        Descuento {quote.discountType === 'percentage' ? `(${quote.discount}%)` : ''} {quote.discountDescription ? ` ${quote.discountDescription}` : ''}:
+                                    </Text>
+                                    <Text style={{ color: '#059669' }}>
+                                        - {formatCurrency(quote.discountType === 'percentage' ? (quote.subtotal * quote.discount) / 100 : quote.discount)}
+                                    </Text>
                                 </View>
                             )}
                             {quote.tax > 0 && (
