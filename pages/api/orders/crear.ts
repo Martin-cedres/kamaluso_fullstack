@@ -261,7 +261,7 @@ const generateAdminEmailContent = (order: OrderForDB, orderId: string) => {
     subject: `¡Tienes un nuevo Pedido!`,
     html: `
         <div style="font-family: Arial, sans-serif; color:#333; line-height:1.5; max-width:600px; margin:auto; padding:20px; background:#f9f9f9; border-radius:8px;">
-            <h1 style="text-align:center; color:#4CAF50;">¡Haz vendido!</h1>
+            <h1 style="text-align:center; color:#4CAF50;">¡Has vendido!</h1>
             <p style="text-align:center;">Aquí tienes el detalle de la compra:</p>
             
             <h2 style="color:#555; border-bottom:1px solid #ddd; padding-bottom:5px;">Detalles del Cliente</h2>

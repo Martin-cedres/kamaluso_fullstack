@@ -171,7 +171,7 @@ export default async function handler(
     console.log(`3. Buscando la orden con externalReference: ${externalReference}`)
     const order = await db
       .collection('orders')
-      .findOne({ externalReference: externalReference })
+      .findOne({ _id: new ObjectId(externalReference) })
 
     if (!order) {
       console.log(

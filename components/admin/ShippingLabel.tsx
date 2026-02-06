@@ -10,151 +10,152 @@ interface ShippingLabelProps {
             address: string;
             notes?: string;
         };
+        createdAt?: string;
     };
 }
 
 export default function ShippingLabel({ order }: ShippingLabelProps) {
-    // Datos robustos
+    // Datos normalizados
     const address = order.shippingDetails?.address || (order as any).address || 'DIRECCIÓN NO ESPECIFICADA';
     const method = order.shippingDetails?.method || (order as any).method || 'RETIRO';
     const notes = order.shippingDetails?.notes || (order as any).notes || '';
+    const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : new Date().toLocaleDateString();
 
     return (
         <div className="shipping-label-print-isolation">
-            {/* Contenedor de Seguridad: 15cm x 10cm - Formato horizontal */}
-            <div className="shipping-label-container border-[5px] border-black bg-white text-black font-sans flex flex-col overflow-hidden relative shadow-none"
-                style={{ width: '15cm', height: '10cm', padding: '0.5cm' }}>
+            {/* 
+                Contenedor Principal: 10cm Ancho x 15cm Alto (Vertical) 
+                Diseño optimizado: Distribución balanceada
+            */}
+            <div className="shipping-label-container font-sans flex flex-col bg-white text-slate-900 overflow-hidden relative shadow-sm"
+                style={{ width: '10cm', height: '15cm', padding: '0.4cm' }}>
 
-                {/* 1. SECCIÓN SUPERIOR: Remitente (Sin número de orden) */}
-                <div className="flex justify-between items-start border-b-[3px] border-black pb-1.5 mb-2 shrink-0 h-[1.1cm]">
-                    <div className="text-left">
-                        <h1 className="text-[7px] font-black uppercase text-gray-500 leading-none mb-1">REMITENTE</h1>
-                        <p className="text-[11px] font-black leading-none uppercase">Katherine Silva - 098 615 074</p>
+                {/* --- HEADER: REMITENTE --- */}
+                <div className="flex justify-between items-start mb-3 border-b-2 border-gray-800 pb-2">
+                    <div className="text-left leading-none">
+                        <h6 className="text-[7px] font-bold uppercase text-gray-500 mb-1 tracking-widest">REMITENTE</h6>
+                        <p className="text-[10px] font-bold uppercase text-slate-900">Katherine Silva</p>
+                        <p className="text-[9px] font-medium uppercase text-slate-600">San José de Mayo, UY</p>
+                        <p className="text-[9px] font-medium uppercase text-slate-600">098 615 074</p>
+                    </div>
+                    {/* ID y Fecha */}
+                    <div className="text-right leading-none">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                            #{order._id?.slice(-6).toUpperCase()}
+                        </div>
+                        <div className="text-[8px] font-bold text-gray-400">
+                            {date}
+                        </div>
                     </div>
                 </div>
 
-                {/* 2. CUERPO: Destinatario y Datos Centrales */}
-                <div className="flex-grow flex flex-col gap-2 min-h-0 overflow-hidden">
+                {/* --- BODY: DESTINATARIO (SHIP TO) --- */}
+                <div className="mb-2">
+                    <h6 className="text-[9px] font-black uppercase text-slate-400 mb-1 tracking-widest">DESTINATARIO</h6>
+                    <p className="text-[20px] font-black uppercase leading-none tracking-tight text-slate-900 border-b border-gray-200 pb-2 mb-1">
+                        {order.name}
+                    </p>
+                </div>
 
-                    {/* NOMBRE DESTINATARIO */}
-                    <div className="border-l-[6px] border-black pl-3 shrink-0 py-0.5">
-                        <h2 className="text-[7px] font-black uppercase text-gray-500 mb-0.5">DESTINATARIO</h2>
-                        <p className="text-[20px] font-black leading-none uppercase tracking-tighter truncate">
-                            {order.name}
+                {/* --- BODY: DIRECCIÓN CENTRAL (El bloque más grande) --- */}
+                <div className="flex-grow border-2 border-black rounded-sm p-3 flex flex-col justify-center relative bg-gray-50">
+                    <h6 className="absolute top-1 left-2 text-[7px] font-bold uppercase text-gray-500 tracking-widest bg-gray-50 px-1">
+                        DIRECCIÓN DE ENTREGA
+                    </h6>
+
+                    <p className="text-[18px] font-extrabold uppercase leading-snug text-slate-900 text-center break-words px-1">
+                        {address}
+                    </p>
+
+                    <div className="mt-4 pt-3 border-t border-gray-300 text-center">
+                        <p className="text-[14px] font-bold uppercase text-slate-700 flex items-center justify-center gap-2">
+                            <span>📞</span> {order.phone || 'Sin teléfono'}
                         </p>
                     </div>
-
-                    {/* CAJA CENTRAL: Dirección y Teléfono */}
-                    <div className="flex-grow grid grid-cols-12 border-[3.5px] border-black bg-gray-100 min-h-0">
-                        {/* DIRECCIÓN (Alineada a la izquierda con padding estándar) */}
-                        <div className="col-span-8 p-3 border-r-[3.5px] border-black flex flex-col bg-white overflow-hidden h-full text-left">
-                            <h3 className="text-[7px] font-black uppercase text-gray-500 mb-1">DIRECCIÓN / PUNTO DE RETIRO</h3>
-                            <div className="flex-grow overflow-hidden flex items-start">
-                                <p className="text-[14px] font-black leading-[1.2] uppercase"
-                                    style={{
-                                        wordBreak: 'break-word',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 5,
-                                        WebkitBoxOrient: 'vertical',
-                                        overflow: 'hidden'
-                                    }}>
-                                    {address}
-                                </p>
-                            </div>
-                        </div>
-                        {/* TELÉFONO (Alineado a la izquierda con padding estándar) */}
-                        <div className="col-span-4 p-3 flex flex-col justify-center bg-white text-left shrink-0 h-full overflow-hidden">
-                            <h3 className="text-[7px] font-black uppercase text-gray-500 mb-1 leading-none">TELÉFONO</h3>
-                            <p className="text-[18px] font-black tracking-tighter leading-none truncate">
-                                {order.phone || 'N/A'}
-                            </p>
-                        </div>
-                    </div>
                 </div>
 
-                {/* 3. SECCIÓN INFERIOR: Envío y Logo */}
-                <div className="mt-2 pt-2 border-t-[3px] border-black flex justify-between items-end shrink-0 h-[1.8cm]">
-                    <div className="flex flex-col justify-end flex-grow pr-4 pb-0.5 h-full overflow-hidden text-left">
-                        <div>
-                            <h4 className="text-[7px] font-black uppercase text-gray-500 mb-1">MÉTODO DE ENVÍO</h4>
-                            <p className="text-[17px] font-black uppercase text-blue-900 leading-none tracking-tight truncate">
-                                {method}
-                            </p>
+                {/* --- BODY: NOTAS (Solo si existen) --- */}
+                {notes && (
+                    <div className="mt-3 bg-yellow-100 border border-yellow-300 p-2 rounded text-center">
+                        <p className="text-[11px] font-bold uppercase leading-tight text-slate-900">
+                            OBSERVACIONES: {notes}
+                        </p>
+                    </div>
+                )}
+
+                {/* --- FOOTER: MÉTODO Y LOGO --- */}
+                <div className="mt-4 flex items-center justify-between border-t-2 border-black pt-2">
+                    <div className="flex-1">
+                        <h6 className="text-[8px] font-bold uppercase text-gray-400 mb-0.5">MÉTODO DE ENVÍO</h6>
+                        <div className="text-[28px] font-black uppercase leading-none text-black tracking-tighter">
+                            {method}
                         </div>
-                        {notes?.trim() && (
-                            <div className="mt-1 bg-yellow-100 px-2 py-0.5 border border-yellow-400 text-[8px] font-bold leading-none inline-block self-start max-w-full truncate italic">
-                                ⚠️ {notes}
-                            </div>
-                        )}
                     </div>
 
-                    <div className="shrink-0 h-full flex items-end">
+                    <div className="w-[2.2cm] flex flex-col justify-end items-end">
                         <img
                             src="/logo.webp"
-                            alt="Logo"
-                            style={{ width: '2.5cm', height: 'auto', display: 'block', objectFit: 'contain' }}
+                            alt="Kamaluso"
+                            style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
                         />
+                        <p className="text-[7px] font-bold text-slate-500 mt-1 whitespace-nowrap">
+                            www.papeleriapersonalizada.uy
+                        </p>
                     </div>
                 </div>
             </div>
 
+            {/* ESTILOS DE IMPRESIÓN (Manteniendo los fixes de A4) */}
             <style jsx global>{`
                 .shipping-label-container {
+                    border: 1px solid #e5e7eb;
                     margin: 20px auto;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
                 }
 
                 @media print {
                     @page {
-                        size: 15cm 10cm landscape;
-                        margin: 0 !important;
+                        size: 100mm 150mm;
+                        margin: 0mm !important;
                     }
 
                     html, body {
-                        visibility: hidden !important;
+                        width: 100mm;
+                        height: 150mm;
                         margin: 0 !important;
                         padding: 0 !important;
-                        width: 15cm !important;
-                        height: 10cm !important;
                         overflow: hidden !important;
-                        background: white !important;
                     }
 
-                    .shipping-label-print-isolation, 
+                    body * {
+                        visibility: hidden;
+                        height: 0;
+                    }
+
+                    .shipping-label-print-isolation,
                     .shipping-label-print-isolation * {
-                        visibility: visible !important;
+                        visibility: visible;
+                        height: auto;
                     }
 
                     .shipping-label-print-isolation {
-                        position: fixed !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                        width: 15cm !important;
-                        height: 10cm !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        background: white !important;
-                        z-index: 99999999 !important;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100mm;
+                        height: 150mm;
+                        margin: 0;
+                        padding: 0;
+                        background: white;
+                        z-index: 99999;
                     }
 
                     .shipping-label-container {
-                        width: 15cm !important;
-                        height: 10cm !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        border: none !important;
+                        padding: 5mm !important; /* Más aire interno */
                         margin: 0 !important;
-                        border: 5px solid black !important;
-                        background: white !important;
-                        display: flex !important;
-                        flex-direction: column !important;
-                        overflow: hidden !important;
-                        break-inside: avoid !important;
-                        page-break-inside: avoid !important;
-                    }
-
-                    * {
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        box-sizing: border-box !important;
+                        box-shadow: none !important;
                     }
                 }
             `}</style>

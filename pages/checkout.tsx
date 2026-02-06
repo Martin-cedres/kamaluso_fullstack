@@ -112,89 +112,85 @@ export default function CheckoutPage() {
 
     const shippingDetails = getShippingDetails()
 
-    if (paymentMethod === 'mercado_pago_online') {
-      try {
-        // Generate a temporary order ID for Mercado Pago's external_reference
-        const tempOrderId = `kamaluso-mp-${Date.now()}`
-
-        const response = await fetch('/api/payments/create-preference', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: tempOrderId,
-            items: cartItems,
-            paymentMethod: paymentMethod, // Enviar el método de pago
-          }),
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to create payment preference')
-        }
-
-        const formData = {
-          name,
-          email,
-          phone,
-          shippingDetails,
-          paymentMethod,
-          appliedCoupon,
-          notes: orderNotes, // Añadir notas del pedido
-          // Store the temp ID to create the real order on the success page
-          tempOrderId: tempOrderId,
-          // Add cart items and total for order creation on success page
-          items: cartItems,
-          total: total,
-        }
-        localStorage.setItem('checkout_form_data', JSON.stringify(formData))
-
-        router.push(data.init_point)
-      } catch (error: any) {
-        console.error('Mercado Pago checkout error:', error)
-        toast.error(
-          `Hubo un error al iniciar el pago con Mercado Pago: ${error.message}`,
-        )
-        setIsSubmitting(false)
-      }
-      return
-    }
-
+    // 1. Preparar payload base para la creación de la orden
     const payload = {
       name,
       email,
       phone,
       shippingDetails,
       items: cartItems,
-      total, // This total is from the client, the server will recalculate
+      total, // El backend recalculará esto por seguridad, pero lo enviamos
       paymentMethod,
-      notes: orderNotes, // Añadir notas del pedido
-      couponCode: appliedCoupon?.code, // Send only the code
+      notes: orderNotes,
+      couponCode: appliedCoupon?.code,
+      source: 'web', // Identificar origen
     }
 
     try {
-      const response = await fetch('/api/orders/crear', {
+      // 2. CREAR LA ORDEN PRIMERO (Para todos los métodos de pago)
+      // Esto asegura que la orden existe en DB antes de cualquier redirección
+      const createOrderResponse = await fetch('/api/orders/crear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
-      if (response.ok) {
-        toast.success(
-          '¡Pedido realizado con éxito! Recibirás un correo con los detalles.',
-        )
-        clearCart()
-        router.push('/')
-      } else {
-        const errorData = await response.json()
-        toast.error(
-          `Hubo un error al procesar tu pedido: ${errorData.message || 'Por favor, inténtalo de nuevo.'}`,
-        )
-        setIsSubmitting(false)
+      const orderData = await createOrderResponse.json()
+
+      if (!createOrderResponse.ok) {
+        throw new Error(orderData.message || 'Error al crear la orden inicial')
       }
-    } catch (error) {
-      console.error('Checkout error:', error)
-      toast.error('Hubo un error de conexión. Por favor, inténtalo de nuevo.')
+
+      const { orderId } = orderData
+
+      // 3. Manejar flujo según método de pago
+      if (paymentMethod === 'mercado_pago_online') {
+        // --- FLUJO MERCADO PAGO ---
+        try {
+          // Crear preferencia usando el ID REAL de la orden
+          const prefResponse = await fetch('/api/payments/create-preference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: orderId, // ID real de MongoDB returned by crear.ts
+              items: cartItems,
+              paymentMethod: paymentMethod,
+            }),
+          })
+
+          const prefData = await prefResponse.json()
+
+          if (!prefResponse.ok) {
+            throw new Error(prefData.message || 'Error al conectar con Mercado Pago')
+          }
+
+          // Guardar flag en localstorage para limpiar carrito al volver solo si es necesario
+          // Pero NO guardamos datos de la orden porque ya está en BD
+          localStorage.setItem('mp_pending_cart_clear', 'true');
+
+          // Redirigir a Mercado Pago
+          router.push(prefData.init_point)
+
+        } catch (mpError: any) {
+          console.error('Error Mercado Pago:', mpError)
+          toast.error(`Error iniciando pago: ${mpError.message}`)
+          setIsSubmitting(false)
+          // Nota: La orden quedó creada en "pendiente". Podríamos ofrecer reintentar el pago de esa misma orden en el futuro.
+        }
+
+      } else {
+        // --- FLUJO OTROS MÉTODOS (Transferencia, Efectivo, etc.) ---
+        // La orden ya se creó y los emails se enviaron desde el backend en crear.ts
+        toast.success('¡Pedido realizado con éxito! Recibirás un correo con los detalles.')
+        clearCart()
+        router.push('/') // O a una página de "gracias" genérica
+      }
+
+    } catch (error: any) {
+      console.error('Checkout Error:', error)
+      toast.error(
+        `Hubo un error al procesar tu pedido: ${error.message || 'Inténtalo de nuevo.'}`,
+      )
       setIsSubmitting(false)
     }
   }

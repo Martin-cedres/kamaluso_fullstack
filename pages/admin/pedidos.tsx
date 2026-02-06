@@ -495,7 +495,7 @@ const AdminPedidosPage = () => {
     }
   }
 
-  const statusOptions = ['pendiente', 'enviado', 'entregado']
+  const statusOptions = ['pendiente', 'pagado', 'enviado', 'entregado']
 
   return (
     <AdminLayout>
