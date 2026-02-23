@@ -10,7 +10,7 @@ import Head from 'next/head'
 import Script from 'next/script'
 import dynamic from 'next/dynamic'
 import { Toaster } from 'react-hot-toast'
-import { Inter, Outfit } from 'next/font/google'
+import { Inter, Outfit, Plus_Jakarta_Sans, Cormorant_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { useRouter } from 'next/router'
@@ -42,6 +42,18 @@ const inter = Inter({
 const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-outfit',
+})
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+})
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  variable: '--font-cormorant',
+  style: ['normal', 'italic'],
+  weight: ['400', '600', '700'],
 })
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -144,7 +156,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             }}
           />
           <div
-            className={`${inter.variable} ${outfit.variable} font-sans flex flex-col min-h-screen`}
+            className={`${inter.variable} ${outfit.variable} ${plusJakarta.variable} ${cormorant.variable} font-sans flex flex-col min-h-screen`}
           >
             <TopBar />
             <Navbar />

@@ -238,6 +238,8 @@ const AdminIndex = () => {
     puntosClave: '', // Se manejará como string separado por comas en el formulario
     faqs: [],
     useCases: [],
+    videoUrl: '',
+    videoPreviewUrl: '',
   })
 
   // ... (a lot of code) ...
@@ -447,6 +449,8 @@ const AdminIndex = () => {
   const [editingProduct, setEditingProduct] = useState<any>(null); // Estado para el producto en edición
   const [seoLoading, setSeoLoading] = useState<{ [key: string]: boolean }>({});
   const [newUseCase, setNewUseCase] = useState('');
+  const [videoPreviewFile, setVideoPreviewFile] = useState<File | null>(null);
+  const [videoPreviewPreview, setVideoPreviewPreview] = useState<string | null>(null);
 
 
   // --- Handlers for Use Cases ---
@@ -540,6 +544,8 @@ const AdminIndex = () => {
           ? editingProduct.seoKeywords.join(', ')
           : editingProduct.seoKeywords || '',
         descripcion: Array.isArray(editingProduct.descripcion) ? editingProduct.descripcion[0] : editingProduct.descripcion || '',
+        videoUrl: editingProduct.videoUrl || '',
+        videoPreviewUrl: editingProduct.videoPreviewUrl || '',
       });
       setSelectedCategoria(editingProduct.categoria || '');
       const subCatValue = Array.isArray(editingProduct.subCategoria)
@@ -550,8 +556,10 @@ const AdminIndex = () => {
       setPreviewsSecundarias(
         Array.isArray(editingProduct.images) ? editingProduct.images : editingProduct.images ? [editingProduct.images] : []
       );
+      setVideoPreviewPreview(editingProduct.videoPreviewUrl || null);
       setImage(null);
       setImages([]);
+      setVideoPreviewFile(null);
       setOptionImages({});
       setOptionImagePreviews({});
       setShowForm(true);
@@ -735,6 +743,29 @@ const AdminIndex = () => {
 
 
 
+  // Efecto para preview de video y automation de imagen principal
+  useEffect(() => {
+    if (!videoPreviewFile) {
+      if (!editId) setVideoPreviewPreview(null)
+      return
+    }
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = reader.result as string
+      setVideoPreviewPreview(result)
+
+      // AUTOMATION: Siempre sincronizar el preview del video como imagen principal para asegurar frame estático
+      fetch(result)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], videoPreviewFile.name, { type: videoPreviewFile.type })
+          setImage(file)
+          toast.success('Sincronizando imagen principal para el estado estático', { icon: '✨' })
+        })
+    }
+    reader.readAsDataURL(videoPreviewFile)
+  }, [videoPreviewFile, editId])
+
   const handleProductDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
@@ -799,13 +830,17 @@ const AdminIndex = () => {
       puntosClave: '',
       faqs: [],
       useCases: [],
+      videoUrl: '',
+      videoPreviewUrl: '',
     })
     setSelectedCategoria('')
     setSelectedSubCategoria('')
     setImage(null)
     setImages([])
+    setVideoPreviewFile(null)
     setPreview(null)
     setPreviewsSecundarias([])
+    setVideoPreviewPreview(null)
     setOptionImages({});
     setOptionImagePreviews({});
     setEditId(null);
@@ -839,6 +874,7 @@ const AdminIndex = () => {
       // Handle images OUTSIDE the loop
       if (image) formData.append('image', image)
       images.forEach((f, i) => formData.append(`images[${i}]`, f))
+      if (videoPreviewFile) formData.append('videoPreviewFile', videoPreviewFile)
 
       // Append option images
       Object.keys(optionImages).forEach(key => {
@@ -1377,6 +1413,9 @@ const AdminIndex = () => {
                   )}
                 </div>
 
+
+
+
                 {/* --- Imágenes --- */}
                 <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-700 mb-4">Imágenes</h3>
@@ -1425,6 +1464,71 @@ const AdminIndex = () => {
                           )}
                         </Droppable>
                       </DragDropContext>
+                    </div>
+
+                    {/* --- Video del Producto --- */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Video del Producto (Opcional)
+                      </h4>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">URL de YouTube</label>
+                          <input
+                            type="text"
+                            value={form.videoUrl}
+                            onChange={(e) => setForm((f: any) => ({ ...f, videoUrl: e.target.value }))}
+                            placeholder="Ej: https://www.youtube.com/watch?v=..."
+                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Este video aparecerá en la galería de la página de detalle.</p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Preview Animado (Hover)</label>
+                          <div className="mt-1 flex items-center">
+                            <label className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50">
+                              <span>Seleccionar WebP Animado</span>
+                              <input
+                                type="file"
+                                accept="image/webp,image/gif"
+                                onChange={(e) => setVideoPreviewFile(e.target.files ? e.target.files[0] : null)}
+                                className="sr-only"
+                              />
+                            </label>
+                            <span className="ml-3 text-sm text-gray-500">
+                              {videoPreviewFile ? videoPreviewFile.name : (form.videoPreviewUrl ? 'Archivo existente' : 'Ningún archivo seleccionado')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Se muestra al pasar el mouse sobre la tarjeta del producto (Desktop).</p>
+
+                          {videoPreviewPreview && (
+                            <div className="mt-3 relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={videoPreviewPreview}
+                                alt="Video preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setVideoPreviewFile(null);
+                                  setVideoPreviewPreview(null);
+                                  setForm((f: any) => ({ ...f, videoPreviewUrl: '' }));
+                                }}
+                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-sm"
+                              >
+                                <XMarkIcon className="h-3 w-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

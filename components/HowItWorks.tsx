@@ -4,78 +4,73 @@ import { BookOpenIcon, PaintBrushIcon, TruckIcon } from '@heroicons/react/24/out
 const steps = [
     {
         id: 1,
-        title: 'Elige tu Base',
-        description: 'Selecciona tu producto (agenda, libreta, planner) y el interior que necesitas (semana vista, diaria, docentes...).',
+        title: 'Imagina tu año',
+        description: 'Encuentra la base perfecta para tus planes. Elige entre agendas, libretas o planners con el interior que mejor se adapte a tu ritmo.',
         icon: BookOpenIcon,
-        color: 'from-pink-500 to-rose-500',
         delay: '0'
     },
     {
         id: 2,
-        title: 'Personaliza tu Tapa',
-        description: 'Elige diseño de nuestro catálogo, acabado (brillo/mate), con o sin elástico, agrega tu nombre, texto, etc... o envíanos tu propio diseño por WhatsApp.',
+        title: 'Dale una identidad',
+        description: 'Viste tu compañera con diseños de nuestro catálogo o envíanos tu propia idea. Asesoría personalizada vía Atelier Digital.',
         icon: PaintBrushIcon,
-        color: 'from-purple-500 to-indigo-500',
         delay: '100'
     },
     {
         id: 3,
-        title: 'Recibe tu producto',
-        description: 'Retira en nuestro taller en san José de Mayo o te lo enviamos a todo Uruguay en 2 a 5 días.',
+        title: 'El placer de recibir',
+        description: 'Cuidamos cada detalle del embalaje. Retira en nuestro taller o recíbelo en 2 a 5 días en cualquier rincón de Uruguay.',
         icon: TruckIcon,
-        color: 'from-blue-500 to-cyan-500',
         delay: '200'
     }
 ];
 
 const HowItWorks = () => {
     return (
-        <section className="py-16 sm:py-24 bg-white relative overflow-hidden" >
-            {/* Background decoration */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none" >
-                <div className="absolute -top-24 -left-24 w-96 h-96 bg-pink-50 rounded-full blur-3xl opacity-50"></div>
-                <div className="absolute top-1/2 right-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl opacity-50"></div>
-            </div>
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 font-heading tracking-tight">
-                        Crea tu Papelería Ideal en <span className="text-slate-900 underline decoration-4 decoration-amber-400/50 underline-offset-4">3 Pasos Simples</span>
+        <section className="py-20 md:py-28 bg-[#FBF9F7] relative overflow-hidden">
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
+                <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-20 md:mb-24">
+                    <span className="inline-block px-4 py-1.5 rounded-full bg-slate-900/5 text-slate-500 text-[10px] font-bold tracking-[0.3em] uppercase mb-8">
+                        Nuestro Proceso
+                    </span>
+                    <h2 className="text-4xl md:text-6xl font-serif italic text-slate-900 mb-6 leading-tight">
+                        El Arte de Crear tu <br />
+                        <span className="font-sans not-italic font-black uppercase tracking-tighter">Compañera de Rutina</span>
                     </h2>
-                    <p className="text-base md:text-lg text-gray-600">
-                        Transformamos tus ideas en productos tangibles de alta calidad. Sin complicaciones.
+                    <div className="w-16 h-[1px] bg-slate-200 mb-8"></div>
+                    <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl leading-relaxed">
+                        Un viaje desde tu imaginación hasta tus manos, cuidado por artesanos uruguayos.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-12 relative">
-                    {/* Connector Line (Desktop) */}
-                    <div className="hidden md:block absolute top-10 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 -z-10"></div>
-
-                    {steps.map((step, index) => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16 lg:gap-20">
+                    {steps.map((step) => (
                         <div
                             key={step.id}
-                            className="group relative flex flex-col items-center text-center"
-                            style={{ animationDelay: `${step.delay}ms` }}
+                            className="group relative flex flex-col items-start"
                         >
-                            {/* Icon Circle - Original Gradient Style */}
-                            <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br ${step.color} p-0.5 shadow-lg md:shadow-xl shadow-gray-200 mb-4 md:mb-6 transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3 relative`}>
-                                <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center relative">
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
-                                    <step.icon className={`w-8 h-8 md:w-10 md:h-10 text-gray-800 relative z-10`} />
+                            {/* Oversized Faint Number Backdrop */}
+                            <span className="absolute -top-12 -left-4 text-8xl md:text-9xl font-black text-slate-100/60 select-none z-0">
+                                0{step.id}
+                            </span>
 
-                                    {/* Number Badge - Original */}
-                                    <div className="absolute -top-2 -right-2 md:-top-3 md:-right-3 w-7 h-7 md:w-8 md:h-8 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-xs md:text-sm border-3 md:border-4 border-white shadow-md">
-                                        {step.id}
-                                    </div>
+                            <div className="relative z-10 w-full">
+                                <div className="mb-8 p-4 bg-white rounded-2xl shadow-sm border border-slate-100 inline-flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                                    <step.icon className="w-6 h-6 md:w-8 md:h-8 text-slate-800" />
                                 </div>
-                            </div>
 
-                            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3 font-outfit group-hover:text-pink-600 transition-colors">
-                                {step.title}
-                            </h3>
-                            <p className="text-sm md:text-base text-gray-600 leading-relaxed max-w-xs mx-auto">
-                                {step.description}
-                            </p>
+                                <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 tracking-tight">
+                                    {step.title}
+                                </h3>
+
+                                <p className="text-base text-slate-500 leading-relaxed mb-6 font-medium">
+                                    {step.description}
+                                </p>
+
+                                <button className="text-[10px] font-bold tracking-widest uppercase text-slate-400 border-b border-transparent hover:border-slate-900 hover:text-slate-900 transition-all duration-300">
+                                    Saber más
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

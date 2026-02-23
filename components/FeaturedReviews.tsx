@@ -56,7 +56,7 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
   }));
 
   return (
-    <section id="reviews" className="px-6 py-12 bg-gray-50 scroll-mt-20">
+    <section id="reviews" className="px-6 py-12 bg-white scroll-mt-20">
       <Head>
         <script
           type="application/ld+json"

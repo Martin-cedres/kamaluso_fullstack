@@ -22,8 +22,8 @@ export default function s3Loader({ src, width, quality }: ImageLoaderProps): str
     // Check if the src already has a size variant pattern (-XXXw)
     const hasSizeVariant = /-\d+w\.webp$/.test(src);
 
-    // Si la imagen YA tiene una variante (ej: fue subida con Lambda), generar la URL con el tamaño apropiado
-    // Si NO tiene variante, es la imagen base y la devolvemos sin modificar
+    // Si la imagen está en processed, DEBEMOS implementar width para que Next.js no se queje.
+    // Si la variante no existe (404), OptimizedImage.tsx hará el fallback automático.
     if (hasSizeVariant || src.includes('/processed/')) {
       // Clean the src to get the base URL, e.g., '.../image-800w.webp' -> '.../image'
       const cleanSrc = src.replace(/-\d+w\.webp$/, '.webp');
@@ -31,11 +31,11 @@ export default function s3Loader({ src, width, quality }: ImageLoaderProps): str
 
       // Generate the sized variant URL
       const generatedUrl = `${baseUrl}-${bestFitSize}w.webp`;
-      console.log(`s3Loader: src=${src}, width=${width} -> ${generatedUrl}`);
       return generatedUrl;
     } else {
-      // Imagen base sin variantes, devolverla sin modificar
-      console.log(`s3Loader: Imagen base sin variantes, retornando: ${src}`);
+      // Para otros casos de S3 que no sean processed, devolvemos original
+      // Nota: Si esto causa el warning de "not implement width", Next.js es muy estricto.
+      // Pero usualmente solo se activa si se usa el loader.
       return src;
     }
   }

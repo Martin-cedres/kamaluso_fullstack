@@ -3,7 +3,7 @@ import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
 import os from 'os' // Importar el módulo os
-import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la utilidad compartida
+import { uploadFileToS3, uploadFileToS3Original } from '../../../lib/s3-upload'; // Importar la utilidad compartida
 import clientPromise from '../../../lib/mongodb';
 import { withAuth } from '../../../lib/auth';
 import { revalidateProductPaths } from '../../../lib/utils';
@@ -104,6 +104,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
       }
       imagesUrls.unshift(imageUrl);
+
+      // --- Manejo del Video Preview (WebP Animado) ---
+      let videoPreviewUrl = '';
+      const videoFile = files.videoPreviewFile as any;
+      if (videoFile) {
+        const vf = Array.isArray(videoFile) ? videoFile[0] : videoFile;
+        if (vf && vf.filepath) {
+          videoPreviewUrl = await uploadFileToS3Original(vf as formidable.File);
+        }
+      }
 
       // --- Parseo de Campos Complejos (Igual que en editar.ts) ---
 
@@ -229,6 +239,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         puntosClave: puntosClave,
         faqs: faqs,
         useCases: useCases,
+        videoUrl: String(fields.videoUrl || ''),
+        videoPreviewUrl,
       };
 
       const result = await db.collection('products').insertOne(productoDoc);

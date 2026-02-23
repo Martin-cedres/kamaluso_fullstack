@@ -11,6 +11,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, ShieldCheckIcon, TruckIcon, SparklesIcon, DocumentTextIcon, CheckCircleIcon, QuestionMarkCircleIcon, LightBulbIcon, StarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import Breadcrumbs from '../../../components/Breadcrumbs'
 import OptimizedImage from '../../../components/OptimizedImage';
+import ProductVideo from '../../../components/ProductVideo';
+import { getYouTubeId, getYouTubeThumbnail } from '../../../components/ProductVideo';
 import StarRating from '../../../components/StarRating';
 import ReviewList from '../../../components/ReviewList';
 import ReviewForm from '../../../components/ReviewForm';
@@ -31,6 +33,7 @@ import ProductSchema from '../../../lib/ProductSchema';
 import PriceLock from '../../../components/PriceLock';
 import SublimationAccessModal from '../../../components/SublimationAccessModal';
 import ProductDetailedContent from '../../../components/ProductDetailedContent';
+import ProductInfoAccordions from '../../../components/ProductInfoAccordions';
 import SeoMeta from '../../../components/SeoMeta';
 
 // Helper para detectar cookie de acceso mayorista
@@ -66,6 +69,9 @@ interface ProductProp {
   descripcionExtensa?: string; // Nuevo campo
   faqs?: { question: string; answer: string; }[]; // Nuevo campo
   useCases?: string[]; // Nuevo campo
+  videoUrl?: string;
+  videoPreviewUrl?: string;
+  creadoEn?: string | Date;
 }
 
 const getCardDisplayPrice = (product: ProductProp) => {
@@ -188,12 +194,51 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     });
   }, [activeCoverDesignGroups, displayGroups]);
 
-  const allProductImages = useMemo(() => {
-    const images = new Set<string>();
-    if (product?.imageUrl) images.add(product.imageUrl);
-    if (product?.images) product.images.forEach(img => images.add(img));
-    return Array.from(images);
-  }, [product?.imageUrl, product?.images]);
+  // Constante especial para identificar el video en la galería
+  const VIDEO_MARKER = '__VIDEO__';
+  const PREVIEW_MARKER = '__PREVIEW__';
+
+  const allProductMedia = useMemo(() => {
+    const media: string[] = [];
+
+    // Si tiene preview animado, es el primer item (Loop)
+    if (product?.videoPreviewUrl) media.push(PREVIEW_MARKER);
+
+    // Si tiene video completo, es el siguiente
+    if (product?.videoUrl) media.push(VIDEO_MARKER);
+
+    // Extraer ID del video preview si existe para deduplicación robusta
+    const videoId = product?.videoPreviewUrl?.split('/').pop()?.split('.')[0];
+
+    if (product?.imageUrl) {
+      // Deduplicar si es el mismo asset que el preview animado (Sincronizado por Admin)
+      let isDuplicate = false;
+      if (videoId) {
+        const imageId = product.imageUrl.split('/').pop()?.split('.')[0];
+        if (videoId === imageId) isDuplicate = true;
+      }
+      if (!isDuplicate) media.push(product.imageUrl);
+    }
+
+    if (product?.images) {
+      product.images.forEach(img => {
+        // También deduplicar contra el video preview si está en el array de imágenes
+        let isRedundantWithPreview = false;
+        if (videoId) {
+          const imgId = img.split('/').pop()?.split('.')[0];
+          if (videoId === imgId) isRedundantWithPreview = true;
+        }
+
+        if (!media.includes(img) && img !== product.imageUrl && !isRedundantWithPreview) {
+          media.push(img);
+        }
+      });
+    }
+    return media;
+  }, [product?.imageUrl, product?.images, product?.videoUrl, product?.videoPreviewUrl]);
+
+  // Alias para compatibilidad con la navegación existente
+  const allProductImages = allProductMedia;
 
   useEffect(() => {
     const checkScroll = (
@@ -233,7 +278,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
   useEffect(() => {
     if (product) {
-      setActiveImage(allProductImages[0] || '/placeholder.png');
+      setActiveImage(allProductMedia[0] || '/placeholder.png');
     }
   }, [product, allProductImages]);
 
@@ -460,7 +505,25 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
           key="breadcrumb-jsonld"
         />
-
+        {product.videoUrl && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "VideoObject",
+                "name": `Video de ${product.nombre}`,
+                "description": product.descripcionBreve || `Mira este video de ${product.nombre} en Kamaluso`,
+                "thumbnailUrl": [
+                  `https://img.youtube.com/vi/${getYouTubeId(product.videoUrl) || ''}/maxresdefault.jpg`
+                ],
+                "uploadDate": product.creadoEn ? new Date(product.creadoEn).toISOString() : new Date().toISOString(),
+                "contentUrl": product.videoUrl,
+                "embedUrl": `https://www.youtube.com/embed/${getYouTubeId(product.videoUrl) || ''}`
+              })
+            }}
+          />
+        )}
       </Head>
 
       <div className="bg-white" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 4rem)' }}>
@@ -481,134 +544,191 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         </div>
 
         {/* --- ESTRUCTURA PARA ESCRITORIO (md y superior) --- */}
-        <div className="hidden md:grid mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid-cols-2 gap-14 mt-6">
-          {/* Columna Izquierda (Imagen + Miniaturas + CONTENIDO ABAJO) */}
-          <div className="flex flex-col">
-            <div className="md:sticky top-28 self-start mb-12">
-              <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg mb-4 group mx-auto">
+        <div className="hidden md:grid mx-auto max-w-[1400px] px-6 lg:px-12 grid-cols-12 gap-12 mt-8 mb-24">
+
+          {/* Columna Izquierda (Imagen Principal + Miniaturas) - 6 columnas (50%) */}
+          <div className="col-span-12 md:col-span-6 flex flex-col sticky top-28 self-start">
+            <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-sm bg-[#F9F9F9] mb-6 group">
+              {activeImage === PREVIEW_MARKER && product.videoPreviewUrl ? (
+                /* Point 5: High-End Gallery Loop using <img> for WebP compatibility */
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={product.videoPreviewUrl}
+                  alt={`Preview animado de ${product.nombre}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : activeImage === VIDEO_MARKER && product.videoUrl ? (
+                <ProductVideo
+                  videoUrl={product.videoUrl}
+                  alt={`Video de ${product.nombre}`}
+                />
+              ) : (
                 <OptimizedImage
                   key={activeImage}
                   src={activeImage}
                   alt={product.alt || product.nombre}
                   fill
-                  sizes="(max-width: 768px) 90vw, 50vw"
+                  sizes="(max-width: 1024px) 100vw, 60vw"
                   style={{ objectFit: 'cover' }}
-                  className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
+                  className={`transition-opacity duration-500 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
                   priority
                   onLoadingComplete={() => setIsAnimating(false)}
                 />
-                {allProductImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
-                      aria-label="Imagen anterior"
-                    >
-                      <ChevronLeftIcon className="h-6 w-6" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20"
-                      aria-label="Siguiente imagen"
-                    >
-                      <ChevronRightIcon className="h-6 w-6" />
-                    </button>
-                  </>
-                )}
-              </div>
+              )}
 
-              {/* Miniaturas para Escritorio */}
-              {allProductImages.length > 1 && (
-                <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto mt-4 group/thumbnails">
-
-                  {/* Gradient Masks */}
-                  <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
-                  <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showDesktopRightArrow ? 'opacity-100' : 'opacity-0'}`} />
-
-                  {/* Left Arrow */}
+              {/* Botones de Navegación Imagen Principal (Hover) */}
+              {allProductMedia.length > 1 && (
+                <>
                   <button
-                    onClick={() => scrollThumbnails(desktopCarouselRef, 'left')}
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopLeftArrow ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'}`}
-                    aria-label="Scroll left"
+                    onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-3 text-slate-800 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+                    aria-label="Imagen anterior"
                   >
-                    <ChevronLeftIcon className="h-5 w-5" />
+                    <ChevronLeftIcon className="h-6 w-6" />
                   </button>
-
-                  <div
-                    ref={desktopCarouselRef}
-                    tabIndex={0}
-                    className="flex flex-nowrap gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1 w-full scroll-smooth focus:outline-none"
-                  >
-                    {allProductImages.map((img, index) => (
-                      <div
-                        key={index}
-                        id={`thumbnail-desktop-${index}`}
-                        className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none transform ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 hover:scale-105 opacity-70'}`}
-                        onClick={() => handleImageChange(img)}
-                      >
-                        <OptimizedImage
-                          src={img}
-                          alt={`Thumbnail ${index + 1}`}
-                          fill
-                          sizes="80px"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Right Arrow */}
                   <button
-                    onClick={() => scrollThumbnails(desktopCarouselRef, 'right')}
-                    className={`absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 shadow-md border border-gray-100 z-20 transition-all duration-200 transform ${showDesktopRightArrow ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}
-                    aria-label="Scroll right"
+                    onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-3 text-slate-800 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+                    aria-label="Siguiente imagen"
                   >
-                    <ChevronRightIcon className="h-5 w-5" />
+                    <ChevronRightIcon className="h-6 w-6" />
                   </button>
-                </div>
+                </>
               )}
             </div>
 
+            {/* Miniaturas Ampliadas */}
+            {allProductMedia.length > 1 && (
+              <div className="relative w-full flex items-center justify-start gap-4">
+                <button
+                  onClick={() => scrollThumbnails(desktopCarouselRef, 'left')}
+                  className={`bg-white border border-slate-200 text-slate-600 rounded-full p-2 hover:bg-slate-50 transition-opacity ${showDesktopLeftArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </button>
 
+                <div
+                  ref={desktopCarouselRef}
+                  className="flex flex-nowrap gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 w-full scroll-smooth"
+                >
+                  {allProductMedia.map((media, index) => (
+                    <div
+                      key={index}
+                      id={`thumbnail-desktop-${index}`}
+                      className={`relative w-24 h-24 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 ${activeImage === media ? 'ring-2 ring-slate-900 opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                      onClick={() => handleImageChange(media)}
+                    >
+                      {media === PREVIEW_MARKER ? (
+                        <div className="relative h-full w-full bg-black">
+                          <img
+                            src={product.videoPreviewUrl}
+                            alt="Preview animado"
+                            className="h-full w-full object-cover opacity-60"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="rounded-full bg-white/20 p-1 backdrop-blur-sm">
+                              <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ) : media === VIDEO_MARKER && product.videoUrl ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={getYouTubeThumbnail(getYouTubeId(product.videoUrl) || '')}
+                            alt="Video"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        </>
+                      ) : (
+                        <OptimizedImage
+                          src={media}
+                          alt={`Vista ${index + 1}`}
+                          fill
+                          sizes="100px"
+                          style={{ objectFit: 'cover' }}
+                          unoptimized={media === product.videoPreviewUrl}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => scrollThumbnails(desktopCarouselRef, 'right')}
+                  className={`bg-white border border-slate-200 text-slate-600 rounded-full p-2 hover:bg-slate-50 transition-opacity ${showDesktopRightArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Columna Derecha con Scroll */}
-          <div className="min-w-0 space-y-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
-            <div className="flex items-center">
-              <StarRating rating={parseFloat(averageRating)} />
-              <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
-            </div>
-            <div className="hidden md:flex items-center justify-between">
-              {isSublimable && !hasWholesalerAccess ? (
-                <PriceLock
-                  price={totalPrice}
-                  productName={product.nombre}
-                  productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
-                  productImage={activeImage}
-                  productDescription={product.descripcionBreve}
-                  hasAccess={hasWholesalerAccess}
-                  onUnlockRequest={() => setSublimationModalOpen(true)}
-                  size="lg"
-                />
-              ) : (
-                <p className="text-3xl font-semibold text-pink-500">$U {totalPrice}</p>
-              )}
-              <ShareProductButton
-                productName={product.nombre}
-                productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
-                productImage={activeImage}
-                variant="button"
-                size="md"
-              />
+          {/* Columna Derecha (Info + Compra) - 6 columnas (50%) */}
+          <div className="col-span-12 md:col-span-6 flex flex-col gap-8">
+
+            {/* Cabecera de Producto */}
+            <div className="border-b border-slate-100 pb-6">
+              <h1 className="text-4xl md:text-5xl font-black font-heading text-slate-900 mb-4 leading-tight tracking-tight">
+                {product.nombre}
+              </h1>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center">
+                    <StarRating rating={parseFloat(averageRating)} />
+                    <span className="ml-2 text-sm font-medium text-slate-500 underline decoration-slate-300 underline-offset-4">
+                      {reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'}
+                    </span>
+                  </div>
+
+                  {isSublimable && !hasWholesalerAccess ? (
+                    // Badge especial para mayoristas sin acceso
+                    <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      Precio Mayorista
+                    </span>
+                  ) : (
+                    // Precio normal destacado
+                    <p className="text-3xl font-extrabold text-slate-900 font-heading">
+                      $U {totalPrice}
+                    </p>
+                  )}
+                </div>
+
+                {/* Sublimable Locked State */}
+                {isSublimable && !hasWholesalerAccess && (
+                  <PriceLock
+                    price={totalPrice}
+                    productName={product.nombre}
+                    productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
+                    productImage={activeImage}
+                    productDescription={product.descripcionBreve}
+                    hasAccess={hasWholesalerAccess}
+                    onUnlockRequest={() => setSublimationModalOpen(true)}
+                    size="lg"
+                  />
+                )}
+              </div>
             </div>
 
+            {/* Descripción Breve Editorial */}
             {product.descripcionBreve && (
-              <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
+              <div className="text-slate-800 text-lg leading-8 font-medium">
+                {product.descripcionBreve}
+              </div>
             )}
 
-            {/* --- Grupos de Personalización --- */}
-            <div ref={addToCartRef} className="space-y-6">
+            {/* --- Configurador --- */}
+            <div ref={addToCartRef} className="flex flex-col gap-8">
               {orderedCustomizationGroups.map((group, index) => {
                 const groupNumber = index + 1;
                 const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
@@ -616,7 +736,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 if (isCoverDesignGroup) {
                   const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
                   return (
-                    <div key={group.name}>
+                    <div key={group.name} className="animate-fade-in">
                       <NewCoverDesignGallery
                         groupName={`${groupNumber}. ${groupTitle}`}
                         options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
@@ -627,14 +747,19 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   );
                 } else {
                   const groupTitle = customGroupTitles[group.name] || group.name;
+
                   return (
-                    <div key={group.name}>
-                      <h3 className="font-bold text-lg text-gray-800 mb-2">{groupNumber}. {groupTitle}{group.required && <span className="text-red-500 ml-1">*</span>}</h3>
+                    <div key={group.name} className="flex flex-col gap-3">
+                      <h3 className="font-bold text-base text-slate-900 uppercase tracking-wide flex items-center justify-between">
+                        <span>{groupNumber}. {groupTitle}</span>
+                        {group.required && <span className="text-[10px] text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full font-bold">Requerido</span>}
+                      </h3>
+
                       {group.type === 'text' ? (
                         <input
                           type="text"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500"
-                          placeholder="Escribe aquí..."
+                          className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400"
+                          placeholder="Escribe tu personalización aquí..."
                           value={selections[group.name] || ''}
                           onChange={(e) => handleSelectionChange(group.name, e.target.value)}
                         />
@@ -644,7 +769,10 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                             <button
                               key={option.name}
                               onClick={() => handleSelectionChange(group.name, option.name)}
-                              className={`px-6 py-3 rounded-lg border text-base font-medium transition-colors ${selections[group.name] === option.name ? 'bg-pink-500 text-white border-pink-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                              className={`px-5 py-3 rounded-lg border-2 text-sm font-bold transition-all duration-200 ${selections[group.name] === option.name
+                                ? 'bg-slate-900 text-white border-slate-900'
+                                : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300 hover:text-slate-900'
+                                }`}
                             >
                               {option.name}
                             </button>
@@ -655,135 +783,132 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   );
                 }
               })}
-
-
             </div>
 
             {/* --- Botones de Acción --- */}
-            <div className="hidden md:flex flex-col sm:flex-row gap-4 mt-8">
-              <button onClick={handleAddToCart} className="w-full sm:w-auto bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoPink hover:from-pink-600 hover:to-rose-700 transition-all duration-300 flex-grow transform hover:-translate-y-0.5">
-                Agregar al carrito
+            <div className="flex flex-col gap-4 mt-4 pt-6 border-t border-slate-100">
+              <button
+                onClick={handleAddToCart}
+                className="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white text-lg font-bold py-4 rounded-full shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 flex justify-center items-center gap-3"
+              >
+                <span>Añadir al carrito</span>
+                <span className="text-white/40">|</span>
+                <span>$U {totalPrice}</span>
               </button>
+
+              {/* Trust Badges alineados */}
+              <div className="grid grid-cols-3 gap-2 text-center text-[10px] uppercase font-bold text-slate-400 tracking-wider mt-2">
+                <div className="flex flex-col items-center gap-1">
+                  <ShieldCheckIcon className="w-5 h-5 text-slate-300" />
+                  <span>Compra Segura</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <TruckIcon className="w-5 h-5 text-slate-300" />
+                  <span>Envíos a todo el país</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <SparklesIcon className="w-5 h-5 text-slate-300" />
+                  <span>Hecho en Uruguay</span>
+                </div>
+              </div>
             </div>
 
-            {/* Trust Badges (Desktop) */}
-            <div className="hidden md:flex items-center gap-6 mt-6 pt-6 border-t border-gray-100 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <ShieldCheckIcon className="w-5 h-5 text-verde" />
-                <span>Compra 100% Segura</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TruckIcon className="w-5 h-5 text-azul" />
-                <span>Envíos a todo Uruguay</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <SparklesIcon className="w-5 h-5 text-amarillo" />
-                <span>Calidad Garantizada</span>
-              </div>
-            </div>
+
           </div>
         </div>
 
         {/* --- ESTRUCTURA PARA MÓVIL (hasta md) --- */}
-        <div className="md:hidden mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2 pb-8">
-          {/* Contenedor de Imagen Principal Pegajosa */}
-          <div className="sticky top-16 z-40 bg-white pb-4">
-            <div className="relative w-full max-w-md lg:max-w-lg aspect-square rounded-2xl overflow-hidden shadow-lg group mx-auto">
+        <div className="md:hidden mt-0 pb-32 bg-white">
+
+          {/* Carrusel Full-Width Edge-to-Edge */}
+          <div className="relative w-full aspect-square bg-[#F9F9F9] overflow-hidden">
+            {activeImage === PREVIEW_MARKER && product.videoPreviewUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={product.videoPreviewUrl}
+                alt={`Preview animado de ${product.nombre}`}
+                className="h-full w-full object-cover"
+              />
+            ) : activeImage === VIDEO_MARKER && product.videoUrl ? (
+              <ProductVideo
+                videoUrl={product.videoUrl}
+                alt={`Video de ${product.nombre}`}
+              />
+            ) : (
               <OptimizedImage
                 key={activeImage}
                 src={activeImage}
                 alt={product.alt || product.nombre}
                 fill
-                sizes="(max-width: 768px) 90vw, 50vw"
+                sizes="100vw"
                 style={{ objectFit: 'cover' }}
-                className={`transition-opacity duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}
+                className={`transition-opacity duration-300 ${isAnimating ? 'opacity-80' : 'opacity-100'}`}
                 priority
                 onLoadingComplete={() => setIsAnimating(false)}
               />
-              {allProductImages.length > 1 && (
-                <>
-                  <button onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20" aria-label="Imagen anterior">
-                    <ChevronLeftIcon className="h-6 w-6" />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); navigateImage('next'); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-2 text-gray-800 hover:bg-white/80 transition-opacity opacity-0 group-hover:opacity-100 z-20" aria-label="Siguiente imagen">
-                    <ChevronRightIcon className="h-6 w-6" />
-                  </button>
-                </>
-              )}
+            )}
+
+            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+              {activeImage === PREVIEW_MARKER ? (
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : activeImage === VIDEO_MARKER ? (
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              ) : null}
+              <span>{allProductMedia.indexOf(activeImage) + 1} / {allProductMedia.length}</span>
             </div>
           </div>
 
-          {/* Contenido con Scroll (Miniaturas, Info, Opciones) */}
-          <div className="min-w-0 space-y-8 mt-4">
-            {/* Miniaturas para Móvil */}
-            {allProductImages.length > 1 && (
-              <div className="relative w-full max-w-md lg:max-w-lg flex items-center justify-center mx-auto">
-                {/* Gradient Masks */}
-                <div className={`absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showMobileLeftArrow ? 'opacity-100' : 'opacity-0'}`} />
-                <div className={`absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-300 ${showMobileRightArrow ? 'opacity-100' : 'opacity-0'}`} />
+          {/* Contenedor de Info Móvil */}
+          <div className="px-5 pt-6 flex flex-col gap-6">
 
-                {showMobileLeftArrow && (
-                  <button onClick={() => scrollThumbnails(mobileCarouselRef, 'left')} className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1.5 z-20 shadow-md border border-gray-100">
-                    <ChevronLeftIcon className="h-5 w-5 text-gray-700" />
-                  </button>
-                )}
-                <div ref={mobileCarouselRef} tabIndex={0} className="flex flex-nowrap gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-4 w-full scroll-smooth focus:outline-none">
-                  {allProductImages.map((img, index) => (
-                    <div
-                      key={index}
-                      id={`thumbnail-mobile-${index}`}
-                      className={`relative w-16 h-16 rounded-lg overflow-hidden cursor-pointer snap-start flex-shrink-0 transition-all duration-300 focus:outline-none ${activeImage === img ? 'ring-2 ring-pink-500 scale-105' : 'hover:opacity-80 opacity-80'}`}
-                      onClick={() => handleImageChange(img)}
-                    >
-                      <OptimizedImage src={img} alt={`Thumbnail ${index + 1}`} fill sizes="80px" style={{ objectFit: 'cover' }} />
-                    </div>
-                  ))}
+            {/* Header Móvil */}
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <h1 className="text-3xl font-black font-heading text-slate-900 leading-tight w-[70%]">
+                  {product.nombre}
+                </h1>
+                <div className="flex flex-col items-end">
+                  <span className="text-2xl font-bold text-slate-900">$ {totalPrice}</span>
+                  <div className="flex items-center gap-1">
+                    <StarIcon className="w-3 h-3 text-amarillo fill-amarillo" />
+                    <span className="text-xs text-slate-500 font-medium">{averageRating}</span>
+                  </div>
                 </div>
-                {showMobileRightArrow && (
-                  <button onClick={() => scrollThumbnails(mobileCarouselRef, 'right')} className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1.5 z-20 shadow-md border border-gray-100">
-                    <ChevronRightIcon className="h-5 w-5 text-gray-700" />
-                  </button>
-                )}
               </div>
-            )}
 
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{product.nombre}</h1>
-            <div className="flex items-center">
-              <StarRating rating={parseFloat(averageRating)} />
-              <span className="ml-2 text-sm text-gray-600">({reviewCount} {reviewCount === 1 ? 'opinión' : 'opiniones'})</span>
-            </div>
-            <p className="text-3xl font-semibold text-pink-500 hidden md:block">$U {totalPrice}</p>
-
-            {/* Mobile Trust Badges */}
-            <div className="md:hidden flex items-center justify-between gap-2 py-4 border-y border-gray-100 bg-gray-50/50 px-2 rounded-lg">
-              <div className="flex flex-col items-center text-center gap-1 w-1/3">
-                <ShieldCheckIcon className="w-5 h-5 text-verde" />
-                <span className="text-[10px] text-gray-600 font-medium leading-tight">Compra<br />Segura</span>
-              </div>
-              <div className="flex flex-col items-center text-center gap-1 w-1/3 border-l border-gray-200">
-                <TruckIcon className="w-5 h-5 text-azul" />
-                <span className="text-[10px] text-gray-600 font-medium leading-tight">Envíos a<br />todo el país</span>
-              </div>
-              <div className="flex flex-col items-center text-center gap-1 w-1/3 border-l border-gray-200">
-                <SparklesIcon className="w-5 h-5 text-amarillo" />
-                <span className="text-[10px] text-gray-600 font-medium leading-tight">Calidad<br />Premium</span>
-              </div>
+              {product.descripcionBreve && (
+                <p className="text-slate-500 text-sm leading-relaxed mt-2 border-b border-slate-100 pb-4">
+                  {product.descripcionBreve}
+                </p>
+              )}
             </div>
 
-            {product.descripcionBreve && (
-              <p className="text-gray-600 text-lg leading-relaxed">{product.descripcionBreve}</p>
-            )}
+            {/* Mobile Trust Badges Compact */}
+            <div className="flex items-center justify-between gap-2 py-3 bg-slate-50 px-4 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-2">
+                <TruckIcon className="w-4 h-4 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Envíos a todo el país</span>
+              </div>
+              <div className="w-[1px] h-4 bg-slate-200"></div>
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Hecho en Uruguay</span>
+              </div>
+            </div>
+            {/* Mobile Customization Groups */}
+            <div className="flex flex-col gap-6 mt-6">
+              {orderedCustomizationGroups.map((group, i) => {
+                const groupNumber = i + 1;
+                const groupTitle = customGroupTitles[group.name] || group.name;
 
-            {/* --- Grupos de Personalización --- */}
-            <div ref={addToCartRef} className="space-y-6">
-              {orderedCustomizationGroups.map((group, index) => {
-                const groupNumber = index + 1;
-                const isCoverDesignGroup = group.name.startsWith('Diseño de Tapa');
-
-                if (isCoverDesignGroup) {
-                  const groupTitle = customGroupTitles['Diseño de Tapa'] || group.name.replace('Diseño de Tapa - ', '');
+                // 1. Diseño de Tapa (Galería Especial)
+                if (group.name === 'Diseño de Tapa') {
                   return (
-                    <div key={group.name}>
+                    <div key={group.name} className="flex flex-col gap-3">
                       <NewCoverDesignGallery
                         groupName={`${groupNumber}. ${groupTitle}`}
                         options={(group.options || []).map(opt => ({ name: opt.name, image: opt.image || '', priceModifier: opt.priceModifier || 0 }))}
@@ -792,15 +917,41 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       />
                     </div>
                   );
-                } else {
-                  const groupTitle = customGroupTitles[group.name] || group.name;
+                }
 
-                  // Determine visual type based on group name
-                  let selectorType: 'grid' | 'color' | 'text' | 'button' = 'button';
-                  if (group.type === 'text') selectorType = 'text';
-                  else if (group.name.toLowerCase().includes('interior') || group.name.toLowerCase().includes('diseño')) selectorType = 'grid';
-                  else if (group.name.toLowerCase().includes('wire') || group.name.toLowerCase().includes('color')) selectorType = 'color';
+                // 2. Campos de Texto (Nombre, Frase)
+                if (group.type === 'text') {
+                  return (
+                    <div key={group.name} className="flex flex-col gap-3">
+                      <h3 className="font-bold text-base text-slate-900 uppercase tracking-wide flex items-center justify-between">
+                        <span>{groupNumber}. {groupTitle}</span>
+                        {group.required && <span className="text-[10px] text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full font-bold">Requerido</span>}
+                      </h3>
+                      <input
+                        type="text"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400"
+                        placeholder={`Escribe ${group.name}...`}
+                        value={selections[group.name] || ''}
+                        onChange={(e) => handleSelectionChange(group.name, e.target.value)}
+                      />
+                    </div>
+                  );
+                }
 
+                // 3. Otros Selectores Especiales (Grid/Color para visuales)
+                let selectorType: 'text' | 'button' | 'color' | 'grid' = 'button';
+                let isVisualSelector = false;
+
+                if (group.name.toLowerCase().includes('interior') || group.name.toLowerCase().includes('diseño')) {
+                  selectorType = 'grid';
+                  isVisualSelector = true;
+                }
+                else if (group.name.toLowerCase().includes('wire') || group.name.toLowerCase().includes('color')) {
+                  selectorType = 'color';
+                  isVisualSelector = true;
+                }
+
+                if (isVisualSelector) {
                   return (
                     <div key={group.name}>
                       <VisualOptionSelector
@@ -810,9 +961,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                         options={(group.options || []).map(opt => ({
                           name: opt.name,
                           priceModifier: opt.priceModifier,
-                          // For grid types, we might want to map to specific images if available, 
-                          // otherwise VisualOptionSelector handles placeholders.
-                          // For color types, VisualOptionSelector handles color mapping by name.
+                          image: opt.image,
+                          color: opt.color
                         }))}
                         selectedOption={selections[group.name]}
                         onSelect={(value) => handleSelectionChange(group.name, value)}
@@ -820,100 +970,85 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     </div>
                   );
                 }
+
+                // 4. Fallback: Botones Simples (Elástico, Tipo de Tapa, etc.)
+                return (
+                  <div key={group.name} className="flex flex-col gap-3">
+                    <h3 className="font-bold text-base text-slate-900 uppercase tracking-wide flex items-center justify-between">
+                      <span>{groupNumber}. {groupTitle}</span>
+                      {group.required && <span className="text-[10px] text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full font-bold">Requerido</span>}
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {(group.options || []).map((option) => (
+                        <button
+                          key={option.name}
+                          onClick={() => handleSelectionChange(group.name, option.name)}
+                          className={`px-5 py-3 rounded-lg border-2 text-sm font-bold transition-all duration-200 active:scale-95 ${selections[group.name] === option.name
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300 hover:text-slate-900'
+                            }`}
+                        >
+                          {option.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
               })}
             </div>
-          </div>
-        </div>
 
-        {/* --- CONTENIDO DETALLADO COMÚN (Restaurado) --- */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-20">
-          <ProductDetailedContent product={product} reviews={reviews} reviewCount={reviewCount} />
-        </div>
-
-
-
-
-        {
-          relatedProducts.length > 0 && (
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <section className="mt-16">
-                <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                  {relatedProducts.map((p) => (
-                    <div key={p._id} className="h-full">
-                      <ProductCard product={p} />
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-          )
-        }
-
-        {/* --- Botón de Compra Pegajoso para Móviles --- */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[60] pb-safe">
-          <div className="flex justify-between items-center gap-3">
-            {/* Precio a la izquierda */}
-            <div className="text-left flex-1">
-              <p className="text-xs text-gray-500 -mb-1">Total</p>
-              {isSublimable && !hasWholesalerAccess ? (
-                <button
-                  onClick={() => setSublimationModalOpen(true)}
-                  className="font-bold text-xl text-naranja flex items-center gap-1"
-                >
-                  <span className="blur-md">$U {totalPrice}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                  </svg>
-                </button>
-              ) : (
-                <p className="font-bold text-2xl text-pink-500">$U {totalPrice}</p>
-              )}
-            </div>
-            {/* Botón de Compartir */}
-            <ShareProductButton
-              productName={product.nombre}
-              productUrl={`https://www.papeleriapersonalizada.uy/productos/detail/${product.slug}`}
-              productImage={activeImage}
-              variant="icon"
-              size="md"
-            />
-            {/* Botón de Añadir a la derecha (principal) */}
-            {isSublimable && !hasWholesalerAccess ? (
-              <button
-                onClick={() => setSublimationModalOpen(true)}
-                className="bg-gradient-to-r from-naranja to-amarillo text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoWarm transition text-lg whitespace-nowrap flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                Desbloquear
-              </button>
-            ) : (
+            {/* --- Botones de Acción Móvil --- */}
+            {/* --- Sticky Bottom Bar Móvil --- */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
               <button
                 onClick={handleAddToCart}
-                className="bg-gradient-to-r from-pink-500 to-rose-600 text-white px-4 py-4 rounded-xl font-semibold shadow-lg hover:shadow-kamalusoPink transition text-lg whitespace-nowrap"
+                className="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white text-lg font-bold py-4 rounded-full shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex justify-center items-center gap-3"
               >
-                Agregar al carrito
+                <span>Añadir al carrito</span>
+                <span className="text-white/40">|</span>
+                <span>$U {totalPrice}</span>
               </button>
-            )}
+            </div>
+
           </div>
         </div>
-
-
-        {/* Modal de acceso sublimación */}
-        <SublimationAccessModal
-          isOpen={sublimationModalOpen}
-          onClose={() => setSublimationModalOpen(false)}
-          onSuccess={() => {
-            setHasWholesalerAccess(true);
-            setSublimationModalOpen(false);
-          }}
-        />
       </div>
+
+      {/* --- CONTENIDO DETALLADO COMÚN --- */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-32 md:mb-20">
+        <ProductDetailedContent product={product} reviews={reviews} reviewCount={reviewCount} />
+      </div>
+
+      {
+        relatedProducts.length > 0 && (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <section className="mt-16">
+              <h2 className="text-3xl font-semibold mb-8 text-center">Productos relacionados</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {relatedProducts.map((p) => (
+                  <div key={p._id} className="h-full">
+                    <ProductCard product={p} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )
+      }
+
+      {/* Modal de acceso sublimación */}
+      <SublimationAccessModal
+        isOpen={sublimationModalOpen}
+        onClose={() => setSublimationModalOpen(false)}
+        onSuccess={() => {
+          setHasWholesalerAccess(true);
+          setSublimationModalOpen(false);
+        }}
+      />
     </>
   )
 }
+
 
 export const getStaticPaths: GetStaticPaths = async () => {
   await connectDB()

@@ -1,27 +1,22 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import Head from 'next/head' // Importo Head para añadir el schema
-import SeoMeta from '../components/SeoMeta'; // Importar SeoMeta
+import Head from 'next/head'
+import SeoMeta from '../components/SeoMeta';
 
-import { StarIcon, ShieldCheckIcon, TruckIcon, SparklesIcon } from '@heroicons/react/24/solid'; // Importar StarIcon
-import Product from '../models/Product'; // Importar el MODELO Product
-import Review from '../models/Review'; // Importar el modelo Review
-import Category from '../models/Category'; // Importar el MODELO Category
-import connectDB from '../lib/mongoose' // Importar connectDB
-import { GetStaticProps } from 'next' // Importar GetStaticProps
-import FeaturedReviews from '../components/FeaturedReviews'; // Importar FeaturedReviews
-import ProductCard from '../components/ProductCard'; // Importar ProductCard
-import { IReview } from '../models/Review'; // Importar la interfaz IReview global
-import NewsletterForm from '../components/NewsletterForm'; // Importar NewsletterForm
-import HowItWorks from '../components/HowItWorks'; // Importar HowItWorks
-import RealResultsGallery from '../components/RealResultsGallery'; // Importar RealResultsGallery
-import ProductCarousel from '../components/ProductCarousel'; // Importar ProductCarousel
-import HeroTextRotator from '../components/HeroTextRotator'; // Importar HeroTextRotator
-import { useState, useEffect } from 'react'; // Import hooks (needed later?)
-import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion (needed later?)
-import ScrollReveal from '../components/ScrollReveal'; // Import ScrollReveal
-import OptimizedImage from '../components/OptimizedImage'; // Import OptimizedImage
-import OrganicBlob from '../components/OrganicBlob'; // Import OrganicBlob
+import { StarIcon, ShieldCheckIcon, TruckIcon, SparklesIcon } from '@heroicons/react/24/solid';
+import Product from '../models/Product';
+import Review from '../models/Review';
+import Category from '../models/Category';
+import connectDB from '../lib/mongoose'
+import { GetStaticProps } from 'next'
+import FeaturedReviews from '../components/FeaturedReviews';
+import ProductCarousel from '../components/ProductCarousel';
+import { IReview } from '../models/Review';
+import NewsletterForm from '../components/NewsletterForm';
+import HowItWorks from '../components/HowItWorks';
+import RealResultsGallery from '../components/RealResultsGallery';
+import HeroTextRotator from '../components/HeroTextRotator';
+import ScrollReveal from '../components/ScrollReveal';
 
 // Interfaces
 interface Categoria {
@@ -31,63 +26,44 @@ interface Categoria {
   imagen?: string
 }
 
-interface Product {
+interface ProductType {
   _id: string
   nombre: string
   imageUrl?: string
   alt?: string
   categoria?: string
   slug?: string
-  basePrice?: number // Usar basePrice
-  precio?: number // Antiguo
-  precioFlex?: number // Antiguo
-  precioDura?: number // Antiguo
+  basePrice?: number
+  precio?: number
+  precioFlex?: number
+  precioDura?: number
   tapa?: string
-  averageRating?: number; // Para el rating
-  numReviews?: number; // Para el rating
-  // Nuevos campos para el schema
-  descripcionBreve?: string;
-  descripcionExtensa?: string;
-  puntosClave?: string[];
+  averageRating?: number
+  numReviews?: number
+  descripcionBreve?: string
+  descripcionExtensa?: string
+  puntosClave?: string[]
+}
+
+interface CategoryProducts {
+  slug: string
+  nombre: string
+  products: ProductType[]
 }
 
 interface HomeProps {
-  destacados: Product[]
+  destacados: ProductType[]
   categories: Categoria[]
-  reviews: IReview[];
+  reviews: IReview[]
+  productsByCategory: CategoryProducts[]
 }
 
-export default function Home({ destacados, categories, reviews }: HomeProps) {
-  // ELIMINADO: Estado de Hero Text que causaba re-renders globales
-  // const [heroTextIndex, setHeroTextIndex] = useState(0);
-  // ... useEffect logic ...
-
+export default function Home({ destacados, categories, reviews, productsByCategory }: HomeProps) {
   // Calculate real average rating from reviews
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length)
     : 0;
-  // ...
   const totalReviews = reviews.length;
-
-  const getCardPrice = (product: Product) => {
-    if (product.basePrice) {
-      return (
-        <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.basePrice}
-        </p>
-      )
-    }
-    if (product.precio) {
-      return (
-        <p className="text-pink-500 font-semibold text-lg mb-4">
-          $U {product.precio}
-        </p>
-      )
-    }
-    return null
-  }
-
-
 
   return (
     <>
@@ -97,315 +73,192 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
         keywords="agendas personalizadas, agendas 2026, papelería personalizada uruguay, libretas corporativas, regalos empresariales, planners"
       />
 
-
       <main className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
-        {/* Hero Section - Rediseñado para Impacto */}
-        <ScrollReveal>
-          <section className="relative bg-fondoClaro overflow-hidden">
-            {/* Organic Animated Background Blobs */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <OrganicBlob color="#E84393" size="xl" className="top-0 left-0 -translate-x-1/2 -translate-y-1/2" animationSpeed="slow" blur="3xl" />
-              <OrganicBlob color="#FF6B35" size="lg" className="top-1/4 right-0 translate-x-1/3" animationSpeed="medium" blur="3xl" />
-              <OrganicBlob color="#FFD100" size="md" className="bottom-1/4 left-1/4" animationSpeed="fast" blur="2xl" />
-              <OrganicBlob color="#2ECC71" size="lg" className="bottom-0 right-1/4 translate-y-1/2" animationSpeed="slow" blur="3xl" />
-              <OrganicBlob color="#1F75FE" size="md" className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" animationSpeed="medium" blur="3xl" />
+
+        {/* ========== HERO COMPACTO (TIPOGRÁFICO) ========== */}
+        <section className="relative bg-gradient-to-b from-[#FFFAF5] to-white overflow-hidden border-b border-slate-50">
+          <div className="max-w-7xl mx-auto px-6 py-10 md:py-24 relative z-10 flex flex-col items-center">
+
+            {/* Contenedor de Texto Hero - Centrado y Puro (Sin Botones) */}
+            <div className="w-full flex flex-col items-center space-y-6 md:space-y-10 max-w-4xl text-center">
+
+              {/* Trust Badge Minimalista */}
+              <div className="flex items-center gap-1.5 mb-2 opacity-50">
+                <div className="flex text-amarillo">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon key={i} className="h-3 w-3 fill-current" />
+                  ))}
+                </div>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">+1000 clientes felices</span>
+              </div>
+
+              {/* Headline Elite */}
+              <h1 className="text-3xl md:text-6xl lg:text-7xl font-extrabold font-heading text-slate-950 leading-[1.05] tracking-[-0.03em]">
+                Papelería personalizada premium para{' '}
+                <br />
+                <span className="inline-block overflow-visible relative">
+                  <HeroTextRotator />
+                </span>
+              </h1>
+
+              {/* Beneficios ultra-compactos y elegantes */}
+              <div className="flex flex-wrap justify-center gap-x-12 gap-y-3 text-[10px] md:text-xs text-slate-400 font-medium uppercase tracking-[0.3em] pt-2">
+                <div className="flex items-center gap-2">
+                  <span>Tapas Únicas</span>
+                </div>
+                <div className="flex items-center gap-2 border-l border-slate-200 pl-12 hidden md:flex">
+                  <span>Interiores Premium</span>
+                </div>
+                <div className="flex items-center gap-2 border-l border-slate-200 pl-12 border-none md:border-solid">
+                  <span>Hecho en Uruguay</span>
+                </div>
+              </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 lg:py-20 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12 relative z-10">
+          </div>
+        </section>
 
-              {/* Texto Hero */}
-              <div className="flex-1 text-center md:text-left space-y-8">
+        {/* ========== CARRUSELES DE PRODUCTOS POR CATEGORÍA (EDITORIAL SYSTEM) ========== */}
+        {
+          productsByCategory.map((catGroup, idx) => {
+            const isAgendas = catGroup.slug === 'agendas-tapa-dura';
+            const isLibretas = catGroup.slug === 'libretas-y-cuadernos';
+            const isSublimable = catGroup.slug === 'papeleria-sublimable';
+            const displayNumber = (idx + 1).toString().padStart(2, '0');
 
-                {/* Badge de Confianza - DYNAMIC from real reviews - Clickable */}
-                <a
-                  href="#reviews"
-                  className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100 animate-fade-in-up hover:shadow-md hover:border-pink-200 transition-all duration-300 cursor-pointer group"
-                  title={`Basado en ${totalReviews} reseñas reales de clientes. Click para ver detalles.`}
-                >
-                  <div className="flex text-amarillo">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        className={`h-5 w-5 transition-transform group-hover:scale-110 ${i < Math.floor(averageRating)
-                          ? 'text-amarillo'
-                          : i < Math.ceil(averageRating) && averageRating % 1 >= 0.5
-                            ? 'text-amarillo'
-                            : 'text-gray-300'
+            if (catGroup.products.length === 0) return null;
+
+            return (
+              <ScrollReveal key={catGroup.slug}>
+                <section className="px-6 py-16 md:py-24 overflow-hidden relative bg-white">
+                  <div className="max-w-[1400px] mx-auto">
+
+                    {/* Header Ultra-Limpio & Consistente */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 px-4 sm:px-8 gap-6 relative z-10">
+
+                      <div className="flex items-center gap-4 md:gap-6">
+                        <span className="text-xl md:text-3xl font-serif text-slate-300">{displayNumber}</span>
+
+                        {/* Agendas: Tight Tracking Bold Sans */}
+                        {isAgendas && (
+                          <h2 className="text-4xl md:text-6xl lg:text-7xl font-extrabold font-heading text-slate-950 tracking-[-0.05em] uppercase leading-none">
+                            Agendas
+                          </h2>
+                        )}
+
+                        {/* Libretas: Consistent Bold Sans for the whole title */}
+                        {isLibretas && (
+                          <h2 className="text-4xl md:text-7xl font-black font-heading text-slate-950 tracking-tight uppercase leading-none">
+                            Libretas y Cuadernos
+                          </h2>
+                        )}
+
+                        {/* Sublimable: Dramatic Scale (Thin Sans + Oversized Serif Italic) */}
+                        {isSublimable && (
+                          <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
+                            <h2 className="text-xl md:text-3xl lg:text-4xl font-light font-heading text-slate-400 tracking-[0.2em] uppercase">
+                              Papelería
+                            </h2>
+                            <span className="text-4xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-800 leading-none mt-[-5px] md:mt-0">
+                              Sublimable
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Default for others */}
+                        {!isAgendas && !isLibretas && !isSublimable && (
+                          <h2 className="text-4xl md:text-6xl font-extrabold font-heading text-slate-950 tracking-tight uppercase">
+                            {catGroup.nombre}
+                          </h2>
+                        )}
+                      </div>
+
+                      <Link
+                        href={`/productos/${catGroup.slug}`}
+                        className={`group flex items-center gap-3 text-base md:text-xl font-serif italic pb-2 border-b transition-all duration-300 ${isSublimable ? 'text-slate-800 border-slate-800/20 hover:border-slate-800' : 'text-slate-950 border-slate-200 hover:border-slate-950'
                           }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-medium text-textoSecundario">
-                    <span className="font-bold text-textoPrimario">{averageRating.toFixed(1)}/5</span>
-                    <span className="text-xs text-pink-600 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">→ Ver reseñas</span>
-                  </span>
-                </a>
-
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold font-heading text-slate-900 leading-tight tracking-tighter pb-6">
-                  Organizá tu vida <br className="hidden md:block" />
-                  <span className="block text-slate-500 mt-2 min-h-[130px] md:min-h-[150px] lg:min-h-[170px] overflow-visible pb-4 font-bold tracking-tight">
-                    <span className="block overflow-visible mb-1 text-slate-900">
-                      con productos para
-                    </span>
-                    <span className="inline-block overflow-visible relative">
-                      <HeroTextRotator />
-                      {/* Subtle underline effect removed to let gradient shine */}
-                    </span>
-                  </span>
-                </h1>
-
-                <p className="text-xl text-textoSecundario max-w-2xl mx-auto md:mx-0 leading-relaxed">
-                  Decile chau al caos. Obtené agendas y libretas 100% personalizadas, hechas en Uruguay para quienes quieren organización, estilo y una identidad única.
-                </p>
-
-                <div className="flex flex-col items-center gap-4 justify-center md:justify-start pt-4">
-                  <Link
-                    href="/productos"
-                    className="group relative w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-rosa via-naranja to-amarillo text-white rounded-full font-bold text-lg shadow-lg hover:shadow-2xl hover:shadow-rosa/50 hover:-translate-y-1 hover:scale-105 transition-all duration-300 text-center overflow-hidden"
-                  >
-                    {/* Animated gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-amarillo via-naranja to-rosa opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                    <span className="relative z-10 flex items-center justify-center gap-3">
-                      Ver Colección
-                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </span>
-                  </Link>
-
-                  {/* Micro Social Proof */}
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest pt-2">
-                    <div className="flex items-center gap-1.5 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                      <span className="text-amber-500 text-sm">✓</span>
-                      <span>+500 Clientes Felices</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                      <span className="text-amber-500 text-sm">✓</span>
-                      <span>Calidad Premium Artesanal</span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-textoSecundario">
-                    ✨ Personaliza tu agenda, libreta o planner ideal
-                  </p>
-                </div>
-
-                <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-x-8 gap-y-4 text-sm text-textoSecundario font-medium">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheckIcon className="w-5 h-5 text-verde" />
-                    <span>Compra 100% Segura</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TruckIcon className="w-5 h-5 text-azul" />
-                    <span>Envíos a todo Uruguay</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <SparklesIcon className="w-5 h-5 text-amarillo" />
-                    <span>Calidad Garantizada</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Imagen Hero */}
-              <div className="flex-1 w-full max-w-lg md:max-w-xl lg:max-w-2xl relative">
-                <div className="relative aspect-square md:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl transform md:rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <Image
-                    src="/Agendas%20tapa%20dura%20y%20tapa%20flex%20papeleriapersonalizada.uy%20kamaluso.webp"
-                    alt="Agendas Tapa Dura Personalizadas Uruguay - Kamaluso"
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    style={{ objectFit: 'cover' }}
-                    className="z-0"
-                  />
-                  {/* Floating Card Effect */}
-                  <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl shadow-2xl border border-white/60 hidden sm:block z-20">
-                    {/* Header with Logo and Badge */}
-                    <div className="flex items-center justify-between mb-3">
-                      <Image
-                        src="/logo.webp"
-                        alt="Kamaluso Logo"
-                        width={40}
-                        height={40}
-                        className="rounded-lg"
-                        unoptimized
-                      />
-                      <span className="bg-gradient-to-r from-rosa via-naranja to-amarillo text-white text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full shadow-md">
-                        ✨ 100% Tuya
-                      </span>
+                      >
+                        Ver colección →
+                        <svg
+                          className={`w-5 h-5 transition-transform duration-300 group-hover:translate-x-1 ${isSublimable ? 'text-slate-800' : 'text-slate-400'}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </Link>
                     </div>
 
-                    {/* Title */}
-                    <p className="font-bold text-textoPrimario text-lg mb-3">Personalización Real</p>
-
-                    {/* Benefits */}
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-textoSecundario">
-                        <span className="text-base">✨</span>
-                        <span>Tapas + tu logo o diseño</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-textoSecundario">
-                        <span className="text-base">📖</span>
-                        <span>Interiores premium</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-textoSecundario">
-                        <span className="text-base">💪</span>
-                        <span>Tapa Dura Laminada</span>
-                      </div>
+                    {/* Carrusel con padding para que asome la siguiente tarjeta */}
+                    <div className="relative">
+                      <ProductCarousel products={catGroup.products} />
                     </div>
                   </div>
-                </div>
-                {/* Decorative Elements */}
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-amarillo/20 rounded-full blur-3xl -z-10"></div>
-                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-rosa/20 rounded-full blur-3xl -z-10"></div>
-              </div>
-
-            </div>
-          </section>
-        </ScrollReveal>
-
-        {/* Categorías Dinámicas */}
-        <ScrollReveal>
-          <section className="relative px-6 py-12 bg-gradient-to-br from-fondoClaro via-white to-fondoClaro overflow-hidden">
-            {/* Subtle organic background */}
-            <div className="absolute inset-0 pointer-events-none opacity-30">
-              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-organic-pink to-transparent"></div>
-              <div className="absolute bottom-0 right-0 w-full h-32 bg-gradient-to-t from-organic-orange to-transparent"></div>
-            </div>
-
-            <div className="text-center mb-16 relative z-10">
-              <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Explorá</p>
-              <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
-                Categorías
-              </h2>
-            </div>
-            <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto relative z-10">
-
-
-              {categories
-                .filter(cat => cat.slug !== 'papeleria-sublimable')
-                .map((cat) => (
-                  <Link
-                    key={cat._id}
-                    href={`/productos/${cat.slug}`}
-                    className="group w-full sm:w-64 md:w-80 bg-white rounded-3xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-rosa/20"
-                  >
-                    <div className="relative w-full h-64 overflow-hidden">
-                      <OptimizedImage
-                        src={cat.imagen || '/placeholder.png'}
-                        alt={cat.nombre}
-                        fill
-                        sizes="(max-width: 639px) 90vw, (max-width: 767px) 256px, 320px"
-                        style={{ objectFit: 'cover' }}
-                        className="group-hover:scale-110 transition-transform duration-500"
-                      />
-                      {/* Gradient overlay on hover */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-rosa/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
-                    <div className="p-4 text-center">
-                      <h3 className="text-xl font-semibold text-slate-900 group-hover:text-rosa transition-colors">{cat.nombre}</h3>
-                    </div>
-                  </Link>
-                ))}
-
-              {/* Tarjeta Especial: Sublimación */}
-              <Link
-                href="/productos/papeleria-sublimable"
-                className="group w-full sm:w-64 md:w-80 bg-gradient-to-br from-naranja via-orange-500 to-amarillo rounded-3xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-naranja/40 relative"
-              >
-                <div className="absolute top-4 right-4 bg-white text-naranja text-xs font-bold px-3 py-1 rounded-full z-10 shadow-lg">
-                  Exclusivo Sublimadores
-                </div>
-                <div className="relative w-full h-64 flex items-center justify-center">
-                  <div className="text-center text-white p-6">
-                    <span className="text-6xl mb-4 block group-hover:scale-110 transition-transform duration-500 font-sans">📦</span>
-                    <p className="text-lg font-medium opacity-90">Insumos para</p>
-                  </div>
-                </div>
-                <div className="p-4 text-center bg-white/10 backdrop-blur-sm">
-                  <h3 className="text-xl font-bold text-gray-900">Sublimación</h3>
-                  <p className="text-gray-800 text-sm mt-1">Insumos Premium</p>
-                </div>
-              </Link>
-            </div>
-          </section>
-        </ScrollReveal>
-
-        {/* Productos Destacados - Prioridad alta para mostrar productos temprano */}
-        {destacados.length > 0 && (
-          <ScrollReveal>
-            <section className="px-6 py-12 bg-white overflow-hidden">
-              <div className="text-center mb-16">
-                <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Más vendidos</p>
-                <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
-                  Los más elegidos
-                </h2>
-              </div>
-              <div className="max-w-[1400px] mx-auto">
-                <ProductCarousel products={destacados} />
-              </div>
-            </section>
-          </ScrollReveal>
-        )}
-
-        {/* Cómo Funciona */}
-        <ScrollReveal>
-          <HowItWorks />
-        </ScrollReveal>
+                </section>
+              </ScrollReveal>
+            );
+          })
+        }
 
         {/* Reseñas Destacadas - Prueba social */}
         <ScrollReveal>
-          <FeaturedReviews reviews={reviews} />
+          <div className="bg-white py-16 md:py-24 border-t border-slate-50">
+            <FeaturedReviews reviews={reviews} />
+          </div>
         </ScrollReveal>
 
         {/* Expectativas hechas realidad - Galería de trabajos reales */}
         <ScrollReveal>
-          <RealResultsGallery />
+          <div className="bg-white pb-20 md:pb-32 pt-0">
+            <RealResultsGallery />
+          </div>
         </ScrollReveal>
 
-        {/* ========== SECCIÓN B2B EMPRESARIAL (Movida al final) ========== */}
+        {/* ========== SECCIÓN B2B EMPRESARIAL ========== */}
         <ScrollReveal>
-          <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-16 px-6 overflow-hidden shadow-2xl">
+          <section className="relative bg-slate-900 py-20 md:py-32 px-6 overflow-hidden">
             {/* Patrón sutil de fondo */}
             <div
-              className="absolute inset-0 opacity-[0.03]"
+              className="absolute inset-0 opacity-[0.05]"
               style={{
                 backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)',
-                backgroundSize: '32px 32px'
+                backgroundSize: '40px 40px'
               }}
             />
 
-            <div className="max-w-6xl mx-auto relative z-10">
-              {/* Header */}
-              <div className="text-center mb-12">
-                <span className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-4">
-                  Soluciones Corporativas
+            <div className="max-w-[1400px] mx-auto relative z-10">
+              {/* Header Editorial B2B */}
+              <div className="flex flex-col items-center text-center mb-16 md:mb-24">
+                <span className="inline-block px-4 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-[10px] font-bold tracking-[0.3em] uppercase mb-8">
+                  Servicio Corporativo
                 </span>
-                <h2 className="text-3xl md:text-5xl font-bold font-heading text-white mb-4 tracking-tighter">
-                  ¿Buscás regalos para tu
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200"> empresa</span>?
+                <h2 className="text-4xl md:text-7xl font-extrabold font-heading text-white mb-6 tracking-tight leading-none uppercase">
+                  Regalos para <br />
+                  <span className="font-serif italic text-amber-400 normal-case">tu empresa</span>
                 </h2>
-                <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                  Agendas, libretas y papelería personalizada con el logo de tu empresa.
-                  Sin mínimo de compra. Envíos a todo Uruguay.
+                <div className="w-20 h-[1px] bg-amber-400/40 mb-8"></div>
+                <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
+                  Papelería personalizada con la identidad de tu marca.
+                  <span className="text-white"> Sin mínimos</span> y con envíos a todo Uruguay.
                 </p>
               </div>
 
-              {/* Features Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+              {/* Features Grid - Boutique Style */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-20 max-w-5xl mx-auto">
                 {[
-                  { icon: '🎨', title: 'Tu Logo', desc: 'Personalización total' },
-                  { icon: '📦', title: 'Sin Mínimo', desc: 'Desde 1 unidad' },
-                  { icon: '⚡', title: 'Respuesta 24hs', desc: 'Cotización rápida' },
-                  { icon: '🇺🇾', title: 'Todo Uruguay', desc: 'Envíos a cualquier punto' },
+                  { icon: '🎨', title: 'Tu Logo', desc: 'Identidad fiel' },
+                  { icon: '📦', title: 'Desde 1 unidad', desc: 'Flexibilidad total' },
+                  { icon: '⚡', title: 'Cotización 24h', desc: 'Agilidad pro' },
+                  { icon: '🇺🇾', title: 'Envíos Nacionales', desc: 'A todo el país' },
                 ].map((feature, idx) => (
                   <div
                     key={idx}
-                    className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6 text-center hover:border-amber-500/30 transition-colors"
+                    className="group bg-slate-800/20 backdrop-blur-md border border-slate-700/50 rounded-[20px] p-6 md:p-8 text-center hover:border-amber-400/40 transition-all duration-500 hover:-translate-y-1"
                   >
-                    <div className="text-2xl md:text-3xl mb-2">{feature.icon}</div>
-                    <h3 className="text-white font-semibold text-sm md:text-base">{feature.title}</h3>
-                    <p className="text-slate-500 text-xs md:text-sm">{feature.desc}</p>
+                    <div className="text-3xl mb-4 group-hover:scale-110 transition-transform duration-500">{feature.icon}</div>
+                    <h3 className="text-white font-bold text-sm md:text-base uppercase tracking-wider mb-2">{feature.title}</h3>
+                    <p className="text-slate-500 text-xs md:text-sm font-medium">{feature.desc}</p>
                   </div>
                 ))}
               </div>
@@ -414,7 +267,7 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
                   href="/regalos-empresariales"
-                  className="group relative px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-900 rounded-xl font-bold text-lg shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3"
+                  className="group relative px-10 py-5 bg-white text-slate-900 rounded-xl font-bold text-lg hover:bg-amber-400 transition-all duration-500 flex items-center gap-3 overflow-hidden"
                 >
                   Solicitar Cotización
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -423,23 +276,20 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
                 </Link>
                 <Link
                   href="/preguntas-frecuentes-b2b"
-                  className="px-8 py-4 border border-slate-600 text-slate-300 rounded-xl font-semibold hover:bg-slate-800 hover:text-white hover:border-slate-500 transition-all duration-300"
+                  className="px-10 py-5 border border-slate-700 text-slate-400 rounded-xl font-semibold hover:bg-slate-800 hover:text-white hover:border-slate-500 transition-all duration-500"
                 >
-                  Ver Preguntas Frecuentes
+                  Preguntas Frecuentes
                 </Link>
               </div>
-
-              {/* Trust indicator */}
-              <p className="text-center text-slate-500 text-sm mt-8">
-                ✓ Facturación oficial &nbsp;•&nbsp; ✓ Mockup gratis &nbsp;•&nbsp; ✓ Calidad premium
-              </p>
             </div>
           </section>
         </ScrollReveal>
 
         {/* Newsletter Form */}
         <ScrollReveal>
-          <NewsletterForm />
+          <div className="bg-white py-20 md:py-32 border-t border-slate-50">
+            <NewsletterForm />
+          </div>
         </ScrollReveal>
       </main >
     </>
@@ -449,11 +299,8 @@ export default function Home({ destacados, categories, reviews }: HomeProps) {
 export const getStaticProps: GetStaticProps = async () => {
   await connectDB();
 
-  // Aggregation pipeline to fetch featured products with review data
-  const destacadosPipeline = [
-    { $match: { destacado: true } },
-    { $sort: { order: 1, createdAt: -1 } as any },
-    { $limit: 12 },
+  // Pipeline reutilizable para agregar datos de reviews a productos
+  const reviewLookupStages = [
     {
       $lookup: {
         from: 'reviews',
@@ -482,6 +329,14 @@ export const getStaticProps: GetStaticProps = async () => {
     { $project: { reviews: 0, approvedReviews: 0, 'customizationGroups.options._id': 0 } },
   ];
 
+  // Fetch destacados (para compatible con otros usos)
+  const destacadosPipeline = [
+    { $match: { destacado: true } },
+    { $sort: { order: 1, createdAt: -1 } as any },
+    { $limit: 12 },
+    ...reviewLookupStages,
+  ];
+
   const destacadosData = await Product.aggregate(destacadosPipeline);
   const destacados = JSON.parse(JSON.stringify(destacadosData)).map((p: any) => ({
     ...p,
@@ -489,9 +344,64 @@ export const getStaticProps: GetStaticProps = async () => {
     numReviews: p.numReviews || 0,
   }));
 
-  // Fetch categories (only root categories)
+  // Fetch categorías raíz
   const categoriesData = await Category.find({ parent: { $in: [null, undefined] } }).lean();
   const categories = JSON.parse(JSON.stringify(categoriesData));
+
+  // Fetch productos agrupados por categoría para los carruseles
+  // Necesitamos buscar por la categoría raíz Y todas sus subcategorías
+  const allCategoriesData = await Category.find({}).lean();
+  const allCats = JSON.parse(JSON.stringify(allCategoriesData));
+
+  const productsByCategoryUnsorted: CategoryProducts[] = [];
+
+  for (const cat of categories) {
+    // Obtener slugs de esta categoría + todas sus subcategorías
+    const subCatSlugs = allCats
+      .filter((c: any) => c.parent && c.parent.toString() === cat._id.toString())
+      .map((c: any) => c.slug);
+    const allSlugs = [cat.slug, ...subCatSlugs];
+
+    const productsPipeline = [
+      {
+        $match: {
+          $or: [
+            { categoria: { $in: allSlugs } },
+            { subCategoria: { $in: allSlugs } }
+          ],
+          status: { $ne: 'inactivo' },
+          soloDestacado: { $ne: true }
+        }
+      },
+      { $sort: { order: 1, createdAt: -1 } as any },
+      { $limit: 12 },
+      ...reviewLookupStages,
+    ];
+
+    const productsData = await Product.aggregate(productsPipeline);
+    const products = JSON.parse(JSON.stringify(productsData)).map((p: any) => ({
+      ...p,
+      averageRating: p.averageRating === null ? 0 : p.averageRating,
+      numReviews: p.numReviews || 0,
+    }));
+
+    if (products.length > 0) {
+      productsByCategoryUnsorted.push({
+        slug: cat.slug,
+        nombre: cat.nombre,
+        products,
+      });
+    }
+  }
+
+  // Forzar orden: agendas-tapa-dura → libretas-y-cuadernos → papeleria-sublimable → resto
+  const priorityOrder = ['agendas-tapa-dura', 'libretas-y-cuadernos', 'papeleria-sublimable'];
+  const productsByCategory = [
+    ...priorityOrder
+      .map(slug => productsByCategoryUnsorted.find(c => c.slug === slug))
+      .filter(Boolean) as CategoryProducts[],
+    ...productsByCategoryUnsorted.filter(c => !priorityOrder.includes(c.slug)),
+  ];
 
   // Fetch recent reviews
   const reviewsData = await Review.find({ isApproved: true })
@@ -501,16 +411,15 @@ export const getStaticProps: GetStaticProps = async () => {
     .populate('product', 'nombre imageUrl _id slug')
     .lean();
 
-  // Filter out reviews where the product was deleted
   const reviews = JSON.parse(JSON.stringify(reviewsData)).filter((r: any) => r.product != null);
-
 
   return {
     props: {
       destacados,
       categories,
       reviews,
+      productsByCategory,
     },
-    revalidate: 3600, // Revalidate once per hour
+    revalidate: 3600,
   };
 };

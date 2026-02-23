@@ -95,9 +95,9 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md fixed w-full z-50 transition-all duration-300" style={{ top: 'var(--topbar-height, 0px)' }}>
       <NavSchema />
-      <div className="max-w-6xl mx-auto px-6 flex justify-between items-center h-16 relative gap-4">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 flex justify-between items-center h-14 md:h-16 relative gap-4">
         <Link href="/" className="flex items-center flex-shrink-0" onClick={closeAllMenus}>
-          <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-12" unoptimized />
+          <Image src="/logo.webp" alt="Kamaluso Logo" width={50} height={50} className="w-auto h-10 md:h-12" unoptimized />
         </Link>
 
         {/* Search Bar - Desktop Centered (Expanded) */}
@@ -133,19 +133,19 @@ export default function Navbar() {
 
           <Link
             href="/regalos-empresariales"
-            className="py-1 px-4 text-white font-bold bg-gradient-to-r from-gray-700 to-black rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center"
+            className="py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             Empresas
           </Link>
           <Link
             href="/imprimeya"
-            className="py-1 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1"
+            className="py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             ImprimeYa
           </Link>
           <Link
             href="/productos/papeleria-sublimable"
-            className="py-1 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1"
+            className="py-1 text-gray-900 font-medium transition group hover:text-pink-500"
           >
             Sublimación
           </Link>
@@ -209,21 +209,21 @@ export default function Navbar() {
           {renderCategoryLinks(true)}
           <Link
             href="/regalos-empresariales"
-            className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-gray-700 to-black rounded-lg transition text-center mt-2"
+            className="block py-2 text-gray-900 font-medium hover:text-pink-500 transition"
             onClick={closeAllMenus}
           >
             Empresas
           </Link>
           <Link
             href="/imprimeya"
-            className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg transition text-center"
+            className="block py-2 text-gray-900 font-medium hover:text-pink-500 transition"
             onClick={closeAllMenus}
           >
             ImprimeYa
           </Link>
           <Link
             href="/productos/papeleria-sublimable"
-            className="block py-2 px-3 text-white font-bold bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg transition text-center"
+            className="block py-2 text-gray-900 font-medium hover:text-pink-500 transition"
             onClick={closeAllMenus}
           >
             Sublimación

@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import fs from 'fs'
 import path from 'path'
-import { uploadFileToS3 } from '../../../lib/s3-upload'; // Importar la utilidad compartida
+import { uploadFileToS3, uploadFileToS3Original } from '../../../lib/s3-upload'; // Importar la utilidad compartida
 import { ObjectId } from 'mongodb';
 import os from 'os'; // Importar os
 import clientPromise from '../../../lib/mongodb';
@@ -111,6 +111,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       if (fields.alt) updateDoc.alt = String(fields.alt);
       if (fields.notes) updateDoc.notes = String(fields.notes);
       if (fields.status) updateDoc.status = String(fields.status);
+      if (fields.videoUrl) updateDoc.videoUrl = String(fields.videoUrl);
 
       // Nuevos campos de descripción
       if (fields.descripcionBreve) updateDoc.descripcionBreve = String(fields.descripcionBreve);
@@ -258,6 +259,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           }
         }
         updateDoc.images = newImagesUrls
+      }
+
+      // --- Manejo del Video Preview (WebP Animado) ---
+      const videoFile = files.videoPreviewFile as any;
+      if (videoFile) {
+        const vf = Array.isArray(videoFile) ? videoFile[0] : videoFile;
+        if (vf && vf.filepath) {
+          updateDoc.videoPreviewUrl = await uploadFileToS3Original(vf as formidable.File);
+        }
+      } else if (getFieldValue(fields.videoPreviewUrl) === '') {
+        // Solo si el campo viene explícitamente vacío se elimina (esto es lo que envía el botón "X" del front)
+        // NOTA: Si el campo no viene en absoluto, getFieldValue devuelve '', pero en el Edit Form siempre viene.
+        updateDoc.videoPreviewUrl = '';
       }
 
       updateDoc.actualizadoEn = new Date()

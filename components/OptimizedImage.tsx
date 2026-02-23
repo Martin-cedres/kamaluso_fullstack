@@ -24,29 +24,17 @@ const OptimizedImage = (props: ImageProps) => {
     // Lógica para predecir la URL optimizada en S3
     const getPotentialS3Url = (original: string) => {
         if (!original.startsWith('https://')) return null;
-        if (original.includes('/processed/') && original.endsWith('.webp')) return original; // Ya es óptima
-
-        // Intento de conversión: reemplazar /uploads/ por /processed/ y cambiar extensión
-        // Nota: Esto asume que la estructura de archivos de imagen coincide
-        if (original.includes('/uploads/')) {
-            let newUrl = original.replace('/uploads/', '/processed/');
-            // Reemplazar extensión por .webp
-            newUrl = newUrl.replace(/\.[^/.]+$/, '.webp');
-            return newUrl;
-        }
+        if (original.includes('/processed/') && original.endsWith('.webp')) return original;
         return null;
     };
 
-    const targetS3Url = getPotentialS3Url(originalSrc);
-
-    // Si no podemos construir una URL de S3 (ej: imagen local), usamos la original directo
-    // Si podemos, intentamos cargar esa primero
+    const targetS3Url = props.unoptimized ? null : getPotentialS3Url(originalSrc);
     const [imageSrc, setImageSrc] = useState<string | typeof src>(targetS3Url || src);
     const [useCustomLoader, setUseCustomLoader] = useState(!!targetS3Url);
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        const newTarget = getPotentialS3Url(getSrcString(src));
+        const newTarget = props.unoptimized ? null : getPotentialS3Url(getSrcString(src));
         if (newTarget) {
             setImageSrc(newTarget);
             setUseCustomLoader(true);
@@ -55,7 +43,7 @@ const OptimizedImage = (props: ImageProps) => {
             setUseCustomLoader(false);
         }
         setHasError(false);
-    }, [src]);
+    }, [src, props.unoptimized]);
 
     const handleError = () => {
         if (hasError) return;

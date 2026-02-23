@@ -42,6 +42,8 @@ export interface IProduct extends Document {
   destacado: boolean;
   imageUrl: string;
   images?: string[];
+  videoUrl?: string;         // URL de YouTube del producto
+  videoPreviewUrl?: string;  // URL del WebP animado en S3 (para hover en tarjeta)
   averageRating?: number;
   numReviews?: number;
   claveDeGrupo?: string;
@@ -78,6 +80,8 @@ const productSchema: Schema<IProduct> = new Schema(
     destacado: { type: Boolean, default: false },
     imageUrl: { type: String, required: true },
     images: [{ type: String }],
+    videoUrl: { type: String },
+    videoPreviewUrl: { type: String },
     order: { type: Number, default: 0 },
     coverDesignGroupNames: [{ type: String }],
     customizationGroups: [
