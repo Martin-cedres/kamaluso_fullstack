@@ -818,7 +818,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         </div>
 
         {/* --- ESTRUCTURA PARA MÓVIL (hasta md) --- */}
-        <div className="md:hidden mt-0 pb-32 bg-white">
+        <div className="md:hidden mt-0 pb-80 bg-white">
 
           {/* Carrusel Full-Width Edge-to-Edge */}
           <div className="relative w-full aspect-square bg-[#F9F9F9] overflow-hidden">
@@ -999,7 +999,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
             {/* --- Botones de Acción Móvil --- */}
             {/* --- Sticky Bottom Bar Móvil --- */}
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-slate-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[999] bg-white border-t border-slate-100 p-4 shadow-[0_-15px_40px_rgba(0,0,0,0.15)] rounded-t-3xl">
               <button
                 onClick={handleAddToCart}
                 className="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white text-lg font-bold py-4 rounded-full shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex justify-center items-center gap-3"

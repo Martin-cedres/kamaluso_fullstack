@@ -9,7 +9,7 @@ const MobileBottomBar = () => {
 
     // Solo mostrar en móvil (md:hidden se encarga, pero aseguramos layout)
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 z-50 md:hidden pb-safe-area">
+        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-[40] md:hidden pb-safe transition-all duration-300">
             <div className="flex justify-around items-center h-16">
 
                 {/* Inicio */}

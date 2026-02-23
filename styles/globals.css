@@ -1,11 +1,16 @@
-html, body {
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottom-safe-bar {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
   .unsticky {
     position: relative !important;
   }
