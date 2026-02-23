@@ -258,7 +258,7 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <p className="text-gray-700">
-                      $U {item.precio * item.quantity}
+                      $U {(item.precio * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}

@@ -81,7 +81,7 @@ const MiniCart = ({ cartItems, onClose }: MiniCartProps) => {
                             )}
                             <div className="flex items-center justify-between mt-1">
                                 <span className="text-xs text-gray-600">Cant: {item.quantity}</span>
-                                <span className="font-bold text-pink-500">${item.precio * item.quantity}</span>
+                                <span className="font-bold text-pink-500">${(item.precio * item.quantity).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

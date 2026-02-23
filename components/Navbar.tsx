@@ -18,6 +18,7 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [isClient, setIsClient] = useState(false);
   const menuCloseTimer = useRef<NodeJS.Timeout | null>(null);
+  const cartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -26,7 +27,19 @@ export default function Navbar() {
   const closeAllMenus = () => {
     setMenuOpen(false);
     setOpenDropdown(null);
+    setShowMiniCart(false);
   };
+
+  // Cierre al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
+        setShowMiniCart(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleDropdownToggle = (slug: string) => {
     setOpenDropdown(openDropdown === slug ? null : slug);
@@ -45,12 +58,12 @@ export default function Navbar() {
     }, 200); // 200ms delay before closing
   };
 
-  const handleCartEnter = () => {
-    setShowMiniCart(true);
-  };
-
-  const handleCartLeave = () => {
-    setShowMiniCart(false);
+  const toggleMiniCart = (e: React.MouseEvent) => {
+    // En escritorio, prevenimos la navegación y abrimos el dropdown
+    if (window.innerWidth >= 768) {
+      e.preventDefault();
+      setShowMiniCart(!showMiniCart);
+    }
   };
 
   const renderCategoryLinks = (isMobile: boolean = false) => {
@@ -169,14 +182,13 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <div
               className="relative"
-              onMouseEnter={handleCartEnter}
-              onMouseLeave={handleCartLeave}
+              ref={cartRef}
             >
               <Link
                 href="/cart"
                 className={`relative text-gray-900 hover:text-pink-500 transition ${cartIconAnimate ? 'animate-cartBounce' : ''
                   }`}
-                onClick={closeAllMenus}
+                onClick={toggleMiniCart}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />

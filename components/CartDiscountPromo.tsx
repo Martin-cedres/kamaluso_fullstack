@@ -49,7 +49,7 @@ const CartDiscountPromo = () => {
                         <h4 className="font-bold text-green-700">¡Genial! 10% OFF Aplicado</h4>
                     </div>
                     <p className="text-sm text-green-600">
-                        Ahorraste <span className="font-bold">${discountAmount}</span> en esta compra.
+                        Ahorraste <span className="font-bold">${discountAmount.toFixed(2)}</span> en esta compra.
                     </p>
                     {/* Progress Bar (100%) */}
                     <div className="w-full bg-green-200 rounded-full h-2.5 mt-3 overflow-hidden">

@@ -51,13 +51,27 @@ const CartSuggestions = () => {
             }
         };
 
-        // Debounce simple o llamar solo cuando cambia cartItems length considerablemente
-        // Para simplificar, llamamos cuando cambia cartItems (esto podría optimizarse)
+        // Solo llamamos una vez al montar el componente (cuando se abre el carrito)
         fetchSuggestions();
 
-    }, [cartItems.length]); // Dependencia simplificada para evitar loops si los precios no cambian estructura
+    }, []); // Dependencia vacía para estabilidad visual
 
-    if (cartItems.length === 0 || suggestions.length === 0) return null;
+    if (cartItems.length === 0) return null;
+
+    if (loading) {
+        return (
+            <div className="mt-4 pt-4 border-t border-gray-100 animate-pulse">
+                <div className="h-4 bg-gray-100 rounded w-3/4 mb-3"></div>
+                <div className="flex gap-3 overflow-hidden">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="min-w-[140px] h-32 bg-gray-50 rounded-lg"></div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (suggestions.length === 0) return null;
 
     return (
         <div className="mt-4 pt-4 border-t border-gray-100">
