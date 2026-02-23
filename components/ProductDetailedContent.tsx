@@ -36,7 +36,7 @@ const AccordionItem = ({ title, icon: Icon, children, defaultOpen = false }: { t
         <div className="border-b border-gray-200 last:border-0">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between py-6 text-left group transition-colors hover:bg-gray-50/50 px-2 rounded-lg"
+                className="w-full flex items-center justify-between py-4 md:py-6 text-left group transition-colors hover:bg-gray-50/50 px-2 rounded-lg"
             >
                 <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg transition-colors ${isOpen ? 'bg-pink-50 text-pink-600' : 'bg-gray-100 text-gray-500 group-hover:bg-pink-50 group-hover:text-pink-500'}`}>
@@ -59,7 +59,7 @@ const AccordionItem = ({ title, icon: Icon, children, defaultOpen = false }: { t
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                     >
-                        <div className="pb-8 px-2 pl-14 text-gray-600">
+                        <div className="pb-6 md:pb-8 px-2 pl-12 md:pl-14 text-gray-600">
                             {children}
                         </div>
                     </motion.div>
@@ -74,10 +74,10 @@ const ProductDetailedContent: React.FC<ProductDetailedContentProps> = ({ product
     const descriptionContent = product.descripcionExtensa || product.descripcion || '';
 
     return (
-        <div className="w-full mt-8 max-w-5xl mx-auto">
+        <div className="w-full mt-0 md:mt-8 max-w-5xl mx-auto">
 
             {/* Contenedor de Acordeones con estilo de tarjeta unificada */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-16">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-8 md:mb-16">
 
                 {/* 1. Características Destacadas (Siempre visible o primer acordeón abierto por defecto) */}
                 {product.puntosClave && product.puntosClave.length > 0 && (

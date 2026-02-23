@@ -21,10 +21,15 @@ const OptimizedImage = (props: ImageProps) => {
 
     const originalSrc = getSrcString(src);
 
-    // Lógica para predecir la URL optimizada en S3
+    // Lógica para predecir la URL optimizada en S3 (vía proxy)
     const getPotentialS3Url = (original: string) => {
-        if (!original.startsWith('https://')) return null;
-        if (original.includes('/processed/') && original.endsWith('.webp')) return original;
+        if (!original.startsWith('https://') && !original.startsWith('/api/images/')) return null;
+
+        // Si ya es una URL de S3 o del proxy
+        if (original.includes('amazonaws.com') || original.startsWith('/api/images/')) {
+            // Intentamos asegurar que pase por el loader si es WebP
+            if (original.endsWith('.webp')) return original;
+        }
         return null;
     };
 
@@ -34,7 +39,8 @@ const OptimizedImage = (props: ImageProps) => {
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        const newTarget = props.unoptimized ? null : getPotentialS3Url(getSrcString(src));
+        const currentSrc = getSrcString(src);
+        const newTarget = props.unoptimized ? null : getPotentialS3Url(currentSrc);
         if (newTarget) {
             setImageSrc(newTarget);
             setUseCustomLoader(true);
@@ -48,11 +54,11 @@ const OptimizedImage = (props: ImageProps) => {
     const handleError = () => {
         if (hasError) return;
 
-        // Si falló la carga con S3 (404), hacemos fallback a la original con Vercel
+        // Si falló la carga con el loader (ej: 404 variante), hacemos fallback a la original
         if (useCustomLoader && imageSrc !== src) {
-            console.log(`OptimizedImage: Fallback S3 (${imageSrc}) -> Vercel (${originalSrc})`);
+            console.log(`OptimizedImage: Fallback loader (${imageSrc}) -> Original (${originalSrc})`);
             setImageSrc(src); // Volver a original
-            setUseCustomLoader(false); // Desactivar loader custom (activa Vercel)
+            setUseCustomLoader(false); // Desactivar loader custom para esta instancia
             setHasError(true);
         }
     };

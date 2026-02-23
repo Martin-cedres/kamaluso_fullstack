@@ -526,7 +526,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         )}
       </Head>
 
-      <div className="bg-white" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 4rem)' }}>
+      <div className="bg-white" style={{ paddingTop: 'calc(var(--topbar-height, 0px) + 1.5rem)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Migas de pan para Escritorio */}
           <div className="hidden md:block pb-6">
@@ -818,7 +818,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         </div>
 
         {/* --- ESTRUCTURA PARA MÓVIL (hasta md) --- */}
-        <div className="md:hidden mt-0 pb-80 bg-white">
+        <div className="md:hidden mt-0 pb-4 bg-white">
 
           {/* Carrusel Full-Width Edge-to-Edge */}
           <div className="relative w-full aspect-square bg-[#F9F9F9] overflow-hidden">
@@ -863,7 +863,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
           </div>
 
           {/* Contenedor de Info Móvil */}
-          <div className="px-5 pt-6 flex flex-col gap-6">
+          <div className="px-5 pt-4 flex flex-col gap-4">
 
             {/* Header Móvil */}
             <div>
@@ -900,7 +900,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               </div>
             </div>
             {/* Mobile Customization Groups */}
-            <div className="flex flex-col gap-6 mt-6">
+            <div className="flex flex-col gap-4 mt-4">
               {orderedCustomizationGroups.map((group, i) => {
                 const groupNumber = i + 1;
                 const groupTitle = customGroupTitles[group.name] || group.name;
@@ -999,7 +999,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
 
             {/* --- Botones de Acción Móvil --- */}
             {/* --- Sticky Bottom Bar Móvil --- */}
-            <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[999] bg-white border-t border-slate-100 p-4 shadow-[0_-15px_40px_rgba(0,0,0,0.15)] rounded-t-3xl">
+            <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[999] bg-white border-t border-slate-100 p-4 shadow-[0_-15px_40px_rgba(0,0,0,0.15)] rounded-t-3xl">
               <button
                 onClick={handleAddToCart}
                 className="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white text-lg font-bold py-4 rounded-full shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex justify-center items-center gap-3"
@@ -1015,7 +1015,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       </div>
 
       {/* --- CONTENIDO DETALLADO COMÚN --- */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-32 md:mb-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-24 md:mb-20 mt-0 md:mt-0">
         <ProductDetailedContent product={product} reviews={reviews} reviewCount={reviewCount} />
       </div>
 

@@ -55,8 +55,8 @@ export const uploadFileToS3 = async (file: formidable.File) => {
       // Si llegamos aquí, la imagen fue procesada exitosamente
       console.log(`✅ Imagen procesada por Lambda: ${baseKey}`);
 
-      // Retornar URL base (sin el tamaño, el loader lo agregará según viewport)
-      return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/processed/${baseKey}.webp`;
+      // Retornar URL base vía proxy
+      return `/api/images/processed/${baseKey}.webp`;
     } catch (error: any) {
       if (error.name === 'NotFound' && attempt < maxAttempts - 1) {
         // La imagen aún no se procesó, esperar y reintentar
@@ -65,14 +65,14 @@ export const uploadFileToS3 = async (file: formidable.File) => {
       } else if (attempt === maxAttempts - 1) {
         // Timeout: Lambda no procesó la imagen a tiempo
         console.warn(`⚠️ Lambda no procesó la imagen a tiempo. Retornando original: ${baseKey}`);
-        // Retornar URL del archivo original como fallback
-        return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
+        // Retornar URL del archivo original vía proxy como fallback
+        return `/api/images/uploads/${baseKey}${extension}`;
       }
     }
   }
 
   // Fallback final (no debería llegar aquí)
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
+  return `/api/images/uploads/${baseKey}${extension}`;
 };
 
 export const uploadFileToS3Original = async (file: formidable.File) => {
@@ -96,7 +96,7 @@ export const uploadFileToS3Original = async (file: formidable.File) => {
 
   try { fs.unlinkSync(file.filepath); } catch (e) { console.error(e); }
 
-  return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/uploads/${baseKey}${extension}`;
+  return `/api/images/uploads/${baseKey}${extension}`;
 };
 
 export const deleteFileFromS3 = async (fileUrl: string) => {
