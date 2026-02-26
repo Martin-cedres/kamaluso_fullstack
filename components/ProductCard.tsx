@@ -166,33 +166,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/0 to-black/0 group-hover:from-black/[0.02] group-hover:to-transparent transition-all duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/0 to-black/0 group-hover:from-black/[0.05] group-hover:to-transparent transition-all duration-500" />
 
-          {/* Badge para productos sublimables - Rediseño más limpio */}
+          {/* Badge para productos sublimables - Ultra Minimalista / Expansivo */}
           {isSublimable && (
-            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-naranja text-[9px] font-bold px-3 py-1.5 rounded-full shadow-sm z-10 uppercase tracking-widest border border-naranja/10">
-              💎 Mayorista
+            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md text-naranja text-[10px] font-bold px-2 py-1.5 rounded-full shadow-sm z-10 flex items-center gap-0 group-hover:gap-2 transition-all duration-500 ease-in-out border border-naranja/10 group-hover:px-3 overflow-hidden max-w-[32px] group-hover:max-w-[120px]">
+              <span className="flex-shrink-0">💎</span>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 uppercase tracking-widest whitespace-nowrap">Mayorista</span>
             </div>
           )}
 
-          {/* Badge de Vista Animada (WebP) */}
+          {/* Badge de Vista Animada (WebP) - Estilo Bubble */}
           {hasVideoPreview && (
-            <div className={`absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-pink-600 text-[9px] font-black px-2.5 py-1 rounded-full z-10 uppercase tracking-widest flex items-center gap-1.5 shadow-sm border border-pink-100 transition-opacity duration-300 ${isHovered ? 'md:opacity-0' : 'opacity-100'}`}>
-              <span className="relative flex h-2 w-2">
+            <div className={`absolute bottom-3 left-3 bg-white/95 backdrop-blur-md text-pink-600 text-[10px] font-black p-2 rounded-full z-10 shadow-sm border border-pink-100 transition-all duration-300 flex items-center gap-0 group-hover:gap-2 overflow-hidden max-w-[34px] group-hover:max-w-[140px] group-hover:px-4 ${isHovered ? 'md:opacity-0' : 'opacity-100'}`}>
+              <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500"></span>
               </span>
-              Animado
-            </div>
-          )}
-
-          {/* Badge de Video (YouTube) - Solo si no hay WebP o si queremos mostrar ambos */}
-          {hasVideo && !hasVideoPreview && (
-            <div className={`absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[9px] font-bold px-2.5 py-1 rounded-full z-10 uppercase tracking-wider flex items-center gap-1`}>
-              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Video
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 uppercase tracking-widest whitespace-nowrap">Ver en acción</span>
             </div>
           )}
 
@@ -208,25 +199,36 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </Link>
 
-        <div className="flex flex-col flex-grow p-6">
+        <div className="flex flex-col flex-grow p-6 relative">
           <Link href={productUrl}>
             <h2 className={`text-base md:text-lg font-bold font-heading text-slate-900 line-clamp-2 leading-snug ${titleHoverClass} transition-colors duration-300`}>
               {product.nombre}
             </h2>
           </Link>
 
-          {product.averageRating && product.averageRating > 0 ? (
-            <div className="flex items-center mt-3 mb-1">
-              <StarRating rating={product.averageRating} />
-              {product.numReviews && product.numReviews > 0 && (
-                <span className="text-[9px] text-slate-500 ml-2 font-bold uppercase tracking-wider bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
-                  {product.numReviews} {product.numReviews === 1 ? 'reseña' : 'reseñas'}
-                </span>
+          {/* Contenedor de Información Secundaria / Ratings con Animación */}
+          <div className="relative h-10 mt-3 overflow-hidden">
+            {/* Rating (Estado por defecto) */}
+            <div className="absolute inset-0 flex items-center transition-all duration-500 group-hover:-translate-y-full group-hover:opacity-0">
+              {product.averageRating && product.averageRating > 0 ? (
+                <div className="flex items-center">
+                  <StarRating rating={product.averageRating} />
+                  {product.numReviews && product.numReviews > 0 && (
+                    <span className="text-[10px] text-slate-400 ml-2 font-medium">({product.numReviews})</span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-[10px] text-slate-300 uppercase tracking-widest font-medium">Producto Artesanal</span>
               )}
             </div>
-          ) : (
-            <div className="mt-3 mb-1 h-4"></div>
-          )}
+
+            {/* Descripción/Specs al Hover (Estado Activo) */}
+            <div className="absolute inset-0 flex items-center transition-all duration-500 translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+              <p className="text-[11px] text-slate-500 font-medium italic line-clamp-2 leading-tight">
+                {product.descripcionBreve || "Diseño exclusivo Kamaluso con detalles premium."}
+              </p>
+            </div>
+          </div>
 
           <div className="mt-auto pt-4 flex items-end justify-between">
             <div className="flex flex-col">
@@ -254,15 +256,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               )}
             </div>
 
-            {/* Quick Add Button (+) Estilo boutique */}
+            {/* CTA Button: Expansivo "Personalizar" */}
             <Link
               href={productUrl}
-              className={`relative z-10 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-950 shadow-sm border border-slate-100 group-hover:bg-slate-950 group-hover:text-white group-hover:border-slate-950 transition-all duration-500 hover:scale-110 active:scale-95`}
-              title="Añadir al diseño"
+              className={`relative z-10 h-11 px-4 rounded-full bg-slate-50 flex items-center justify-center text-slate-950 shadow-sm border border-slate-100 transition-all duration-500 hover:scale-105 active:scale-95 group/btn hover:bg-slate-950 hover:text-white hover:border-slate-950 overflow-hidden`}
+              title="Ir a personalizar"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
+              <div className="flex items-center gap-0 group-hover/btn:gap-2 transition-all duration-500">
+                <span className="max-w-0 opacity-0 group-hover/btn:max-w-[100px] group-hover/btn:opacity-100 transition-all duration-500 text-[10px] font-bold uppercase tracking-[0.2em] whitespace-nowrap overflow-hidden">
+                  Personalizar
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </div>
             </Link>
           </div>
         </div>

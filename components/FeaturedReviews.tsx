@@ -64,10 +64,10 @@ const FeaturedReviews: React.FC<FeaturedReviewsProps> = ({ reviews }) => {
           key="reviews-jsonld"
         />
       </Head>
-      <div className="text-center mb-16">
-        <p className="text-sm font-semibold text-rosa uppercase tracking-widest mb-3">Testimonios</p>
-        <h2 className="text-4xl md:text-6xl font-bold font-heading text-slate-900 tracking-tighter">
-          Lo que dicen nuestros clientes
+      <div className="text-center mb-16 px-4">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mb-4">Experiencias Reales</p>
+        <h2 className="text-4xl md:text-7xl font-serif italic text-slate-950 leading-tight">
+          Lo que cuentan de nosotros
         </h2>
       </div>
 

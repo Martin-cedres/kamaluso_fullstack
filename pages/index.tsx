@@ -77,7 +77,7 @@ export default function Home({ destacados, categories, reviews, productsByCatego
 
         {/* ========== HERO COMPACTO (TIPOGRÁFICO) ========== */}
         <section className="relative bg-gradient-to-b from-[#FFFAF5] to-white overflow-hidden border-b border-slate-50">
-          <div className="max-w-7xl mx-auto px-6 py-10 md:py-24 relative z-10 flex flex-col items-center">
+          <div className="max-w-7xl mx-auto px-6 pt-10 pb-20 md:pt-24 md:pb-32 relative z-10 flex flex-col items-center">
 
             {/* Contenedor de Texto Hero - Centrado y Puro (Sin Botones) */}
             <div className="w-full flex flex-col items-center space-y-6 md:space-y-10 max-w-4xl text-center">
@@ -93,10 +93,10 @@ export default function Home({ destacados, categories, reviews, productsByCatego
               </div>
 
               {/* Headline Elite */}
-              <h1 className="text-3xl md:text-6xl lg:text-7xl font-extrabold font-heading text-slate-950 leading-[1.05] tracking-[-0.03em]">
-                Papelería personalizada premium para{' '}
-                <br />
-                <span className="inline-block overflow-visible relative">
+              <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold font-heading text-slate-950 leading-[1.05] tracking-tight">
+                Papelería personalizada <br className="hidden md:block" />
+                premium para <br />
+                <span className="inline-block overflow-visible relative font-serif italic text-slate-800 pt-2">
                   <HeroTextRotator />
                 </span>
               </h1>
@@ -130,44 +130,41 @@ export default function Home({ destacados, categories, reviews, productsByCatego
 
             return (
               <ScrollReveal key={catGroup.slug}>
-                <section className="px-6 py-16 md:py-24 overflow-hidden relative bg-white">
+                <section className={`px-6 ${idx === 0 ? 'pt-12 md:pt-20' : 'pt-16 md:pt-28'} pb-12 md:pb-24 overflow-hidden relative bg-white`}>
                   <div className="max-w-[1400px] mx-auto">
 
-                    {/* Header Ultra-Limpio & Consistente */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 px-4 sm:px-8 gap-6 relative z-10">
+                    {/* Header Ultra-Limpio & Consistente - Aumento de Margen inferior para Serif */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 px-4 sm:px-8 gap-6 relative z-10">
 
                       <div className="flex items-center gap-4 md:gap-6">
                         <span className="text-xl md:text-3xl font-serif text-slate-300">{displayNumber}</span>
 
-                        {/* Agendas: Tight Tracking Bold Sans */}
+                        {/* Agendas: Ruta 1 - Serif Italiana */}
                         {isAgendas && (
-                          <h2 className="text-4xl md:text-6xl lg:text-7xl font-extrabold font-heading text-slate-950 tracking-[-0.05em] uppercase leading-none">
+                          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none tracking-tight">
                             Agendas
                           </h2>
                         )}
 
-                        {/* Libretas: Consistent Bold Sans for the whole title */}
+                        {/* Libretas: Ruta 1 - Serif Italiana */}
                         {isLibretas && (
-                          <h2 className="text-4xl md:text-7xl font-black font-heading text-slate-950 tracking-tight uppercase leading-none">
+                          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none tracking-tight">
                             Libretas y Cuadernos
                           </h2>
                         )}
 
-                        {/* Sublimable: Dramatic Scale (Thin Sans + Oversized Serif Italic) */}
+                        {/* Sublimable: Ruta 1 - Serif Italiana (Ya tenía una base similar, la refinamos) */}
                         {isSublimable && (
                           <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                            <h2 className="text-xl md:text-3xl lg:text-4xl font-light font-heading text-slate-400 tracking-[0.2em] uppercase">
-                              Papelería
-                            </h2>
-                            <span className="text-4xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-800 leading-none mt-[-5px] md:mt-0">
-                              Sublimable
+                            <span className="text-4xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none">
+                              Papelería Sublimable
                             </span>
                           </div>
                         )}
 
-                        {/* Default for others */}
+                        {/* Default for others: Ruta 1 - Serif Italiana */}
                         {!isAgendas && !isLibretas && !isSublimable && (
-                          <h2 className="text-4xl md:text-6xl font-extrabold font-heading text-slate-950 tracking-tight uppercase">
+                          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none tracking-tight">
                             {catGroup.nombre}
                           </h2>
                         )}
@@ -203,7 +200,7 @@ export default function Home({ destacados, categories, reviews, productsByCatego
 
         {/* Reseñas Destacadas - Prueba social */}
         <ScrollReveal>
-          <div className="bg-white py-16 md:py-24 border-t border-slate-50">
+          <div className="bg-white py-12 md:py-32 border-t border-slate-50">
             <FeaturedReviews reviews={reviews} />
           </div>
         </ScrollReveal>
@@ -217,7 +214,7 @@ export default function Home({ destacados, categories, reviews, productsByCatego
 
         {/* ========== SECCIÓN B2B EMPRESARIAL ========== */}
         <ScrollReveal>
-          <section className="relative bg-slate-900 py-20 md:py-32 px-6 overflow-hidden">
+          <section className="relative bg-slate-900 py-16 md:py-40 px-6 overflow-hidden">
             {/* Patrón sutil de fondo */}
             <div
               className="absolute inset-0 opacity-[0.05]"

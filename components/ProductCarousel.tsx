@@ -45,11 +45,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
     };
 
     return (
-        <div className="relative group px-2 sm:px-8">
+        <div className="relative group/carousel px-2 sm:px-8">
             {/* Navigation Buttons - Semi-visible for intuitiveness */}
             <button
                 onClick={() => scroll('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 p-3 rounded-full shadow-sm text-slate-400 opacity-20 md:opacity-40 group-hover:opacity-100 transition-all duration-500 hover:scale-110 hidden md:block border border-slate-100"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 p-3 rounded-full shadow-sm text-slate-400 opacity-20 md:opacity-40 group-hover/carousel:opacity-100 transition-all duration-500 hover:scale-110 hidden md:block border border-slate-100"
                 aria-label="Anterior"
             >
                 <ChevronLeftIcon className="w-5 h-5" />
@@ -57,7 +57,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
 
             <button
                 onClick={() => scroll('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 p-3 rounded-full shadow-sm text-slate-400 opacity-20 md:opacity-40 group-hover:opacity-100 transition-all duration-500 hover:scale-110 hidden md:block border border-slate-100"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 p-3 rounded-full shadow-sm text-slate-400 opacity-20 md:opacity-40 group-hover/carousel:opacity-100 transition-all duration-500 hover:scale-110 hidden md:block border border-slate-100"
                 aria-label="Siguiente"
             >
                 <ChevronRightIcon className="w-5 h-5" />

@@ -289,6 +289,37 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
     }
   }, [activeImage]);
 
+  // Auto-scroll main mobile carousel when active image changes
+  useEffect(() => {
+    if (mobileCarouselRef.current) {
+      const index = allProductMedia.indexOf(activeImage);
+      if (index !== -1) {
+        const container = mobileCarouselRef.current;
+        const targetScroll = index * container.clientWidth;
+        if (Math.abs(container.scrollLeft - targetScroll) > 10) {
+          container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+        }
+      }
+    }
+  }, [activeImage, allProductMedia]);
+
+  // Sync activeImage with mobile carousel scroll (swipe)
+  useEffect(() => {
+    const container = mobileCarouselRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const index = Math.round(container.scrollLeft / container.clientWidth);
+      const newImage = allProductMedia[index];
+      if (newImage && newImage !== activeImage) {
+        setActiveImage(newImage);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [allProductMedia, activeImage]);
+
   // Auto-scroll thumbnails when active image changes
   useEffect(() => {
     const index = allProductImages.findIndex(img => img === activeImage);
@@ -298,7 +329,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
       if (desktopThumbnail) {
         desktopThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
-      // Try to find mobile thumbnail (we'll add IDs to mobile too)
+      // Try to find mobile thumbnail
       const mobileThumbnail = document.getElementById(`thumbnail-mobile-${index}`);
       if (mobileThumbnail) {
         mobileThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -821,34 +852,63 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
         <div className="md:hidden mt-0 pb-4 bg-white">
 
           {/* Carrusel Full-Width Edge-to-Edge */}
-          <div className="relative w-full aspect-square bg-[#F9F9F9] overflow-hidden">
-            {activeImage === PREVIEW_MARKER && product.videoPreviewUrl ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={product.videoPreviewUrl}
-                alt={`Preview animado de ${product.nombre}`}
-                className="h-full w-full object-cover"
-              />
-            ) : activeImage === VIDEO_MARKER && product.videoUrl ? (
-              <ProductVideo
-                videoUrl={product.videoUrl}
-                alt={`Video de ${product.nombre}`}
-              />
-            ) : (
-              <OptimizedImage
-                key={activeImage}
-                src={activeImage}
-                alt={product.alt || product.nombre}
-                fill
-                sizes="100vw"
-                style={{ objectFit: 'cover' }}
-                className={`transition-opacity duration-300 ${isAnimating ? 'opacity-80' : 'opacity-100'}`}
-                priority
-                onLoadingComplete={() => setIsAnimating(false)}
-              />
+          <div className="relative w-full aspect-square bg-[#F9F9F9] overflow-hidden group/mobile-carousel">
+            <div
+              ref={mobileCarouselRef}
+              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {allProductMedia.map((media, index) => (
+                <div key={index} className="flex-shrink-0 w-full h-full snap-start relative">
+                  {media === PREVIEW_MARKER && product.videoPreviewUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={product.videoPreviewUrl}
+                      alt={`Preview animado de ${product.nombre}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : media === VIDEO_MARKER && product.videoUrl ? (
+                    <ProductVideo
+                      videoUrl={product.videoUrl}
+                      alt={`Video de ${product.nombre}`}
+                    />
+                  ) : (
+                    <OptimizedImage
+                      src={media}
+                      alt={product.alt || product.nombre}
+                      fill
+                      sizes="100vw"
+                      style={{ objectFit: 'cover' }}
+                      className="transition-opacity duration-300"
+                      priority={index === 0}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Botones de Navegación para Móvil (Solo si hay más de 1 imagen) */}
+            {allProductMedia.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigateImage('prev'); }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-md rounded-full p-2 text-slate-800 shadow-md z-20 active:scale-90 transition-transform"
+                  aria-label="Imagen anterior"
+                >
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigateImage('next'); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-md rounded-full p-2 text-slate-800 shadow-md z-20 active:scale-90 transition-transform"
+                  aria-label="Siguiente imagen"
+                >
+                  <ChevronRightIcon className="h-5 w-5" />
+                </button>
+              </>
             )}
 
-            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+            {/* Indicador de posición */}
+            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1.5 z-20 transition-all">
               {activeImage === PREVIEW_MARKER ? (
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -858,9 +918,51 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   <path d="M8 5v14l11-7z" />
                 </svg>
               ) : null}
-              <span>{allProductMedia.indexOf(activeImage) + 1} / {allProductMedia.length}</span>
+              <span className="tabular-nums">{allProductMedia.indexOf(activeImage) + 1} / {allProductMedia.length}</span>
             </div>
           </div>
+
+          {/* Miniaturas para Móvil */}
+          {allProductMedia.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto px-5 py-4 scrollbar-hide snap-x mt-1">
+              {allProductMedia.map((media, index) => (
+                <div
+                  key={index}
+                  id={`thumbnail-mobile-${index}`}
+                  className={`relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden cursor-pointer snap-start transition-all duration-300 ${activeImage === media ? 'ring-2 ring-slate-900 opacity-100 scale-105' : 'opacity-50 grayscale-[30%]'}`}
+                  onClick={() => handleImageChange(media)}
+                >
+                  {media === PREVIEW_MARKER ? (
+                    <div className="relative h-full w-full bg-black">
+                      <img src={product.videoPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </div>
+                    </div>
+                  ) : media === VIDEO_MARKER && product.videoUrl ? (
+                    <div className="relative h-full w-full">
+                      <img src={getYouTubeThumbnail(getYouTubeId(product.videoUrl) || '')} alt="Video" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  ) : (
+                    <OptimizedImage
+                      src={media}
+                      alt={`Vista ${index + 1}`}
+                      fill
+                      sizes="64px"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Contenedor de Info Móvil */}
           <div className="px-5 pt-4 flex flex-col gap-4">

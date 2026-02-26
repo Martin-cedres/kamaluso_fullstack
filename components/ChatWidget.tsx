@@ -9,7 +9,6 @@ const ChatWidget = () => {
     const [history, setHistory] = useState<{ role: 'user' | 'model'; content: string }[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [conversationId, setConversationId] = useState<string | null>(null);
-    const [hasClosed, setHasClosed] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
 
@@ -20,25 +19,6 @@ const ChatWidget = () => {
     useEffect(() => {
         scrollToBottom();
     }, [history, isOpen]);
-
-    // Auto-open chat after 10 seconds (ONLY ONCE EVER ON HOME)
-    useEffect(() => {
-        // Solo se auto-abre en la Home para no molestar en otras páginas
-        if (router.pathname !== '/') return;
-
-        const hasSeenChat = typeof window !== 'undefined' ? localStorage.getItem('kamaluso_chat_seen_v2') : null;
-
-        if (!hasSeenChat) {
-            const timer = setTimeout(() => {
-                setIsOpen(true);
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('kamaluso_chat_seen_v2', 'true');
-                }
-            }, 8000); // 8 seconds on home is good for conversion
-
-            return () => clearTimeout(timer);
-        }
-    }, [router.pathname]);
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -81,21 +61,9 @@ const ChatWidget = () => {
 
     const handleClose = () => {
         setIsOpen(false);
-        setHasClosed(true);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('kamaluso_chat_seen_v2', 'true');
-        }
     };
 
     const handleToggle = () => {
-        if (isOpen) {
-            setHasClosed(true);
-        } else {
-            // If user manually opens, mark as seen so it doesn't auto-open later
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('kamaluso_chat_seen_v2', 'true');
-            }
-        }
         setIsOpen(!isOpen);
     };
 
@@ -106,7 +74,7 @@ const ChatWidget = () => {
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="fixed bottom-[170px] right-5 md:bottom-28 md:right-32 z-50 w-[88vw] sm:w-[380px] bg-[#FFFAF5]/90 backdrop-blur-xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/40 overflow-hidden transition-all animate-in slide-in-from-bottom-4 fade-in duration-500 flex flex-col max-h-[calc(100vh-250px)] md:max-h-[calc(100vh-200px)] font-sans">
+                <div className="fixed bottom-[170px] right-5 md:bottom-28 md:right-32 z-50 w-[88vw] sm:w-[380px] bg-white/95 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-200 ring-1 ring-black/5 overflow-hidden transition-all animate-in slide-in-from-bottom-4 fade-in duration-500 flex flex-col max-h-[calc(100vh-250px)] md:max-h-[calc(100vh-200px)] font-sans">
 
                     {/* Header: Editorial & Luxury */}
                     <div className="p-6 pb-4 flex justify-between items-start border-b border-black/5">
@@ -229,15 +197,7 @@ const ChatWidget = () => {
             )}
 
             {/* Floating Button - Luxury Design */}
-            <div className={`fixed ${router.pathname.includes('/productos/') ? 'md:bottom-48 hidden md:block' : 'bottom-28'} right-8 z-50 group`}>
-                {!isOpen && (
-                    <div className="absolute bottom-full right-0 mb-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0 pointer-events-none">
-                        <div className="bg-slate-900 text-white text-[10px] font-bold uppercase tracking-[0.2em] px-5 py-2.5 rounded-full whitespace-nowrap shadow-2xl">
-                            ¿Necesitás ayuda?
-                        </div>
-                    </div>
-                )}
-
+            <div className="fixed bottom-28 right-8 z-50 group">
                 <button
                     onClick={handleToggle}
                     className={`relative p-5 rounded-full shadow-[0_15px_35px_rgba(0,0,0,0.2)] border-2 border-[#E5B5A1] overflow-hidden transition-all duration-500 hover:scale-110 active:scale-95 ${isOpen
