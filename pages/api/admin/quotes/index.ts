@@ -39,15 +39,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
     } else if (req.method === 'POST') {
         try {
-            // Generate quote number (e.g., PRE-2024-001)
+            // Generate quote number (e.g., PRE-2024-040)
             const year = new Date().getFullYear();
-            const count = await Quote.countDocuments({
+
+            // Buscar el último presupuesto del año actual para determinar el siguiente número
+            const lastQuote = await Quote.findOne({
                 createdAt: {
                     $gte: new Date(`${year}-01-01`),
                     $lt: new Date(`${year + 1}-01-01`),
                 },
-            });
-            const quoteNumber = `PRE-${year}-${String(count + 1).padStart(3, '0')}`;
+            }).sort({ createdAt: -1 });
+
+            let nextNumber = 40;
+            if (lastQuote && lastQuote.quoteNumber) {
+                const parts = lastQuote.quoteNumber.split('-');
+                const lastNum = parseInt(parts[parts.length - 1], 10);
+                if (!isNaN(lastNum)) {
+                    nextNumber = Math.max(lastNum + 1, 40);
+                }
+            }
+
+            const quoteNumber = `PRE-${year}-${String(nextNumber).padStart(3, '0')}`;
 
             const newQuote = await Quote.create({
                 ...req.body,

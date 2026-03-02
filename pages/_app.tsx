@@ -166,7 +166,7 @@ function MyApp({ Component, pageProps }: AppProps) {
               <SpeedInsights />
             </main>
             {isClient && <DynamicWhatsAppButton />}
-            {isClient && <DynamicChatWidget />}
+            {isClient && router.pathname === '/' && <DynamicChatWidget />}
             {isClient && <DynamicFooter />}
             {isClient && <DynamicMobileBottomBar />}
           </div>
