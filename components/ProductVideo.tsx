@@ -65,7 +65,7 @@ const ProductVideo: React.FC<ProductVideoProps> = ({ videoUrl, alt = 'Video del 
                     <img
                         src={thumbnailUrl}
                         alt={alt}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         loading="lazy"
                     />
 

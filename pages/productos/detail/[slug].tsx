@@ -582,11 +582,10 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
             <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-sm bg-[#F9F9F9] mb-6 group">
               {activeImage === PREVIEW_MARKER && product.videoPreviewUrl ? (
                 /* Point 5: High-End Gallery Loop using <img> for WebP compatibility */
-                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={product.videoPreviewUrl}
                   alt={`Preview animado de ${product.nombre}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
               ) : activeImage === VIDEO_MARKER && product.videoUrl ? (
                 <ProductVideo
@@ -600,8 +599,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                   alt={product.alt || product.nombre}
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"
-                  style={{ objectFit: 'cover' }}
-                  className={`transition-opacity duration-500 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
+                  style={{ objectFit: 'contain' }}
+                  className={`transition-opacity duration-500 p-4 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}
                   priority
                   onLoadingComplete={() => setIsAnimating(false)}
                 />
@@ -655,7 +654,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                           <img
                             src={product.videoPreviewUrl}
                             alt="Preview animado"
-                            className="h-full w-full object-cover opacity-60"
+                            className="h-full w-full object-contain opacity-60"
                           />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="rounded-full bg-white/20 p-1 backdrop-blur-sm">
@@ -671,7 +670,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                           <img
                             src={getYouTubeThumbnail(getYouTubeId(product.videoUrl) || '')}
                             alt="Video"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                           />
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                             <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -685,7 +684,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                           alt={`Vista ${index + 1}`}
                           fill
                           sizes="100px"
-                          style={{ objectFit: 'cover' }}
+                          style={{ objectFit: 'contain' }}
+                          className="p-1"
                           unoptimized={media === product.videoPreviewUrl}
                         />
                       )}
@@ -861,11 +861,10 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
               {allProductMedia.map((media, index) => (
                 <div key={index} className="flex-shrink-0 w-full h-full snap-start relative">
                   {media === PREVIEW_MARKER && product.videoPreviewUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={product.videoPreviewUrl}
                       alt={`Preview animado de ${product.nombre}`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain"
                     />
                   ) : media === VIDEO_MARKER && product.videoUrl ? (
                     <ProductVideo
@@ -878,8 +877,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       alt={product.alt || product.nombre}
                       fill
                       sizes="100vw"
-                      style={{ objectFit: 'cover' }}
-                      className="transition-opacity duration-300"
+                      style={{ objectFit: 'contain' }}
+                      className="transition-opacity duration-300 p-4"
                       priority={index === 0}
                     />
                   )}
@@ -934,7 +933,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                 >
                   {media === PREVIEW_MARKER ? (
                     <div className="relative h-full w-full bg-black">
-                      <img src={product.videoPreviewUrl} alt="Preview" className="h-full w-full object-cover" />
+                      <img src={product.videoPreviewUrl} alt="Preview" className="h-full w-full object-contain" />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -943,7 +942,7 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                     </div>
                   ) : media === VIDEO_MARKER && product.videoUrl ? (
                     <div className="relative h-full w-full">
-                      <img src={getYouTubeThumbnail(getYouTubeId(product.videoUrl) || '')} alt="Video" className="w-full h-full object-cover" />
+                      <img src={getYouTubeThumbnail(getYouTubeId(product.videoUrl) || '')} alt="Video" className="h-full w-full object-contain" />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M8 5v14l11-7z" />
@@ -956,7 +955,8 @@ export default function ProductDetailPage({ product, relatedProducts, reviews, r
                       alt={`Vista ${index + 1}`}
                       fill
                       sizes="64px"
-                      style={{ objectFit: 'cover' }}
+                      style={{ objectFit: 'contain' }}
+                      className="p-1"
                     />
                   )}
                 </div>
