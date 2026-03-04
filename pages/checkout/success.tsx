@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import Script from 'next/script'
 import { useCart } from '../../context/CartContext'
+
+declare global {
+  interface Window {
+    renderOptIn: () => void;
+    gapi: any;
+  }
+}
 
 const CheckoutSuccessPage = () => {
   const router = useRouter()
   const { clearCart } = useCart()
   const [isValidSession, setIsValidSession] = useState(false)
+  const [orderData, setOrderData] = useState<any>(null)
 
   useEffect(() => {
     if (!router.isReady) return
@@ -30,10 +39,55 @@ const CheckoutSuccessPage = () => {
       setIsValidSession(false)
     }
 
+    // Fetch order data for Google Reviews if we have an orderId
+    if (orderId && typeof orderId === 'string') {
+      fetch(`/api/orders/${orderId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.message) {
+            setOrderData(data)
+          }
+        })
+        .catch(err => console.error('Error fetching order for Google Reviews:', err))
+    }
+
   }, [router.isReady, router.query, clearCart])
+
+  // Function to initialize Google Survey Opt-in
+  useEffect(() => {
+    if (orderData && typeof window !== 'undefined') {
+      window.renderOptIn = function () {
+        if (window.gapi) {
+          window.gapi.load('surveyoptin', function () {
+            // Calculate estimated delivery date (7 days from now)
+            const deliveryDate = new Date();
+            deliveryDate.setDate(deliveryDate.getDate() + 7);
+            const formattedDate = deliveryDate.toISOString().split('T')[0];
+
+            window.gapi.surveyoptin.render({
+              "merchant_id": 5687827854,
+              "order_id": orderData.orderId,
+              "email": orderData.email,
+              "delivery_country": "UY",
+              "estimated_delivery_date": formattedDate,
+              "products": orderData.items?.map((item: any) => ({ "gtin": item.gtin || "" })) || []
+            });
+          });
+        }
+      };
+
+      // If gapi is already loaded and surveyoptin is ready, we could call it, 
+      // but usually the script's onload=renderOptIn handles it.
+    }
+  }, [orderData]);
 
   return (
     <main className="min-h-screen bg-gray-50 px-6 flex items-center justify-center">
+      <Script
+        src="https://apis.google.com/js/platform.js?onload=renderOptIn"
+        async
+        defer
+      />
       <div className="bg-white p-8 rounded-2xl shadow-md text-center max-w-lg w-full">
         {isValidSession ? (
           <>
