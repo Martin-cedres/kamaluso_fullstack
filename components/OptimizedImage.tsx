@@ -54,17 +54,24 @@ const OptimizedImage = (props: ImageProps) => {
     const handleError = () => {
         if (hasError) return;
 
-        // Si falló la carga con el loader (ej: 404 variante), hacemos fallback a la original
-        if (useCustomLoader && imageSrc !== src) {
-            console.log(`OptimizedImage: Fallback loader (${imageSrc}) -> Original (${originalSrc})`);
-            setImageSrc(src); // Volver a original
-            setUseCustomLoader(false); // Desactivar loader custom para esta instancia
-            setHasError(true);
+        console.log(`OptimizedImage: Fallback triggered for ${originalSrc}`);
+        
+        // Desactivamos el loader custom si estaba activo
+        if (useCustomLoader) {
+            setUseCustomLoader(false);
         }
+        
+        // Si el estado actual no es el src original, volvemos a él
+        if (imageSrc !== src) {
+            setImageSrc(src);
+        }
+        
+        setHasError(true);
     };
 
     return (
         <Image
+            key={`${originalSrc}-${useCustomLoader}-${hasError}`}
             src={imageSrc}
             alt={alt}
             loader={useCustomLoader ? s3Loader : undefined} // undefined activa el default (Vercel) si no hay loader global

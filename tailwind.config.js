@@ -30,7 +30,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['var(--font-inter)', ...fontFamily.sans],
-        heading: ['var(--font-plus-jakarta)', ...fontFamily.sans],
+        heading: ['var(--font-outfit)', ...fontFamily.sans],
         serif: ['var(--font-cormorant)', ...fontFamily.serif],
         inter: ['Inter', 'sans-serif'],
         outfit: ['var(--font-outfit)', 'sans-serif'],

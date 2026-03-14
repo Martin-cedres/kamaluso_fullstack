@@ -26,8 +26,20 @@ interface ProductCarouselProps {
 
 const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [scrollProgress, setScrollProgress] = React.useState(0);
 
     if (!products || products.length === 0) return null;
+
+    const handleScroll = () => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+            const scrollableWidth = scrollWidth - clientWidth;
+            if (scrollableWidth > 0) {
+                const progress = (scrollLeft / scrollableWidth) * 100;
+                setScrollProgress(progress);
+            }
+        }
+    };
 
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
@@ -66,7 +78,8 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
             {/* Scroll Container */}
             <div
                 ref={scrollContainerRef}
-                className="flex overflow-x-auto gap-4 sm:gap-6 pb-4 snap-x snap-mandatory scroll-smooth hide-scrollbar"
+                onScroll={handleScroll}
+                className="flex overflow-x-auto gap-4 sm:gap-6 pb-6 snap-x snap-mandatory scroll-smooth hide-scrollbar"
                 style={{
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
@@ -100,6 +113,21 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ products }) => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Mobile/Small Screen Progress Bar Indicator */}
+            <div className="md:hidden mt-2 px-6">
+                <div className="h-[2px] w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-rosa transition-all duration-300 ease-out rounded-full"
+                        style={{ width: `${Math.max(15, scrollProgress)}%`, marginLeft: `${(scrollProgress * (100 - Math.max(15, scrollProgress))) / 100}%` }}
+                    />
+                </div>
+                <div className="mt-2 flex justify-center">
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                       Desliza para ver más <span className="animate-pulse">→</span>
+                   </span>
+                </div>
             </div>
 
             <style jsx>{`

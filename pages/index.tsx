@@ -96,7 +96,7 @@ export default function Home({ destacados, categories, reviews, productsByCatego
               <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold font-heading text-slate-950 leading-[1.05] tracking-tight">
                 Papelería personalizada <br className="hidden md:block" />
                 premium para <br />
-                <span className="inline-block overflow-visible relative font-serif italic text-slate-800 pt-2">
+                <span className="inline-block overflow-visible relative font-heading font-extrabold text-slate-800 pt-2">
                   <HeroTextRotator />
                 </span>
               </h1>
@@ -124,7 +124,6 @@ export default function Home({ destacados, categories, reviews, productsByCatego
             const isAgendas = catGroup.slug === 'agendas-tapa-dura';
             const isLibretas = catGroup.slug === 'libretas-y-cuadernos';
             const isSublimable = catGroup.slug === 'papeleria-sublimable';
-            const displayNumber = (idx + 1).toString().padStart(2, '0');
 
             if (catGroup.products.length === 0) return null;
 
@@ -137,34 +136,33 @@ export default function Home({ destacados, categories, reviews, productsByCatego
                     <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 px-4 sm:px-8 gap-6 relative z-10">
 
                       <div className="flex items-center gap-4 md:gap-6">
-                        <span className="text-xl md:text-3xl font-serif text-slate-300">{displayNumber}</span>
 
-                        {/* Agendas: Ruta 1 - Serif Italiana */}
+                        {/* Agendas: Ruta 1 - Sans Premium */}
                         {isAgendas && (
-                          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none tracking-tight">
+                          <h2 className="text-4xl md:text-6xl lg:text-[5rem] font-heading font-extrabold text-slate-900 leading-none tracking-tight">
                             Agendas
                           </h2>
                         )}
 
-                        {/* Libretas: Ruta 1 - Serif Italiana */}
+                        {/* Libretas: Ruta 1 - Sans Premium */}
                         {isLibretas && (
-                          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none tracking-tight">
+                          <h2 className="text-4xl md:text-6xl lg:text-[5rem] font-heading font-extrabold text-slate-900 leading-none tracking-tight">
                             Libretas y Cuadernos
                           </h2>
                         )}
 
-                        {/* Sublimable: Ruta 1 - Serif Italiana (Ya tenía una base similar, la refinamos) */}
+                        {/* Sublimable: Ruta 1 - Sans Premium */}
                         {isSublimable && (
                           <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                            <span className="text-4xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none">
+                            <span className="text-3xl md:text-6xl lg:text-[5rem] font-heading font-extrabold text-slate-900 leading-none uppercase tracking-tight">
                               Papelería Sublimable
                             </span>
                           </div>
                         )}
 
-                        {/* Default for others: Ruta 1 - Serif Italiana */}
+                        {/* Default for others: Ruta 1 - Sans Premium */}
                         {!isAgendas && !isLibretas && !isSublimable && (
-                          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-serif italic text-slate-900 leading-none tracking-tight">
+                          <h2 className="text-4xl md:text-6xl lg:text-[5rem] font-heading font-extrabold text-slate-900 leading-none tracking-tight">
                             {catGroup.nombre}
                           </h2>
                         )}
@@ -172,7 +170,7 @@ export default function Home({ destacados, categories, reviews, productsByCatego
 
                       <Link
                         href={`/productos/${catGroup.slug}`}
-                        className={`group flex items-center gap-3 text-base md:text-xl font-serif italic pb-2 border-b transition-all duration-300 ${isSublimable ? 'text-slate-800 border-slate-800/20 hover:border-slate-800' : 'text-slate-950 border-slate-200 hover:border-slate-950'
+                        className={`group flex items-center gap-3 text-base md:text-lg font-heading font-bold pb-2 border-b transition-all duration-300 ${isSublimable ? 'text-slate-800 border-slate-800/20 hover:border-slate-800' : 'text-slate-950 border-slate-200 hover:border-slate-950'
                           }`}
                       >
                         Ver colección →
@@ -232,7 +230,7 @@ export default function Home({ destacados, categories, reviews, productsByCatego
                 </span>
                 <h2 className="text-4xl md:text-7xl font-extrabold font-heading text-white mb-6 tracking-tight leading-none uppercase">
                   Regalos para <br />
-                  <span className="font-serif italic text-amber-400 normal-case">tu empresa</span>
+                  <span className="font-heading font-extrabold text-amber-400">tu empresa</span>
                 </h2>
                 <div className="w-20 h-[1px] bg-amber-400/40 mb-8"></div>
                 <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
